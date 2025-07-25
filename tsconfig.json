@@ -7,7 +7,15 @@
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
         "allowImportingTsExtensions": true,
-        "noEmit": true
+        "noEmit": true,
+        "baseUrl": ".",
+        "paths": {
+            "*": ["node_modules/*"],
+            "agent/*": ["agent/src/*"],
+            "client/*": ["client/src/*"],
+            "packages/*": ["packages/*"],
+            "@elizaos/config": ["packages/config/src"]
+        }
     },
     "files": [],
     "references": [

@@ -4,134 +4,63 @@ import { QdrantDatabaseAdapter } from "@elizaos/adapter-qdrant";
 import { RedisClient } from "@elizaos/adapter-redis";
 import { SqliteDatabaseAdapter } from "@elizaos/adapter-sqlite";
 import { SupabaseDatabaseAdapter } from "@elizaos/adapter-supabase";
-import { AutoClientInterface } from "@elizaos/client-auto";
-import { DiscordClientInterface } from "@elizaos/client-discord";
-import { InstagramClientInterface } from "@elizaos/client-instagram";
-import { LensAgentClient } from "@elizaos/client-lens";
-import { SlackClientInterface } from "@elizaos/client-slack";
-import { TelegramClientInterface } from "@elizaos/client-telegram";
-import { TwitterClientInterface } from "@elizaos/client-twitter";
-import { FarcasterClientInterface } from "@elizaos/client-farcaster";
-import { JeeterClientInterface } from "@elizaos/client-simsai";
-
 import { DirectClient } from "@elizaos/client-direct";
-import { agentKitPlugin } from "@elizaos/plugin-agentkit";
-
-import { PrimusAdapter } from "@elizaos/plugin-primus";
-import { lightningPlugin } from "@elizaos/plugin-lightning";
-import { elizaCodeinPlugin, onchainJson } from "@elizaos/plugin-iq6900";
-
 import {
     AgentRuntime,
     CacheManager,
     CacheStore,
     type Character,
-    type Client,
-    Clients,
     DbCacheAdapter,
     defaultCharacter,
     elizaLogger,
     FsCacheAdapter,
-    type IAgentRuntime,
-    type ICacheManager,
     type IDatabaseAdapter,
     type IDatabaseCacheAdapter,
-    ModelProviderName,
-    parseBooleanFromText,
     settings,
     stringToUuid,
     validateCharacterConfig,
 } from "@elizaos/core";
-import { zgPlugin } from "@elizaos/plugin-0g";
-
-import { bootstrapPlugin } from "@elizaos/plugin-bootstrap";
-import { normalizeCharacter } from "@elizaos/plugin-di";
-import createGoatPlugin from "@elizaos/plugin-goat";
-// import { intifacePlugin } from "@elizaos/plugin-intiface";
-import { ThreeDGenerationPlugin } from "@elizaos/plugin-3d-generation";
-import { abstractPlugin } from "@elizaos/plugin-abstract";
-import { akashPlugin } from "@elizaos/plugin-akash";
-import { alloraPlugin } from "@elizaos/plugin-allora";
-import { aptosPlugin } from "@elizaos/plugin-aptos";
-import { artheraPlugin } from "@elizaos/plugin-arthera";
-import { autonomePlugin } from "@elizaos/plugin-autonome";
-import { availPlugin } from "@elizaos/plugin-avail";
-import { avalanchePlugin } from "@elizaos/plugin-avalanche";
-import { b2Plugin } from "@elizaos/plugin-b2";
-import { binancePlugin } from "@elizaos/plugin-binance";
-import { birdeyePlugin } from "@elizaos/plugin-birdeye";
-import { bnbPlugin } from "@elizaos/plugin-bnb";
-import {
-    advancedTradePlugin,
-    coinbaseCommercePlugin,
-    coinbaseMassPaymentsPlugin,
-    tokenContractPlugin,
-    tradePlugin,
-    webhookPlugin,
-} from "@elizaos/plugin-coinbase";
-import { coingeckoPlugin } from "@elizaos/plugin-coingecko";
-import { coinmarketcapPlugin } from "@elizaos/plugin-coinmarketcap";
-import { confluxPlugin } from "@elizaos/plugin-conflux";
-import { createCosmosPlugin } from "@elizaos/plugin-cosmos";
-import { cronosZkEVMPlugin } from "@elizaos/plugin-cronoszkevm";
-import { evmPlugin } from "@elizaos/plugin-evm";
-import { flowPlugin } from "@elizaos/plugin-flow";
-import { fuelPlugin } from "@elizaos/plugin-fuel";
-import { genLayerPlugin } from "@elizaos/plugin-genlayer";
-import { gitcoinPassportPlugin } from "@elizaos/plugin-gitcoin-passport";
-import { initiaPlugin } from "@elizaos/plugin-initia";
-import { imageGenerationPlugin } from "@elizaos/plugin-image-generation";
-import { lensPlugin } from "@elizaos/plugin-lensNetwork";
-import { multiversxPlugin } from "@elizaos/plugin-multiversx";
-import { nearPlugin } from "@elizaos/plugin-near";
-import createNFTCollectionsPlugin from "@elizaos/plugin-nft-collections";
-import { nftGenerationPlugin } from "@elizaos/plugin-nft-generation";
-import { createNodePlugin } from "@elizaos/plugin-node";
-import { obsidianPlugin } from "@elizaos/plugin-obsidian";
-import { OpacityAdapter } from "@elizaos/plugin-opacity";
-import { openWeatherPlugin } from "@elizaos/plugin-open-weather";
-import { quaiPlugin } from "@elizaos/plugin-quai";
-import { sgxPlugin } from "@elizaos/plugin-sgx";
-import { solanaPlugin } from "@elizaos/plugin-solana";
-import { solanaAgentkitPlugin } from "@elizaos/plugin-solana-agent-kit";
-import { squidRouterPlugin } from "@elizaos/plugin-squid-router";
-import { stargazePlugin } from "@elizaos/plugin-stargaze";
-import { storyPlugin } from "@elizaos/plugin-story";
-import { suiPlugin } from "@elizaos/plugin-sui";
-import { TEEMode, teePlugin } from "@elizaos/plugin-tee";
-import { teeLogPlugin } from "@elizaos/plugin-tee-log";
-import { teeMarlinPlugin } from "@elizaos/plugin-tee-marlin";
-import { verifiableLogPlugin } from "@elizaos/plugin-tee-verifiable-log";
-import { tonPlugin } from "@elizaos/plugin-ton";
-import { webSearchPlugin } from "@elizaos/plugin-web-search";
-import { dkgPlugin } from "@elizaos/plugin-dkg";
-import { injectivePlugin } from "@elizaos/plugin-injective";
-import { giphyPlugin } from "@elizaos/plugin-giphy";
-import { letzAIPlugin } from "@elizaos/plugin-letzai";
-import { thirdwebPlugin } from "@elizaos/plugin-thirdweb";
-import { hyperliquidPlugin } from "@elizaos/plugin-hyperliquid";
-import { echoChambersPlugin } from "@elizaos/plugin-echochambers";
-import { dexScreenerPlugin } from "@elizaos/plugin-dexscreener";
-import { pythDataPlugin } from "@elizaos/plugin-pyth-data";
-
-import { openaiPlugin } from "@elizaos/plugin-openai";
-import nitroPlugin from "@elizaos/plugin-router-nitro";
-import { devinPlugin } from "@elizaos/plugin-devin";
-
-import { zksyncEraPlugin } from "@elizaos/plugin-zksync-era";
-
-import { chainbasePlugin } from "@elizaos/plugin-chainbase";
-
-import { nvidiaNimPlugin } from "@elizaos/plugin-nvidia-nim";
-
-import { zxPlugin } from "@elizaos/plugin-0x";
 import Database from "better-sqlite3";
 import fs from "fs";
 import net from "net";
 import path from "path";
 import { fileURLToPath } from "url";
 import yargs from "yargs";
-import { emailPlugin } from "@elizaos/plugin-email";
+
+// NEW: Central config and plugin loader
+import { config } from "@elizaos/config";
+import { getEnabledPlugins } from "./pluginLoader";
+import { PostgresDatabaseAdapter } from "@elizaos/adapter-postgres";
+import { QdrantDatabaseAdapter } from "@elizaos/adapter-qdrant";
+import { RedisClient } from "@elizaos/adapter-redis";
+import { SqliteDatabaseAdapter } from "@elizaos/adapter-sqlite";
+import { SupabaseDatabaseAdapter } from "@elizaos/adapter-supabase";
+import { DirectClient } from "@elizaos/client-direct";
+import {
+    AgentRuntime,
+    CacheManager,
+    CacheStore,
+    type Character,
+    DbCacheAdapter,
+    defaultCharacter,
+    elizaLogger,
+    FsCacheAdapter,
+    type IDatabaseAdapter,
+    type IDatabaseCacheAdapter,
+    settings,
+    stringToUuid,
+    validateCharacterConfig,
+} from "@elizaos/core";
+import Database from "better-sqlite3";
+import fs from "fs";
+import net from "net";
+import path from "path";
+import { fileURLToPath } from "url";
+import yargs from "yargs";
+
+// NEW CONFIG AND PLUGIN LOADER 
+import { config } from "@elizaos/config";
+import { getEnabledPlugins } from "./pluginLoader";
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory

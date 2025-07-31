@@ -755,6 +755,31 @@ DirectClient.prototype.start = function (...args: any[]) {
             }));
         res.json({ timeline });
     });
+
+    // --- NEW: metric history from SQLite ---
+    this.router.get("/family/stats/history/db", (req, res) => {
+        try {
+            const Database = require("better-sqlite3");
+            const path = require("path");
+            const dbPath = path.resolve(process.cwd(), "agent", "data", "metrics.sqlite");
+            const db = new Database(dbPath);
+            // Group by ts bucket (10s)
+            const rows = db.prepare(`
+                SELECT (ts/10000)*10000 as bucket, AVG(health) as health, COUNT(*) as n
+                FROM family_metrics
+                GROUP BY bucket
+                ORDER BY bucket
+                LIMIT 200
+            `).all();
+            const timeline = rows.map((row: any) => ({
+                ts: Number(row.bucket),
+                health: Number(row.health)
+            }));
+            res.json({ timeline });
+        } catch (err) {
+            res.status(500).json({ error: "DB unavailable", detail: err.message });
+        }
+    });
     return oldStart.apply(this, args);
 };
 

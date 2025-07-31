@@ -45,3 +45,37 @@ export async function classifySentiment(
   const kw = countKeywords(text, categories);
   return { positive: kw.positive, negative: kw.negative };
 }
+
+// LLM-based multi-category classification (fallback to countKeywords)
+export async function classifyByCategories(
+  text: string,
+  categories: KeywordCategory[],
+  runtime: any // IAgentRuntime type
+): Promise<KeywordResult> {
+  const { generateObject } = runtime;
+  try {
+    // Build schema and prompt
+    const schema = categories.map(cat => `"${cat.id}": int`).join(", ");
+    const wordsPrompt = categories
+      .map(cat => `${cat.id}: [${cat.words.join(", ")}]`)
+      .join("; ");
+    const prompt = `Answer with JSON {${schema}}. For each category, count how many words (as in ${wordsPrompt}) appear in <<<TEXT>>>. TEXT:\n${text}`;
+    const fallback = Object.fromEntries(categories.map(cat => [cat.id, 0]));
+    const result = await generateObject(
+      {
+        prompt,
+        model: "SMALL"
+      },
+      fallback
+    );
+    if (
+      typeof result === "object" &&
+      categories.every(cat => typeof result[cat.id] === "number")
+    ) {
+      return result;
+    }
+  } catch (err) {
+    // fallback below
+  }
+  return countKeywords(text, categories);
+}

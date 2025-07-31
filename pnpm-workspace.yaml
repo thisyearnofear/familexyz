@@ -6,3 +6,4 @@ packages:
   - "agent"
   - "client"
   - "packages/family-plugin-*"
+  - "packages/family-nlp-utils"

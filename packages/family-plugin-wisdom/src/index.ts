@@ -1,25 +1,17 @@
 import type { PluginInitializer } from "@elizaos/core";
+import { countKeywords, KeywordCategory } from "family-nlp-utils";
 
 interface FamilyMetrics {
   total: number;
   positive: number;
   negative: number;
+  positivity?: number;
 }
 
-const POSITIVE = [
-  "love", "joy", "happy", "grateful", "forgive", "understand", "appreciate", "connected", "growth", "peace", "kind"
+const categories: KeywordCategory[] = [
+  { id: "positive", words: ["love", "joy", "grateful", "forgive", "understand", "appreciate"] },
+  { id: "negative", words: ["angry", "sad", "upset", "hate", "resent", "hurt", "conflict"] },
 ];
-const NEGATIVE = [
-  "angry", "sad", "upset", "frustrated", "hate", "resent", "hurt", "lonely", "conflict", "fight", "ignore"
-];
-
-function analyzeSentiment(text: string): {positive: number, negative: number} {
-  const lower = text?.toLowerCase() || "";
-  let positive = 0, negative = 0;
-  for (const word of POSITIVE) if (lower.includes(word)) positive++;
-  for (const word of NEGATIVE) if (lower.includes(word)) negative++;
-  return { positive, negative };
-}
 
 const plugin: PluginInitializer = () => {
   return {
@@ -27,14 +19,15 @@ const plugin: PluginInitializer = () => {
     onMessage: async ({ message, runtime }) => {
       if (!message || message.userId === runtime.agentId) return;
       if (!runtime.meta.familyMetrics) {
-        runtime.meta.familyMetrics = { total: 0, positive: 0, negative: 0 };
+        runtime.meta.familyMetrics = { total: 0, positive: 0, negative: 0, positivity: 0 };
       }
       const metrics: FamilyMetrics = runtime.meta.familyMetrics;
       metrics.total += 1;
-      const sentiment = analyzeSentiment(message.content?.text ?? "");
-      metrics.positive += sentiment.positive;
-      metrics.negative += sentiment.negative;
-      runtime.logger.debug(`[family-plugin-wisdom] received message: ${message.content?.text} (+${sentiment.positive}/-${sentiment.negative})`);
+      const kw = countKeywords(message.content?.text ?? "", categories);
+      metrics.positive += kw.positive;
+      metrics.negative += kw.negative;
+      metrics.positivity = (metrics.positive ?? 0) - (metrics.negative ?? 0);
+      runtime.logger.debug(`[family-plugin-wisdom] received message: ${message.content?.text} (+${kw.positive}/-${kw.negative})`);
     },
   };
 };

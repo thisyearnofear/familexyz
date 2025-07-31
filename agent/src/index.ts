@@ -693,14 +693,40 @@ DirectClient.prototype.start = function (...args: any[]) {
     // Add family stats endpoint
     this.router.get("/family/stats", (req, res) => {
         let total = 0, positive = 0, negative = 0;
+        let intimacy = { affection: 0, tension: 0 };
+        let presence = { attention: 0, distraction: 0 };
+        let generational = { bridge: 0, gap: 0 };
+        let growth = { growth: 0, fixed: 0 };
+
         for (const agent of this.agents.values()) {
-            const metrics = agent.runtime.meta.familyMetrics || {};
-            total += metrics.total || 0;
-            positive += metrics.positive || 0;
-            negative += metrics.negative || 0;
+            const fam = agent.runtime.meta.familyMetrics || {};
+            total += fam.total || 0;
+            positive += fam.positive || 0;
+            negative += fam.negative || 0;
+            const im = agent.runtime.meta.intimacyMetrics || {};
+            intimacy.affection += im.affection || 0;
+            intimacy.tension += im.tension || 0;
+            const pm = agent.runtime.meta.presenceMetrics || {};
+            presence.attention += pm.attention || 0;
+            presence.distraction += pm.distraction || 0;
+            const gm = agent.runtime.meta.generationalMetrics || {};
+            generational.bridge += gm.bridge || 0;
+            generational.gap += gm.gap || 0;
+            const gr = agent.runtime.meta.growthMetrics || {};
+            growth.growth += gr.growth || 0;
+            growth.fixed += gr.fixed || 0;
         }
         const healthScore = ((positive + 1) / (positive + negative + 1)) * 100;
-        res.json({ total, positive, negative, healthScore });
+        res.json({
+            total,
+            positive,
+            negative,
+            healthScore,
+            intimacy,
+            presence,
+            generational,
+            growth,
+        });
     });
     return oldStart.apply(this, args);
 };

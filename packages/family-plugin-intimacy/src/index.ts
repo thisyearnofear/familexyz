@@ -1,22 +1,31 @@
 import type { PluginInitializer } from "@elizaos/core";
+import { countKeywords, KeywordCategory } from "family-nlp-utils";
 
-interface FamilyMetrics {
+interface IntimacyMetrics {
   total: number;
-  positive: number;
-  negative: number;
+  affection: number;
+  tension: number;
 }
+
+const categories: KeywordCategory[] = [
+  { id: "affection", words: ["love", "adore", "kiss", "hold", "romance", "intimate"] },
+  { id: "tension", words: ["argument", "angry", "resent", "ignored", "distant"] },
+];
 
 const plugin: PluginInitializer = () => {
   return {
     name: "family-plugin-intimacy",
     onMessage: async ({ message, runtime }) => {
       if (!message || message.userId === runtime.agentId) return;
-      if (!runtime.meta.familyMetrics) {
-        runtime.meta.familyMetrics = { total: 0, positive: 0, negative: 0 };
+      if (!runtime.meta.intimacyMetrics) {
+        runtime.meta.intimacyMetrics = { total: 0, affection: 0, tension: 0 };
       }
-      const metrics: FamilyMetrics = runtime.meta.familyMetrics;
+      const metrics: IntimacyMetrics = runtime.meta.intimacyMetrics;
       metrics.total += 1;
-      runtime.logger.debug(`[family-plugin-intimacy] received message: ${message.content?.text}`);
+      const kw = countKeywords(message.content?.text ?? "", categories);
+      metrics.affection += kw.affection;
+      metrics.tension += kw.tension;
+      runtime.logger.debug(`[family-plugin-intimacy] received message: ${message.content?.text} (affection: ${kw.affection}, tension: ${kw.tension})`);
     },
   };
 };

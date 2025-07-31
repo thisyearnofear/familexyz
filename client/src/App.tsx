@@ -8,6 +8,7 @@ import { BrowserRouter, Route, Routes } from "react-router";
 import Chat from "./routes/chat";
 import Overview from "./routes/overview";
 import Home from "./routes/home";
+import Dashboard from "./routes/dashboard";
 import useVersion from "./hooks/use-version";
 
 const queryClient = new QueryClient({
@@ -36,6 +37,7 @@ function App() {
                                 <div className="flex flex-1 flex-col gap-4 size-full container">
                                     <Routes>
                                         <Route path="/" element={<Home />} />
+                                        <Route path="/dashboard" element={<Dashboard />} />
                                         <Route
                                             path="chat/:agentId"
                                             element={<Chat />}

@@ -5,62 +5,6 @@ echo "Passing arguments: $*"
 # Base packages directory
 PACKAGES_DIR="./packages"
 
-# Display help message to users
-cat << "EOF"
-
-***********************************************************************
-*                                                                     *
-* IMPORTANT NOTICE:                                                  *
-*                                                                     *
-* To add your plugin to the development workflow:                    *
-*                                                                     *
-*  1. Navigate to the 'scripts' directory in your project.           *
-*                                                                     *
-*        cd scripts                                                  *
-*                                                                     *
-*  2. Edit the 'dev.sh' script file.                                 *
-*                                                                     *
-*        nano dev.sh                                                 *
-*                                                                     *
-*  3. Add the following changes:                                     *
-*                                                                     *
-*     a. Ensure your plugin's package.json contains a 'dev' command  *
-*        under the "scripts" section. Example:                       *
-*                                                                     *
-*        "scripts": {                                                *
-*            "dev": "your-dev-command-here"                          *
-*        }                                                           *
-*                                                                     *
-*     b. Add your plugin's folder name to the WORKING_FOLDERS list   *
-*        (relative to ./packages).                                   *
-*                                                                     *
-*        Example: WORKING_FOLDERS=("client-direct" "your-plugin-folder") *
-*                                                                     *
-*  4. Update the 'agent/package.json' file:                          *
-*                                                                     *
-*     Add your plugin to the "dependencies" section like so:         *
-*                                                                     *
-*        "@elizaos/your-plugin-name": "workspace:*"                    *
-*                                                                     *
-*  5. Edit the 'index.ts' file in 'agent/src':                       *
-*                                                                     *
-*     a. Import your plugin:                                         *
-*                                                                     *
-*        import yourPlugin from '@elizaos/your-plugin-name';           *
-*                                                                     *
-*     b. Add your plugin to the `plugins` array:                     *
-*                                                                     *
-*        const plugins = [                                           *
-*          existingPlugin,                                           *
-*          yourPlugin,                                               *
-*        ];                                                          *
-*                                                                     *
-* This will ensure that your plugin's development server runs        *
-* alongside others when you execute this script.                     *
-***********************************************************************
-
-EOF
-
 # 2 seconds delay
 for i in {1..5}; do
   echo -n "."
@@ -113,7 +57,7 @@ if [ -d "./agent" ]; then
     WATCH_PATHS+=("--watch './packages/$FOLDER/dist'")
   done
 
-  COMMANDS+=("nodemon ${WATCH_PATHS[@]} -e js,json,map --delay 2 --exec 'pnpm --dir agent dev -- $*'")
+  COMMANDS+=("nodemon ${WATCH_PATHS[@]} -e js,json,map --delay 2 --exec 'pnpm --dir agent dev -- --characters=\"characters/wisdom.character.json,characters/intimacy.character.json,characters/generationalBridge.character.json,characters/presence.character.json,characters/growth.character.json\" $*'")
 else
   echo "Warning: 'agent' directory not found."
 fi

@@ -1,4 +1,9 @@
 packages:
-  - "packages/*"
-    - "client"
-    - "agent"
+  - "packages/core"
+  - "packages/config"
+  - "packages/adapter-*"
+  - "packages/client-*"
+  - "agent"
+  - "client"
+  - "packages/family-plugin-*"
+  - "packages/family-nlp-utils"

@@ -1,4 +1,6 @@
 import React from "react";
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
@@ -9,6 +11,18 @@ const connectionOpportunities = [
 ];
 
 export default function Dashboard() {
+  const { data, isLoading } = useQuery({
+    queryKey: ["familyStats"],
+    queryFn: apiClient.getFamilyStats,
+    refetchInterval: 5000,
+  });
+
+  const healthScore =
+    !isLoading && data ? Math.round(data.healthScore) : 80;
+  const total = data?.total ?? "-";
+  const positive = data?.positive ?? "-";
+  const negative = data?.negative ?? "-";
+
   return (
     <div className="max-w-3xl mx-auto py-8 px-4">
       <h1 className="text-3xl font-bold mb-6">Family Dashboard</h1>
@@ -20,8 +34,25 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center space-x-4">
-              <span className="text-5xl font-semibold text-green-600">80%</span>
-              <span className="text-gray-500">Strong connection</span>
+              <span className="text-5xl font-semibold text-green-600">{healthScore}%</span>
+              <span className="text-gray-500">
+                {healthScore >= 75
+                  ? "Strong connection"
+                  : healthScore >= 50
+                  ? "Moderate connection"
+                  : "Needs attention"}
+              </span>
+            </div>
+            <div className="mt-4 text-sm text-gray-500 flex gap-6">
+              <div>
+                <span className="font-semibold">{total}</span> messages
+              </div>
+              <div>
+                <span className="font-semibold text-green-600">{positive}</span> positive
+              </div>
+              <div>
+                <span className="font-semibold text-red-600">{negative}</span> negative
+              </div>
             </div>
           </CardContent>
         </Card>

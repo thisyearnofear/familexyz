@@ -35,6 +35,11 @@
         "@elizaos/client-slack": "workspace:*",
         "@elizaos/client-simsai": "workspace:*",
         "@elizaos/core": "workspace:*",
+        "family-plugin-wisdom": "workspace:*",
+        "family-plugin-intimacy": "workspace:*",
+        "family-plugin-generational-bridge": "workspace:*",
+        "family-plugin-presence": "workspace:*",
+        "family-plugin-growth": "workspace:*",
         "readline": "1.3.0",
         "ws": "8.18.0",
         "yargs": "17.7.2"

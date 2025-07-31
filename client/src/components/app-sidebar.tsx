@@ -45,12 +45,26 @@ export function AppSidebar() {
 
                                 <div className="flex flex-col gap-0.5 leading-none">
                                     <span className="font-semibold">
-                                        ElizaOS
+                                        Family Agents
                                     </span>
                                     <span className="">v{info?.version}</span>
                                 </div>
                             </NavLink>
                         </SidebarMenuButton>
+                    </SidebarMenuItem>
+                </SidebarMenu>
+                {/* Dashboard link */}
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                        <NavLink to="/dashboard">
+                            <SidebarMenuButton>
+                                {/* Home icon */}
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7m-9 2v8m0 0h4m-4 0a2 2 0 01-2-2v-5a2 2 0 012-2h4a2 2 0 012 2v5a2 2 0 01-2 2z" />
+                                </svg>
+                                Dashboard
+                            </SidebarMenuButton>
+                        </NavLink>
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarHeader>

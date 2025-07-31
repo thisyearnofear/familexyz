@@ -728,6 +728,33 @@ DirectClient.prototype.start = function (...args: any[]) {
             growth,
         });
     });
+
+    // --- NEW: metric history endpoint ---
+    this.router.get("/family/stats/history", (req, res) => {
+        // aggregate timeline across all agents, by ts
+        const all = [];
+        for (const agent of this.agents.values()) {
+            const hist = agent.runtime.meta.metricHistory || [];
+            all.push(...hist);
+        }
+        // group by ts bucket (nearest 10s for smoothing)
+        const byBucket: { [bucket: number]: { ts: number; health: number; n: number } } = {};
+        for (const entry of all) {
+            const bucket = Math.floor(entry.ts / 10000) * 10000;
+            if (!byBucket[bucket]) {
+                byBucket[bucket] = { ts: bucket, health: 0, n: 0 };
+            }
+            byBucket[bucket].health += entry.health;
+            byBucket[bucket].n += 1;
+        }
+        const timeline = Object.values(byBucket)
+            .sort((a, b) => a.ts - b.ts)
+            .map(({ ts, health, n }) => ({
+                ts,
+                health: n ? health / n : 0,
+            }));
+        res.json({ timeline });
+    });
     return oldStart.apply(this, args);
 };
 

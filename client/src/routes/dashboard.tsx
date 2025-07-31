@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { apiClient, FamilyStats } from "@/lib/api";
+import { apiClient, FamilyStats, FamilyHistory } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Radar } from "react-chartjs-2";
-import Chart from "chart.js/auto"; // Chart.js registration
+import { Radar, Line } from "react-chartjs-2";
+import Chart from "chart.js/auto";
+import ConsentModal from "@/components/consent-modal";
+import { useNavigate } from "react-router-dom";
 
 const connectionOpportunities = [
   { title: "Family Game Night", description: "Friday, 7pm – Try a new board game together." },
@@ -71,11 +73,69 @@ function ChartCard({ stats }: { stats: FamilyStats | undefined }) {
   );
 }
 
+function LineChartCard({ history }: { history: FamilyHistory | undefined }) {
+  if (!history || !history.timeline.length) return null;
+  const data = {
+    labels: history.timeline.map((d) => new Date(d.ts).toLocaleTimeString()),
+    datasets: [
+      {
+        label: "Health Score",
+        data: history.timeline.map((d) => d.health),
+        fill: false,
+        borderColor: "rgba(75,192,192,1)",
+        tension: 0.3,
+        pointRadius: 1,
+      },
+    ],
+  };
+  const options = {
+    scales: {
+      y: {
+        beginAtZero: true,
+        max: 100,
+        title: { display: true, text: "Health Score" },
+      },
+      x: {
+        title: { display: false },
+        ticks: { display: false }
+      }
+    },
+    plugins: {
+      legend: { display: false }
+    }
+  };
+  return (
+    <Card className="col-span-2">
+      <CardHeader>
+        <CardTitle>Health Score Over Time</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="p-4"><Line data={data} options={options as any} height={200} /></div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function Dashboard() {
+  const navigate = useNavigate();
+  const [consentOpen, setConsentOpen] = useState(false);
+
+  useEffect(() => {
+    if (!localStorage.getItem("familyConsent")) {
+      setConsentOpen(true);
+    }
+  }, []);
+
   const { data, isLoading } = useQuery({
     queryKey: ["familyStats"],
     queryFn: apiClient.getFamilyStats,
     refetchInterval: 5000,
+  });
+
+  const { data: history } = useQuery({
+    queryKey: ["familyStatsHistory"],
+    queryFn: apiClient.getFamilyHistory,
+    refetchInterval: 10000,
   });
 
   const healthScore =
@@ -84,8 +144,19 @@ export default function Dashboard() {
   const positive = data?.positive ?? "-";
   const negative = data?.negative ?? "-";
 
+  function handleConsent(accepted: boolean) {
+    if (accepted) {
+      localStorage.setItem("familyConsent", "accepted");
+      setConsentOpen(false);
+    } else {
+      setConsentOpen(false);
+      navigate("/about");
+    }
+  }
+
   return (
     <div className="max-w-3xl mx-auto py-8 px-4">
+      <ConsentModal open={consentOpen} onConsent={handleConsent} />
       <h1 className="text-3xl font-bold mb-6">Family Dashboard</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -133,6 +204,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
         <ChartCard stats={data} />
+        <LineChartCard history={history} />
       </div>
       <Separator />
       <p className="mt-6 text-gray-500 text-sm">

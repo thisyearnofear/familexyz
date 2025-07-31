@@ -1,5 +1,5 @@
 import type { PluginInitializer } from "@elizaos/core";
-import { countKeywords, KeywordCategory } from "family-nlp-utils";
+import { classifySentiment } from "family-nlp-utils";
 
 interface FamilyMetrics {
   total: number;
@@ -7,11 +7,12 @@ interface FamilyMetrics {
   negative: number;
   positivity?: number;
 }
-
-const categories: KeywordCategory[] = [
-  { id: "positive", words: ["love", "joy", "grateful", "forgive", "understand", "appreciate"] },
-  { id: "negative", words: ["angry", "sad", "upset", "hate", "resent", "hurt", "conflict"] },
-];
+interface MetricHistoryEntry {
+  ts: number;
+  positive: number;
+  negative: number;
+  health: number;
+}
 
 const plugin: PluginInitializer = () => {
   return {
@@ -23,11 +24,31 @@ const plugin: PluginInitializer = () => {
       }
       const metrics: FamilyMetrics = runtime.meta.familyMetrics;
       metrics.total += 1;
-      const kw = countKeywords(message.content?.text ?? "", categories);
-      metrics.positive += kw.positive;
-      metrics.negative += kw.negative;
+
+      // LLM-based sentiment
+      const sentiment = await classifySentiment(message.content?.text ?? "", runtime);
+      metrics.positive += sentiment.positive;
+      metrics.negative += sentiment.negative;
       metrics.positivity = (metrics.positive ?? 0) - (metrics.negative ?? 0);
-      runtime.logger.debug(`[family-plugin-wisdom] received message: ${message.content?.text} (+${kw.positive}/-${kw.negative})`);
+
+      // Metric history
+      if (!runtime.meta.metricHistory) runtime.meta.metricHistory = [];
+      const { positive, negative } = metrics;
+      const health = ((positive + 1) / (positive + negative + 1)) * 100;
+      runtime.meta.metricHistory.push({
+        ts: Date.now(),
+        positive,
+        negative,
+        health,
+      });
+      // Cap to last 120 entries
+      if (runtime.meta.metricHistory.length > 120) {
+        runtime.meta.metricHistory = runtime.meta.metricHistory.slice(-120);
+      }
+
+      runtime.logger.debug(
+        `[family-plugin-wisdom] received message: ${message.content?.text} (+${sentiment.positive}/-${sentiment.negative})`
+      );
     },
   };
 };

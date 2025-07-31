@@ -1,4 +1,9 @@
 packages:
-  - "packages/*"
+  - "packages/core"
+  - "packages/config"
+  - "packages/adapter-*"
+  - "packages/client-*"
+  - "agent"
+  - "client"
     - "client"
     - "agent"

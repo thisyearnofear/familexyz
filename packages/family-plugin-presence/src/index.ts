@@ -1,5 +1,6 @@
 import type { PluginInitializer } from "@elizaos/core";
 import { classifyByCategories, KeywordCategory } from "family-nlp-utils";
+import { storeMetrics } from "../../../agent/src/storeMetrics";
 
 interface PresenceMetrics {
   total: number;
@@ -27,6 +28,12 @@ const plugin: PluginInitializer = () => {
       metrics.attention += kw.attention;
       metrics.distraction += kw.distraction;
       metrics.positivity = (metrics.attention ?? 0) - (metrics.distraction ?? 0);
+      // Uniform health: positive=attention, negative=distraction
+      const positive = metrics.attention ?? 0;
+      const negative = metrics.distraction ?? 0;
+      const health = ((positive + 1) / (positive + negative + 1)) * 100;
+      const entry = { ts: Date.now(), health, attention: metrics.attention, distraction: metrics.distraction };
+      storeMetrics(runtime, entry);
       runtime.logger.debug(`[family-plugin-presence] received message: ${message.content?.text} (attention: ${kw.attention}, distraction: ${kw.distraction})`);
     },
   };

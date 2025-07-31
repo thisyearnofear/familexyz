@@ -1,5 +1,6 @@
 import type { PluginInitializer } from "@elizaos/core";
 import { classifyByCategories, KeywordCategory } from "family-nlp-utils";
+import { storeMetrics } from "../../../agent/src/storeMetrics";
 
 interface GrowthMetrics {
   total: number;
@@ -27,6 +28,12 @@ const plugin: PluginInitializer = () => {
       metrics.growth += kw.growth;
       metrics.fixed += kw.fixed;
       metrics.positivity = (metrics.growth ?? 0) - (metrics.fixed ?? 0);
+      // Uniform health: positive=growth, negative=fixed
+      const positive = metrics.growth ?? 0;
+      const negative = metrics.fixed ?? 0;
+      const health = ((positive + 1) / (positive + negative + 1)) * 100;
+      const entry = { ts: Date.now(), health, growth: metrics.growth, fixed: metrics.fixed };
+      storeMetrics(runtime, entry);
       runtime.logger.debug(`[family-plugin-growth] received message: ${message.content?.text} (growth: ${kw.growth}, fixed: ${kw.fixed})`);
     },
   };

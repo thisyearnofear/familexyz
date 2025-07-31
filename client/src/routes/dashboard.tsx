@@ -134,7 +134,7 @@ export default function Dashboard() {
 
   const { data: history } = useQuery({
     queryKey: ["familyStatsHistory"],
-    queryFn: apiClient.getFamilyHistory,
+    queryFn: () => apiClient.getFamilyHistory("/family/stats/history/db"),
     refetchInterval: 10000,
   });
 
@@ -144,9 +144,12 @@ export default function Dashboard() {
   const positive = data?.positive ?? "-";
   const negative = data?.negative ?? "-";
 
-  function handleConsent(accepted: boolean) {
+  function handleConsent(accepted: boolean, scopes?: any) {
     if (accepted) {
       localStorage.setItem("familyConsent", "accepted");
+      if (scopes) {
+        localStorage.setItem("familyConsentScopes", JSON.stringify(scopes));
+      }
       setConsentOpen(false);
     } else {
       setConsentOpen(false);

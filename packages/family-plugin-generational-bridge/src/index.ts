@@ -1,5 +1,6 @@
 import type { PluginInitializer } from "@elizaos/core";
 import { classifyByCategories, KeywordCategory } from "family-nlp-utils";
+import { storeMetrics } from "../../../agent/src/storeMetrics";
 
 interface GenerationalMetrics {
   total: number;
@@ -27,6 +28,12 @@ const plugin: PluginInitializer = () => {
       metrics.bridge += kw.bridge;
       metrics.gap += kw.gap;
       metrics.positivity = (metrics.bridge ?? 0) - (metrics.gap ?? 0);
+      // Uniform health: positive=bridge, negative=gap
+      const positive = metrics.bridge ?? 0;
+      const negative = metrics.gap ?? 0;
+      const health = ((positive + 1) / (positive + negative + 1)) * 100;
+      const entry = { ts: Date.now(), health, bridge: metrics.bridge, gap: metrics.gap };
+      storeMetrics(runtime, entry);
       runtime.logger.debug(`[family-plugin-generational-bridge] received message: ${message.content?.text} (bridge: ${kw.bridge}, gap: ${kw.gap})`);
     },
   };

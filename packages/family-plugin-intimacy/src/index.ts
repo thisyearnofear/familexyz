@@ -1,5 +1,6 @@
 import type { PluginInitializer } from "@elizaos/core";
 import { classifyByCategories, KeywordCategory } from "family-nlp-utils";
+import { storeMetrics } from "../../../agent/src/storeMetrics";
 
 interface IntimacyMetrics {
   total: number;
@@ -27,6 +28,12 @@ const plugin: PluginInitializer = () => {
       metrics.affection += kw.affection;
       metrics.tension += kw.tension;
       metrics.positivity = (metrics.affection ?? 0) - (metrics.tension ?? 0);
+      // Uniform health: positive=affection, negative=tension
+      const positive = metrics.affection ?? 0;
+      const negative = metrics.tension ?? 0;
+      const health = ((positive + 1) / (positive + negative + 1)) * 100;
+      const entry = { ts: Date.now(), health, affection: metrics.affection, tension: metrics.tension };
+      storeMetrics(runtime, entry);
       runtime.logger.debug(`[family-plugin-intimacy] received message: ${message.content?.text} (affection: ${kw.affection}, tension: ${kw.tension})`);
     },
   };

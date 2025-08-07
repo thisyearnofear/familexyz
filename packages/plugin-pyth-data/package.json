@@ -6,7 +6,7 @@
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
-        "build": "tsup --format esm --dts",
+        "build": "tsup src/index.ts --format esm --dts --external fsevents",
         "test": "vitest",
         "clean": "rimraf dist",
         "build:schemas": "openapi-zod-client ./schema.json --output src/types/zodSchemas.ts",

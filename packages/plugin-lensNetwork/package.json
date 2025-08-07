@@ -20,6 +20,8 @@
     ],
     "dependencies": {
         "@elizaos/core": "workspace:*",
+        "bs58": "^6.0.0",
+        "@types/bs58": "^5.0.0",
         "tsup": "^8.3.5",
         "web3": "^4.15.0",
         "@lens-network/sdk": "^0.0.0-canary-20241203140504",

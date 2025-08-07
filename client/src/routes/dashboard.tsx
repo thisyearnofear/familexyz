@@ -1,18 +1,33 @@
-import React, { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { apiClient, FamilyStats, FamilyHistory } from "@/lib/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Radar, Line } from "react-chartjs-2";
-import Chart from "chart.js/auto";
-import ConsentModal from "@/components/consent-modal";
+import { Suspense } from "react";
 import { useNavigate } from "react-router-dom";
+import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import ConsentModal from "@/components/consent-modal";
+import { 
+  FamilyRadarChart, 
+  FamilyLineChart, 
+  FamilyMetricsCards, 
+  ConnectionOpportunities 
+} from "@/components/family";
+import { useFamilyStats, useFamilyHistory } from "@/hooks/useFamilyData";
+import { useConsent } from "@/hooks/useConsent";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import "chart.js/auto";
 
-const connectionOpportunities = [
-  { title: "Family Game Night", description: "Friday, 7pm – Try a new board game together." },
-  { title: "Mindful Walk", description: "Saturday morning – Tech-free walk in the park." },
-  { title: "Story Swap", description: "Sunday, 4pm – Share family stories across generations." },
-];
+// Loading fallback component - CLEAN principle
+const DashboardSkeleton = () => (
+  <div className="space-y-6">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="h-24 bg-muted animate-pulse rounded-lg" />
+      ))}
+    </div>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="h-80 bg-muted animate-pulse rounded-lg" />
+      <div className="h-80 bg-muted animate-pulse rounded-lg" />
+    </div>
+  </div>
+);
 
 function ChartCard({ stats }: { stats: FamilyStats | undefined }) {
   const data = {
@@ -76,11 +91,11 @@ function ChartCard({ stats }: { stats: FamilyStats | undefined }) {
 function LineChartCard({ history }: { history: FamilyHistory | undefined }) {
   if (!history || !history.timeline.length) return null;
   const data = {
-    labels: history.timeline.map((d) => new Date(d.ts).toLocaleTimeString()),
+    labels: history.timeline.map((d: any) => new Date(d.ts).toLocaleTimeString()),
     datasets: [
       {
         label: "Health Score",
-        data: history.timeline.map((d) => d.health),
+        data: history.timeline.map((d: any) => d.health),
         fill: false,
         borderColor: "rgba(75,192,192,1)",
         tension: 0.3,

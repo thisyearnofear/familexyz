@@ -20,6 +20,8 @@
     ],
     "dependencies": {
         "@elizaos/core": "workspace:*",
+        "bs58": "^6.0.0",
+        "@types/bs58": "^5.0.0",
         "fuels": "0.97.2",
         "tsup": "8.3.5",
         "vitest": "2.1.4"

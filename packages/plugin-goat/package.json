@@ -29,11 +29,16 @@
         "tsup": "8.3.5"
     },
     "scripts": {
-        "build": "tsup --format esm --dts",
+        "build": "tsup --format esm --no-dts",
         "dev": "tsup --format esm --dts --watch",
         "lint": "eslint --fix  --cache ."
     },
     "peerDependencies": {
         "whatwg-url": "7.1.0"
+    },
+    "devDependencies": {
+        "@types/bs58": "^5.0.0",
+        "@types/node": "^22.10.1",
+        "typescript": "^5.6.3"
     }
 }

@@ -7,6 +7,8 @@
     "description": "Movement Network Plugin for Eliza",
     "dependencies": {
         "@elizaos/core": "workspace:*",
+        "bs58": "^6.0.0",
+        "@types/bs58": "^5.0.0",
         "@aptos-labs/ts-sdk": "^1.26.0",
         "bignumber": "1.1.0",
         "bignumber.js": "9.1.2",

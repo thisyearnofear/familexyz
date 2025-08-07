@@ -6,7 +6,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsup --format esm --dts",
+    "build": "tsc --build",
     "test": "vitest",
     "clean": "rimraf dist",
     "lint": "eslint src --ext .ts",

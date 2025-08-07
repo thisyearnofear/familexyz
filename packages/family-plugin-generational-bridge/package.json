@@ -1,11 +1,16 @@
 {
-  "name": "family-plugin-generational-bridge",
+  "name": "@elizaos/family-plugin-generational-bridge",
   "version": "0.0.1",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "private": true,
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts"
+  },
+  "dependencies": {
+    "@elizaos/core": "workspace:*",
+    "@elizaos/family-nlp-utils": "workspace:*",
+    "bs58": "^6.0.0"
   },
   "devDependencies": {
     "tsup": "^8.3.5",

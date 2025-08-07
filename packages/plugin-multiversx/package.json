@@ -20,6 +20,8 @@
     ],
     "dependencies": {
         "@elizaos/core": "workspace:*",
+        "bs58": "^6.0.0",
+        "@types/bs58": "^5.0.0",
         "@multiversx/sdk-core": "13.15.0",
         "bignumber.js": "9.1.2",
         "browserify": "^17.0.1",

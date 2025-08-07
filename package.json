@@ -5,7 +5,7 @@
         "lint": "biome lint .",
         "check": "biome check --apply .",
         "preinstall": "npx only-allow pnpm",
-        "build": "turbo run build --filter=!eliza-docs",
+        "build": "turbo run build",
         "build-docker": "turbo run build",
         "cleanstart": "if [ -f agent/data/db.sqlite ]; then rm agent/data/db.sqlite; fi && pnpm --filter \"@elizaos/agent\" start --isRoot",
         "cleanstart:debug": "if [ -f agent/data/db.sqlite ]; then rm agent/data/db.sqlite; fi && cross-env NODE_ENV=development VERBOSE=true DEFAULT_LOG_LEVEL=debug DEBUG=eliza:* pnpm --filter \"@elizaos/agent\" start --isRoot",
@@ -28,6 +28,7 @@
         "@biomejs/biome": "^1.9.4",
         "@commitlint/cli": "18.6.1",
         "@commitlint/config-conventional": "18.6.3",
+        "@types/bs58": "^5.0.0",
         "@types/jest": "^29.5.11",
         "concurrently": "9.1.0",
         "cross-env": "7.0.3",
@@ -62,14 +63,14 @@
         "@injectivelabs/sdk-ts": "^1.14.33",
         "@vitest/eslint-plugin": "1.0.1",
         "amqplib": "0.10.5",
+        "bs58": "4.0.0",
         "csv-parse": "5.6.0",
         "langdetect": "^0.2.1",
         "ollama-ai-provider": "0.16.1",
         "optional": "0.1.4",
         "pnpm": "9.14.4",
         "sharp": "0.33.5",
-        "tslog": "4.9.3",
-        "bs58": "4.0.0"
+        "tslog": "4.9.3"
     },
     "packageManager": "pnpm@9.12.3+sha512.cce0f9de9c5a7c95bef944169cc5dfe8741abfb145078c0d508b868056848a87c81e626246cb60967cbd7fd29a6c062ef73ff840d96b3c86c40ac92cf4a813ee",
     "workspaces": [

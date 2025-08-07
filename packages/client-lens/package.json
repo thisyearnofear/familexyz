@@ -28,6 +28,8 @@
     },
     "dependencies": {
         "@elizaos/core": "workspace:*",
+        "bs58": "^6.0.0",
+        "@types/bs58": "^5.0.0",
         "@lens-protocol/client": "2.2.0",
         "@lens-protocol/metadata": "1.2.0",
         "axios": "^1.7.9"

@@ -20,6 +20,8 @@
     ],
     "dependencies": {
         "@elizaos/core": "workspace:*",
+        "bs58": "^6.0.0",
+        "@types/bs58": "^5.0.0",
         "@types/body-parser": "1.19.5",
         "@types/cors": "2.8.17",
         "@types/express": "5.0.0",

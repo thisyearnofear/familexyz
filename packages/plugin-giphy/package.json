@@ -6,6 +6,8 @@
     "types": "dist/index.d.ts",
     "dependencies": {
         "@elizaos/core": "workspace:*",
+        "bs58": "^6.0.0",
+        "@types/bs58": "^5.0.0",
         "axios": "^1.6.7",
         "tsup": "^8.3.5",
         "zod": "^3.22.4"

@@ -1,6 +1,7 @@
 import type { UUID, Character } from "@elizaos/core";
+import { API_CONFIG } from "@/lib/constants";
 
-const BASE_URL = `http://localhost:${import.meta.env.VITE_SERVER_PORT ?? 3000}`;
+const BASE_URL = API_CONFIG.BASE_URL;
 
 const fetcher = async ({
     url,
@@ -58,6 +59,9 @@ const fetcher = async ({
     });
 };
 
+// Import types from centralized location - DRY principle
+export type { FamilyStats, FamilyHistory } from "@/types/family";
+
 export const apiClient = {
     sendMessage: (
         agentId: string,
@@ -102,4 +106,8 @@ export const apiClient = {
             body: formData,
         });
     },
+    getFamilyStats: (): Promise<FamilyStats> => 
+        fetcher({ url: "/family/stats" }),
+    getFamilyHistory: (url?: string): Promise<FamilyHistory> => 
+        fetcher({ url: url || "/family/history" }),
 };

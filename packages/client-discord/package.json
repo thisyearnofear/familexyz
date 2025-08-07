@@ -20,6 +20,8 @@
     ],
     "dependencies": {
         "@elizaos/core": "workspace:*",
+        "bs58": "^6.0.0",
+        "@types/bs58": "^5.0.0",
         "@elizaos/plugin-node": "workspace:*",
         "@discordjs/opus": "github:discordjs/opus",
         "@discordjs/rest": "2.4.0",

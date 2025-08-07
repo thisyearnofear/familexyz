@@ -28,6 +28,8 @@
     "description": "",
     "dependencies": {
         "@elizaos/core": "workspace:*",
+        "bs58": "^6.0.0",
+        "@types/bs58": "^5.0.0",
         "@elizaos/plugin-trustdb": "workspace:*",
         "@elizaos/plugin-tee": "workspace:*",
         "@initia/initia.js": "0.2.26"

@@ -22,11 +22,15 @@
         "ws": "^8.0.0"
     },
     "devDependencies": {
-        "vitest": "^1.2.1",
-        "@vitest/coverage-v8": "^1.2.1"
+        "@types/bs58": "^5.0.0",
+        "@types/node": "^22.10.1",
+        "@vitest/coverage-v8": "^1.6.1",
+        "tsup": "^8.3.5",
+        "typescript": "^5.6.3",
+        "vitest": "^1.2.1"
     },
     "scripts": {
-        "build": "tsup --format esm --dts",
+        "build": "tsup --format esm --no-dts",
         "dev": "tsup --format esm --dts --watch",
         "lint": "eslint --fix  --cache .",
         "test": "vitest run",

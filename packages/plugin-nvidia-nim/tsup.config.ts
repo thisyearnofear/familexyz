@@ -5,8 +5,11 @@ export default defineConfig({
     format: ["esm"],
     dts: true,
     splitting: false,
-    sourcemap: true,
+    sourcemap: false,
     clean: true,
-    treeshake: true,
-    minify: true
+    treeshake: false,
+    minify: false,
+    external: ["fsevents", "chokidar", "@elizaos/core", /node_modules/],
+    platform: "node",
+    bundle: false,
 });

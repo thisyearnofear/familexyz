@@ -15,5 +15,9 @@ export default defineConfig({
         "zod",
         "https",
         "http",
+        "fsevents",
     ],
+    noExternal: [],
+    platform: "node",
+    target: "node18",
 });

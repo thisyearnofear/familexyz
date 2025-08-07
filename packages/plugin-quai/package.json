@@ -13,7 +13,7 @@
         "@elizaos/plugin-trustdb": "workspace:*"
     },
     "scripts": {
-        "build": "tsup --format esm --dts",
+        "build": "tsup --format esm --no-dts",
         "test": "vitest",
         "lint": "eslint --fix  --cache ."
     },

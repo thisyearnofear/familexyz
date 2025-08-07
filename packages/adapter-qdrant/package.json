@@ -17,6 +17,8 @@
     },
     "dependencies": {
         "@elizaos/core": "workspace:*",
+        "bs58": "^6.0.0",
+        "@types/bs58": "^5.0.0",
         "@qdrant/js-client-rest": "^1.12.0"
     },
     "devDependencies": {

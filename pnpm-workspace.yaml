@@ -9,4 +9,5 @@ packages:
   - "packages/family-plugin-*"
   - "packages/family-nlp-utils"
   - "packages/@elizaos/family-nlp-utils"
+  - "packages/hedera-core"
   - "packages/create-eliza-app"

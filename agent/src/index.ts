@@ -28,7 +28,7 @@ import { fileURLToPath } from "url";
 import yargs from "yargs";
 
 // NEW: Central config and plugin loader
-import { config } from "@elizaos/config";
+import { config, ModelProviderName } from "@elizaos/config";
 import { getEnabledPlugins } from "./pluginLoader";
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
@@ -105,11 +105,13 @@ function isAllStrings(arr: unknown[]): boolean {
   return Array.isArray(arr) && arr.every((item) => typeof item === "string");
 }
 export async function loadCharacterFromOnchain(): Promise<Character[]> {
+  const onchainJson = process.env.ONCHAIN_JSON || null;
   const jsonText = onchainJson;
 
   console.log("JSON:", jsonText);
   if (!jsonText) return [];
   const loadedCharacters = [];
+
   try {
     const character = JSON.parse(jsonText);
     validateCharacterConfig(character);
@@ -591,7 +593,7 @@ function initializeDatabase(dataDir: string) {
 // also adds plugins from character file into the runtime
 export async function initializeClients(
   character: Character,
-  runtime: IAgentRuntime,
+  runtime: AgentRuntime,
 ) {
   // each client can only register once
   // and if we want two we can explicitly support it
@@ -605,7 +607,12 @@ export async function initializeClients(
   if (character.plugins?.length > 0) {
     for (const plugin of character.plugins) {
       // Plugin may want to initialize stats/meta/etc.
-      if (typeof plugin === "function" && plugin.init) {
+      if (
+        plugin &&
+        typeof plugin === "object" &&
+        "init" in plugin &&
+        typeof plugin.init === "function"
+      ) {
         plugin.init(runtime);
       }
     }
@@ -733,81 +740,23 @@ let nodePlugin: any | undefined;
 export async function createAgent(
   character: Character,
   db: IDatabaseAdapter,
-  cache: ICacheManager,
+  cache: CacheManager,
   token: string,
 ): Promise<AgentRuntime> {
   elizaLogger.log(`Creating runtime for character ${character.name}`);
 
-  nodePlugin ??= createNodePlugin();
-
-  const teeMode = getSecret(character, "TEE_MODE") || "OFF";
-  const walletSecretSalt = getSecret(character, "WALLET_SECRET_SALT");
-
-  // Validate TEE configuration
-  if (teeMode !== TEEMode.OFF && !walletSecretSalt) {
-    elizaLogger.error("A WALLET_SECRET_SALT required when TEE_MODE is enabled");
-    throw new Error("Invalid TEE configuration");
+  // Initialize node plugin if available
+  try {
+    const nodePluginModule = await import("@elizaos/plugin-node");
+    nodePlugin = nodePluginModule.createNodePlugin();
+  } catch (error) {
+    elizaLogger.warn("Node plugin not available:", error);
   }
 
-  let goatPlugin: any | undefined;
+  // Removed TEE and GOAT plugin configuration for cleaner foundation
 
-  if (getSecret(character, "EVM_PRIVATE_KEY")) {
-    goatPlugin = await createGoatPlugin((secret) =>
-      getSecret(character, secret),
-    );
-  }
-
-  // Initialize Reclaim adapter if environment variables are present
-  // let verifiableInferenceAdapter;
-  // if (
-  //     process.env.RECLAIM_APP_ID &&
-  //     process.env.RECLAIM_APP_SECRET &&
-  //     process.env.VERIFIABLE_INFERENCE_ENABLED === "true"
-  // ) {
-  //     verifiableInferenceAdapter = new ReclaimAdapter({
-  //         appId: process.env.RECLAIM_APP_ID,
-  //         appSecret: process.env.RECLAIM_APP_SECRET,
-  //         modelProvider: character.modelProvider,
-  //         token,
-  //     });
-  //     elizaLogger.log("Verifiable inference adapter initialized");
-  // }
-  // Initialize Opacity adapter if environment variables are present
+  // Removed complex verification adapters for cleaner foundation
   let verifiableInferenceAdapter;
-  if (
-    process.env.OPACITY_TEAM_ID &&
-    process.env.OPACITY_CLOUDFLARE_NAME &&
-    process.env.OPACITY_PROVER_URL &&
-    process.env.VERIFIABLE_INFERENCE_ENABLED === "true"
-  ) {
-    verifiableInferenceAdapter = new OpacityAdapter({
-      teamId: process.env.OPACITY_TEAM_ID,
-      teamName: process.env.OPACITY_CLOUDFLARE_NAME,
-      opacityProverUrl: process.env.OPACITY_PROVER_URL,
-      modelProvider: character.modelProvider,
-      token: token,
-    });
-    elizaLogger.log("Verifiable inference adapter initialized");
-    elizaLogger.log("teamId", process.env.OPACITY_TEAM_ID);
-    elizaLogger.log("teamName", process.env.OPACITY_CLOUDFLARE_NAME);
-    elizaLogger.log("opacityProverUrl", process.env.OPACITY_PROVER_URL);
-    elizaLogger.log("modelProvider", character.modelProvider);
-    elizaLogger.log("token", token);
-  }
-  if (
-    process.env.PRIMUS_APP_ID &&
-    process.env.PRIMUS_APP_SECRET &&
-    process.env.VERIFIABLE_INFERENCE_ENABLED === "true"
-  ) {
-    verifiableInferenceAdapter = new PrimusAdapter({
-      appId: process.env.PRIMUS_APP_ID,
-      appSecret: process.env.PRIMUS_APP_SECRET,
-      attMode: "proxytls",
-      modelProvider: character.modelProvider,
-      token,
-    });
-    elizaLogger.log("Verifiable inference primus adapter initialized");
-  }
 
   return new AgentRuntime({
     databaseAdapter: db,
@@ -815,7 +764,10 @@ export async function createAgent(
     modelProvider: character.modelProvider,
     evaluators: [],
     character,
-    plugins: character.plugins ?? [],
+    plugins: [
+      ...(character.plugins ?? []),
+      ...(nodePlugin ? [nodePlugin] : []),
+    ],
     providers: [],
     managers: [],
     cacheManager: cache,
@@ -988,6 +940,7 @@ const startAgents = async () => {
     characters = await loadCharacterFromOnchain();
   }
 
+  const onchainJson = process.env.ONCHAIN_JSON || null;
   const notOnchainJson = !onchainJson || onchainJson == "null";
 
   if ((notOnchainJson && charactersArg) || hasValidRemoteUrls()) {
@@ -995,7 +948,21 @@ const startAgents = async () => {
   }
 
   // Normalize characters for injectable plugins
-  characters = await Promise.all(characters.map(normalizeCharacter));
+  // Normalize characters for injectable plugins
+  characters = await Promise.all(
+    characters.map((char) => {
+      // Basic normalization - ensure required fields exist
+      return {
+        ...char,
+        id: (char.id ||
+          stringToUuid(
+            char.name,
+          )) as `${string}-${string}-${string}-${string}-${string}`,
+        username: char.username || char.name,
+        plugins: char.plugins || [],
+      };
+    }),
+  );
 
   try {
     for (const character of characters) {
@@ -1040,6 +1007,11 @@ startAgents().catch((error) => {
 });
 
 // Prevent unhandled exceptions from crashing the process if desired
+function parseBooleanFromText(value: string | undefined): boolean {
+  if (!value) return false;
+  return value.toLowerCase() === "true" || value === "1";
+}
+
 if (
   process.env.PREVENT_UNHANDLED_EXIT &&
   parseBooleanFromText(process.env.PREVENT_UNHANDLED_EXIT)

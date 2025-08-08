@@ -1,70 +1,158 @@
 node_modules
 /out
 
+# =============================================================================
+# ENVIRONMENT FILES & SECRETS (CRITICAL SECURITY)
+# =============================================================================
+# All environment files
 .env
-.env.production
+.env.*
 .env.local
+.env.development
+.env.staging
+.env.production
+.env.test
 .env_main
-concatenated-output.ts
-embedding-cache.json
-packages/plugin-buttplug/intiface-engine
 
-node-compile-cache
+# Environment backups and variations
+.env.backup
+.env.bak
+.env.orig
+.env.example.local
+*.env
 
-.idea
-.DS_Store
+# API Keys and secrets
+api-keys.json
+secrets.json
+config/secrets.*
+keys/
+*.key
+*.pem
+*.p12
+*.pfx
 
+# Wallet files and private keys
+wallet_data.txt
+wallets/
+private-keys/
+*.wallet
+mnemonic.txt
+seed-phrase.txt
+
+# =============================================================================
+# BUILD & CACHE FILES
+# =============================================================================
 dist/
-# Allow models directory but ignore model files
-models/*.gguf
-pgLite/
+build/
+out/
+.turbo
+.pnpm-store
+node-compile-cache
+.eslintcache
+tsup.config.bundled_*.mjs
 
-cookies.json
-
+# =============================================================================
+# DATABASE & DATA FILES
+# =============================================================================
+*.sqlite
+*.db
 db.sqlite
+pgLite/
+data/
+database/
+
+# Cache files
+embedding-cache.json
+content_cache/
+cache/*
+packages/core/src/providers/cache
+packages/core/src/providers/cache/*
+tokencache/
+tweetcache/
+timeline_cache.json
+
+# =============================================================================
+# LOGS & TEMPORARY FILES
+# =============================================================================
+logs/
+*.log
+log/
+temp/
+tmp/
+
+# =============================================================================
+# SOCIAL MEDIA & API DATA
+# =============================================================================
+cookies.json
+twitter_cookies.json
 searches/
 tweets/
+characters/
 
+# =============================================================================
+# MEDIA & MODEL FILES
+# =============================================================================
+# Allow models directory but ignore model files
+models/*.gguf
 *.gguf
 *.onnx
 *.wav
 *.mp3
 
-logs/
-
+# =============================================================================
+# DEVELOPMENT & TESTING
+# =============================================================================
 test-report.json
-content_cache/
 test_data/
-tokencache/
-tweetcache/
-twitter_cookies.json
-timeline_cache.json
-
-*.sqlite
-
-characters/
-
-packages/core/src/providers/cache
-packages/core/src/providers/cache/*
-cache/*
-packages/plugin-coinbase/src/plugins/transactions.csv
-
-tsup.config.bundled_*.mjs
-
-.turbo
-.cursorrules
-.pnpm-store
-instructions.md
-wallet_data.txt
-
 coverage
-.eslintcache
+concatenated-output.ts
 
-agent/content
+# =============================================================================
+# SYSTEM & IDE FILES
+# =============================================================================
+.idea
+.DS_Store
+.vscode/settings.json
+.vscode/launch.json
 
-eliza.manifest
-eliza.manifest.sgx
-eliza.sig
+# =============================================================================
+# PLUGIN-SPECIFIC IGNORES
+# =============================================================================
+packages/plugin-buttplug/intiface-engine
+packages/plugin-coinbase/src/plugins/transactions.csv
 packages/plugin-nvidia-nim/extra
 packages/plugin-nvidia-nim/old_code
 packages/plugin-nvidia-nim/docs
+
+# =============================================================================
+# AGENT & RUNTIME DATA
+# =============================================================================
+agent/content
+agent/data/
+eliza.manifest
+eliza.manifest.sgx
+eliza.sig
+
+# =============================================================================
+# DOCUMENTATION & NOTES (POTENTIALLY SENSITIVE)
+# =============================================================================
+instructions.md
+.cursorrules
+notes/
+docs/private/
+TODO-private.md
+
+# =============================================================================
+# FAMILY-SPECIFIC SECURITY
+# =============================================================================
+# Family data and conversations
+family-data/
+conversations/
+family-conversations/
+user-data/
+personal-data/
+
+# Hedera-specific sensitive files
+hedera-keys/
+consensus-topics/
+family-topics.json

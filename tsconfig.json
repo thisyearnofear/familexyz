@@ -41,6 +41,15 @@
     },
     {
       "path": "packages/client-slack"
+    },
+    {
+      "path": "packages/hedera-core"
+    },
+    {
+      "path": "packages/family-nlp-utils"
+    },
+    {
+      "path": "packages/family-plugin-hedera-template"
     }
   ]
 }

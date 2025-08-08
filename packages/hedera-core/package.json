@@ -42,8 +42,7 @@
   "dependencies": {
     "@elizaos/core": "workspace:*",
     "@hashgraph/sdk": "^2.49.2",
-    "node-cache": "^5.1.2",
-    "bs58": "^6.0.0"
+    "node-cache": "^5.1.2"
   },
   "devDependencies": {
     "tsup": "^8.3.5",

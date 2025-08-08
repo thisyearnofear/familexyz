@@ -1,0 +1,34 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "noEmit": false,
+    "allowImportingTsExtensions": false,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "composite": true,
+    "rootDir": "./src",
+    "skipLibCheck": true,
+    "types": []
+  },
+  "include": ["src/**/*"],
+  "exclude": [
+    "dist",
+    "node_modules",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "validation.js"
+  ],
+  "references": [
+    {
+      "path": "../core"
+    },
+    {
+      "path": "../family-nlp-utils"
+    },
+    {
+      "path": "../hedera-core"
+    }
+  ]
+}

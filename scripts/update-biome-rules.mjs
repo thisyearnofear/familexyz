@@ -1,10 +1,10 @@
-import fs from 'fs';
+import fs from "fs";
 
-const biomePath = './biome.json';
-const content = fs.readFileSync(biomePath, 'utf8');
+const biomePath = "./config/biome.json";
+const content = fs.readFileSync(biomePath, "utf8");
 
 // Replace all "off" with "warn" but only within rule definitions
 const updated = content.replace(/: "off"/g, ': "warn"');
 
 fs.writeFileSync(biomePath, updated);
-console.log('Updated biome.json rules from "off" to "warn"');
+console.log('Updated config/biome.json rules from "off" to "warn"');

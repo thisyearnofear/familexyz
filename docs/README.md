@@ -1,185 +1,179 @@
-# Eliza - Multi-agent simulation framework
+# Family-Connection AI Agents Documentation
 
-# https://github.com/elizaOS/eliza
+Welcome to the comprehensive documentation for the Family-Connection AI Agents project - a privacy-first suite of specialized AI agents designed to strengthen family bonds.
 
-# Visit https://eliza.builders for support
+## 🚀 Quick Start
 
-## 🌍 README Translations
+- **[Installation Guide](setup/installation.md)** - Get up and running in minutes
+- **[Environment Setup](setup/environments.md)** - Configure your development environment  
+- **[Family Features Guide](setup/family-features.md)** - Learn about the five family agents
 
-[中文说明](./README_CN.md) | [Deutsch](./README_DE.md) | [Français](./README_FR.md) | [ไทย](./README_TH.md) | [Español](README_ES.md)
+## 📚 Documentation Structure
 
-# dev branch
+### 🛠️ Setup & Configuration
+- **[Installation Guide](setup/installation.md)** - Complete installation instructions
+- **[Environment Configuration](setup/environments.md)** - Development, staging, and production setup
+- **[Family Features](setup/family-features.md)** - Configure and use the five family agents
 
-<img src="static/img/eliza_banner.jpg" alt="Eliza Banner" width="100%" />
+### 🏗️ Project Information
+- **[Project Structure](project/structure.md)** - Understanding the codebase organization
+- **[Contributing Guidelines](project/contributing.md)** - How to contribute to the project
+- **[Code of Conduct](project/code-of-conduct.md)** - Community standards and expectations
+- **[Security Policy](project/security.md)** - Security practices and reporting
+- **[Changelog](project/changelog.md)** - Version history and updates
 
-_As seen powering [@DegenSpartanAI](https://x.com/degenspartanai) and [@MarcAIndreessen](https://x.com/pmairca)_
+### 👨‍👩‍👧‍👦 Family Agents
 
-- Multi-agent simulation framework
-- Add as many unique characters as you want with [characterfile](https://github.com/lalalune/characterfile/)
-- Full-featured Discord and Twitter connectors, with Discord voice channel support
-- Full conversational and document RAG memory
-- Can read links and PDFs, transcribe audio and videos, summarize conversations, and more
-- Highly extensible - create your own actions and clients to extend Eliza's capabilities
-- Supports open source and local models (default configured with Nous Hermes Llama 3.1B)
-- Supports OpenAI for cloud inference on a light-weight device
-- "Ask Claude" mode for calling Claude on more complex queries
-- 100% Typescript
+The five specialized AI agents designed for family connection:
 
-# Getting Started
+#### 🧠 **Wisdom Agent** (`packages/family/plugin-wisdom/`)
+- Philosophy & emotional intelligence guidance
+- Socratic questioning for family values exploration
+- Conflict resolution support
+- Age-appropriate wisdom sharing
 
-**Prerequisites (MUST):**
+#### 💑 **Intimacy Agent** (`packages/family/plugin-intimacy/`)
+- Couple relationship coaching
+- Family bonding activity suggestions
+- Communication skill building
+- Conflict de-escalation techniques
 
-- [Node.js 23+](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
-- [pnpm](https://pnpm.io/installation)
+#### 👵👦 **Generational Bridge Agent** (`packages/family/plugin-generational-bridge/`)
+- Cross-generational storytelling
+- Family legacy preservation
+- Cultural tradition sharing
+- Grandparent-grandchild connection
 
-### Edit the .env file
+#### 🧘 **Presence Agent** (`packages/family/plugin-presence/`)
+- Mindfulness and meditation guidance
+- Digital wellness nudges
+- Screen time balance support
+- Family presence check-ins
 
-- Copy .env.example to .env and fill in the appropriate values
-- Edit the TWITTER environment variables to add your bot's username and password
+#### 🚀 **Growth Agent** (`packages/family/plugin-growth/`)
+- Shared family challenges
+- Goal tracking and achievement celebration
+- Growth mindset development
+- Family learning opportunities
 
-### Edit the character file
+### 🔧 Technical Documentation
 
-- Check out the file `src/core/defaultCharacter.ts` - you can modify this
-- You can also load characters with the `pnpm start --characters="path/to/your/character.json"` and run multiple bots at the same time.
+#### Core Framework
+- **[Core Package](../packages/core/)** - Foundation framework documentation
+- **[Configuration](../packages/config/)** - Configuration utilities and schemas
+- **[API Reference](api/)** - Generated API documentation
 
-After setting up the .env file and character file, you can start the bot with the following command:
+#### Integrations
+- **[Database Adapters](../packages/adapters/)** - SQLite, PostgreSQL, Redis configurations
+- **[Platform Clients](../packages/clients/)** - Discord, Telegram, Twitter integrations
+- **[Blockchain](../packages/blockchain/)** - Hedera and Web3 functionality
 
-```
-pnpm i
-pnpm start
-```
+#### Deployment
+- **[Docker Setup](../docker/)** - Containerized deployment
+- **[Production Deployment](setup/production-deployment.md)** - Production setup guide
+- **[Monitoring & Logging](setup/monitoring.md)** - Observability setup
 
-# Customising Eliza
+### 🛡️ Privacy & Safety
 
-### Adding custom actions
+Family data protection is our top priority:
 
-To avoid git clashes in the core directory, we recommend adding custom actions to a `custom_actions` directory and then adding them to the `elizaConfig.yaml` file. See the `elizaConfig.example.yaml` file for an example.
+- **End-to-end encryption** for sensitive conversations
+- **Local data storage** options for maximum privacy
+- **Parental controls** and content moderation
+- **Age-appropriate responses** and content filtering
+- **Data retention policies** with automatic cleanup
+- **Safe mode** for family-friendly interactions
 
-## Running with different models
+### 🌍 Internationalization
 
-### Run with Llama
+Multi-language support for diverse families:
 
-You can run Llama 70B or 405B models by setting the environment variable for a provider that supports these models. Llama is also supported locally if no other provider is set.
+- **[English README](README.md)** (Main)
+- **[中文说明](../i18n/readme/README_CN.md)** (Chinese)
+- **[日本語の説明](../i18n/readme/README_JA.md)** (Japanese)
+- **[한국어 설명](../i18n/readme/README_KOR.md)** (Korean)
+- **[Français](../i18n/readme/README_FR.md)** (French)
+- **[Español](../i18n/readme/README_ES.md)** (Spanish)
+- **[And more...](../i18n/readme/)** (20+ languages)
 
-### Run with Grok
+## 🚦 Getting Started Workflow
 
-You can run Grok models by setting the `GROK_API_KEY` environment variable to your Grok API key and setting grok as the model provider in your character file.
+1. **📖 Read**: Start with the [Installation Guide](setup/installation.md)
+2. **⚙️ Configure**: Set up your [Environment](setup/environments.md)
+3. **👨‍👩‍👧‍👦 Explore**: Learn about [Family Features](setup/family-features.md)
+4. **🏗️ Understand**: Review the [Project Structure](project/structure.md)
+5. **🚀 Deploy**: Follow deployment guides for your platform
 
-### Run with OpenAI
+## 💡 Key Features
 
-You can run OpenAI models by setting the `OPENAI_API_KEY` environment variable to your OpenAI API key and setting openai as the model provider in your character file.
+### Family-Focused AI
+- **5 specialized agents** each with unique family expertise
+- **Age-appropriate interactions** for all family members
+- **Cultural sensitivity** and multi-language support
+- **Privacy-first design** with local data options
 
-## Additional Requirements
+### Platform Integration
+- **Discord, Telegram, Twitter** and more
+- **Web dashboard** for family management
+- **Mobile-friendly** interfaces
+- **WhatsApp integration** for family groups
 
-You may need to install Sharp. If you see an error when starting up, try installing it with the following command:
+### Developer Experience
+- **Monorepo architecture** with clear package organization
+- **TypeScript throughout** for type safety
+- **Hot reload development** for fast iteration
+- **Comprehensive testing** suite
+- **Docker support** for easy deployment
 
-```
-pnpm install --include=optional sharp
-```
+### Enterprise Features
+- **Blockchain integration** via Hedera network
+- **Scalable architecture** for multiple families
+- **Monitoring and analytics** capabilities
+- **API-first design** for custom integrations
 
-# Environment Setup
+## 🤝 Community & Support
 
-You will need to add environment variables to your .env file to connect to various platforms:
+### Getting Help
+- **📖 Documentation**: Start here with comprehensive guides
+- **💬 Discord Community**: Join our family-focused channels
+- **🐛 GitHub Issues**: Report bugs and request features
+- **📧 Email Support**: Contact us for family-specific questions
 
-```
-# Required environment variables
-DISCORD_APPLICATION_ID=
-DISCORD_API_TOKEN= # Bot token
-OPENAI_API_KEY=sk-* # OpenAI API key, starting with sk-
-ELEVENLABS_XI_API_KEY= # API key from elevenlabs
+### Contributing
+- **[Contributing Guide](project/contributing.md)** - How to contribute code
+- **[Code of Conduct](project/code-of-conduct.md)** - Community standards
+- **[Security Policy](project/security.md)** - Report security issues
 
-# ELEVENLABS SETTINGS
-ELEVENLABS_MODEL_ID=eleven_multilingual_v2
-ELEVENLABS_VOICE_ID=21m00Tcm4TlvDq8ikWAM
-ELEVENLABS_VOICE_STABILITY=0.5
-ELEVENLABS_VOICE_SIMILARITY_BOOST=0.9
-ELEVENLABS_VOICE_STYLE=0.66
-ELEVENLABS_VOICE_USE_SPEAKER_BOOST=false
-ELEVENLABS_OPTIMIZE_STREAMING_LATENCY=4
-ELEVENLABS_OUTPUT_FORMAT=pcm_16000
+### Research & Development
+- **[Technical Paper](https://arxiv.org/pdf/2501.06781)** - Academic research behind Eliza OS
+- **[Roadmap](community/roadmap.md)** - Future development plans
+- **[Feature Requests](https://github.com/your-org/familexyz/issues)** - Suggest new capabilities
 
-TWITTER_DRY_RUN=false
-TWITTER_USERNAME= # Account username
-TWITTER_PASSWORD= # Account password
-TWITTER_EMAIL= # Account email
+## 📄 License & Citation
 
+This project is built on the Eliza OS framework. If you use this work in research, please cite:
 
-# For asking Claude stuff
-ANTHROPIC_API_KEY=
-
-WALLET_SECRET_KEY=EXAMPLE_WALLET_SECRET_KEY
-WALLET_PUBLIC_KEY=EXAMPLE_WALLET_PUBLIC_KEY
-
-BIRDEYE_API_KEY=
-
-SOL_ADDRESS=So11111111111111111111111111111111111111112
-SLIPPAGE=1
-SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
-HELIUS_API_KEY=
-
-
-## Telegram
-TELEGRAM_BOT_TOKEN=
-
-TOGETHER_API_KEY=
-```
-
-# Local Inference Setup
-
-### CUDA Setup
-
-If you have an NVIDIA GPU, you can install CUDA to speed up local inference dramatically.
-
-```
-pnpm install
-npx --no node-llama-cpp source download --gpu cuda
-```
-
-Make sure that you've installed the CUDA Toolkit, including cuDNN and cuBLAS.
-
-### Running locally
-
-By default, the bot will download and use a local model. You can change this by setting the environment variables for the model you want to use.
-
-# Clients
-
-## Discord Bot
-
-For help with setting up your Discord Bot, check out here: https://discordjs.guide/preparations/setting-up-a-bot-application.html
-
-# Development
-
-## Testing
-
-To run the test suite:
-
-```bash
-pnpm test           # Run tests once
-pnpm test:watch    # Run tests in watch mode
-```
-
-For database-specific tests:
-
-```bash
-pnpm test:sqlite   # Run tests with SQLite
-pnpm test:sqljs    # Run tests with SQL.js
+```bibtex
+@article{walters2025eliza,
+  title={Eliza: A Web3 friendly AI Agent Operating System},
+  author={Walters, Shaw and Gao, Sam and Nerd, Shakker and Da, Feng and Williams, Warren and Meng, Ting-Chien and Han, Hunter and He, Frank and Zhang, Allen and Wu, Ming and others},
+  journal={arXiv preprint arXiv:2501.06781},
+  year={2025}
+}
 ```
 
-Tests are written using Jest and can be found in `src/**/*.test.ts` files. The test environment is configured to:
+## 🏆 Project Goals
 
-- Load environment variables from `.env.test`
-- Use a 2-minute timeout for long-running tests
-- Support ESM modules
-- Run tests in sequence (--runInBand)
+The Family-Connection AI Agents project aims to:
 
-To create new tests, add a `.test.ts` file adjacent to the code you're testing.
+1. **Strengthen family bonds** through AI-facilitated interactions
+2. **Preserve family traditions** and create new shared experiences  
+3. **Support healthy relationships** across all family dynamics
+4. **Promote digital wellness** and mindful technology use
+5. **Bridge generational gaps** through storytelling and shared wisdom
+6. **Provide accessible family coaching** available 24/7
+7. **Maintain privacy** while enabling powerful AI capabilities
 
-## Docs Updates
+---
 
-Please make sure to verify if the documentation provided is correct. In order to do so, please run the docs service.
-
-```console
-docker compose -f docker-compose-docs.yaml up --build
-```
-
-The docusaurus server will get started and you can verify it locally at https://localhost:3000/eliza.
+**Ready to get started?** Begin with our [Installation Guide](setup/installation.md) and join the growing community of families using AI to strengthen their connections.

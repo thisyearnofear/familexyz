@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define the path to the lerna.json file
-LERNA_FILE="../lerna.json"
+LERNA_FILE="../config/lerna.json"
 
 # Check if lerna.json exists
 if [ ! -f "${LERNA_FILE}" ]; then

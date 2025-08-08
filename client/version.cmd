@@ -1,7 +1,7 @@
 @echo off
 setlocal enabledelayedexpansion
 
-set "LERNA_FILE=..\lerna.json"
+set "LERNA_FILE=..\config\lerna.json"
 
 if not exist "%LERNA_FILE%" (
     echo Error: %LERNA_FILE% does not exist.

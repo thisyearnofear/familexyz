@@ -54,6 +54,7 @@ sgx.trusted_files = [
   "file:agent/package.json",
   "file:agent/tsconfig.json",
   "file:package.json",
+  "file:config/tsconfig.json",
   "file:.env",
 
   # Add these files to sgx.trusted_files in production and remove them from sgx.allowed_files.

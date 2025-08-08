@@ -14,6 +14,11 @@ node_modules
 .env.test
 .env_main
 
+# Environment directory files (for development)
+environments/**/.env*
+environments/**/.*env*
+environments/**/*.env
+
 # Environment backups and variations
 .env.backup
 .env.bak

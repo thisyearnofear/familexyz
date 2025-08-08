@@ -44,6 +44,21 @@ pnpm dev
 
 > **Note:** `pnpm dev` launches all five family agents automatically.
 
+### 🔐 Environment Setup
+
+1. **Copy the template**: `cp environments/development/.env.development.template environments/development/.env.development`
+2. **Add your API keys**:
+   - Venice AI API key (primary)
+   - OpenAI API key (fallback)
+   - Hedera testnet credentials
+   - Social platform tokens (optional)
+3. **Configure family settings**:
+   - Encryption keys for privacy
+   - Data retention policies
+   - Parental controls
+
+**Important**: Never commit your actual `.env.development` file with real API keys. The template file is provided for reference.
+
 ## 📚 Documentation
 
 - **🛠️ [Installation Guide](docs/setup/installation.md)** - Complete setup instructions

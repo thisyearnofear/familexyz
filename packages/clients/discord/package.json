@@ -22,7 +22,6 @@
         "@elizaos/core": "workspace:*",
         "bs58": "^6.0.0",
         "@types/bs58": "^5.0.0",
-        "@elizaos/plugin-node": "workspace:*",
         "@discordjs/opus": "github:discordjs/opus",
         "@discordjs/rest": "2.4.0",
         "@discordjs/voice": "0.17.0",
@@ -36,8 +35,8 @@
         "vitest": "1.2.1"
     },
     "scripts": {
-        "build": "tsup --format esm --dts",
-        "dev": "tsup --format esm --dts --watch",
+        "build": "tsup --format esm --no-dts",
+        "dev": "tsup --format esm --no-dts --watch",
         "test": "vitest run"
     },
     "trustedDependencies": {

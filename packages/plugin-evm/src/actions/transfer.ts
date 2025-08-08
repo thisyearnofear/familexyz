@@ -39,17 +39,8 @@ export class TransferAction {
                 to: params.toAddress,
                 value: parseEther(params.amount),
                 data: params.data as Hex,
-                kzg: {
-                    blobToKzgCommitment: (_: ByteArray): ByteArray => {
-                        throw new Error("Function not implemented.");
-                    },
-                    computeBlobKzgProof: (
-                        _blob: ByteArray,
-                        _commitment: ByteArray
-                    ): ByteArray => {
-                        throw new Error("Function not implemented.");
-                    },
-                },
+                // Remove KZG configuration for standard transactions
+                // KZG is only needed for blob transactions (EIP-4844)
                 chain: undefined,
             });
 

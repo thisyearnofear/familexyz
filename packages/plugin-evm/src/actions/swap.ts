@@ -291,19 +291,8 @@ export class SwapAction {
                         to: params.fromToken,
                         value: 0n,
                         data: approvalData,
-                        kzg: {
-                            blobToKzgCommitment: (
-                                _: ByteArray
-                            ): ByteArray => {
-                                throw new Error("Function not implemented.");
-                            },
-                            computeBlobKzgProof: (
-                                _blob: ByteArray,
-                                _commitment: ByteArray
-                            ): ByteArray => {
-                                throw new Error("Function not implemented.");
-                            },
-                        },
+                        // Remove KZG configuration for standard transactions
+                        // KZG is only needed for blob transactions (EIP-4844)
                         chain: undefined,
                     });
             }
@@ -315,19 +304,8 @@ export class SwapAction {
                     to: bebopRoute.to,
                     value: BigInt(bebopRoute.value),
                     data: bebopRoute.data as Hex,
-                    kzg: {
-                        blobToKzgCommitment: (
-                            _: ByteArray
-                        ): ByteArray => {
-                            throw new Error("Function not implemented.");
-                        },
-                        computeBlobKzgProof: (
-                            _blob: ByteArray,
-                            _commitment: ByteArray
-                        ): ByteArray => {
-                            throw new Error("Function not implemented.");
-                        },
-                    },
+                    // Remove KZG configuration for standard transactions
+                    // KZG is only needed for blob transactions (EIP-4844)
                     chain: undefined,
                 });
             return {

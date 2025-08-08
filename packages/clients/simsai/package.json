@@ -32,7 +32,7 @@
         "@elizaos/core": "workspace:*"
     },
     "scripts": {
-        "build": "tsup --format esm --dts",
+        "build": "tsup --format esm --no-dts",
         "dev": "tsup --format esm --dts --watch",
         "lint": "eslint --fix"
     }

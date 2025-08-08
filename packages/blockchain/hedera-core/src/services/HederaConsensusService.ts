@@ -2,6 +2,7 @@ import {
   TopicCreateTransaction,
   TopicMessageQuery,
   TopicMessageSubmitTransaction,
+  TopicInfoQuery,
   TopicId,
   TransactionResponse,
   TopicMessage,
@@ -152,11 +153,31 @@ export class HederaConsensusService {
       // For now, use a simplified implementation
       // In production, you would properly handle the subscription
       try {
-        // This is a placeholder - actual implementation would use proper subscription
-        console.log(`Querying topic ${topicId} for family ${familyId}`);
+        // Query consensus messages from the topic
+        const topicMessages = await this.client.getTopicMessages(topicId);
+        
+        // Filter messages for the specific family
+        const familyMessages = topicMessages.filter(msg => {
+          try {
+            const content = JSON.parse(msg.contents.toString());
+            return content.familyId === familyId;
+          } catch {
+            return false;
+          }
+        });
 
-        // Return empty array for now - will be implemented properly later
-        // when we have actual topic messages to query
+        // Convert to family interactions
+        return familyMessages.map(msg => {
+          const content = JSON.parse(msg.contents.toString());
+          return {
+            familyId: content.familyId,
+            agentId: content.agentId,
+            timestamp: content.timestamp,
+            type: content.type,
+            sentiment: content.sentiment,
+            metadata: content.metadata
+          };
+        });
       } catch (error) {
         console.warn("Failed to query consensus messages:", error);
       }
@@ -178,14 +199,22 @@ export class HederaConsensusService {
     return this.hederaService.executeWithRetry(async () => {
       const client = this.hederaService.getClient();
 
-      // Note: Hedera SDK doesn't have a direct TopicInfoQuery
-      // This is a placeholder for future implementation or custom query
-      const topicInfo: TopicInfo = {
-        topicId,
-        memo: `Topic ${topicId}`, // Would need to query this from network
+      // Use TopicInfoQuery to get topic information
+      const topicInfo = await new TopicInfoQuery()
+        .setTopicId(topicId)
+        .execute(this.client);
+      
+      return {
+        topicId: topicInfo.topicId.toString(),
+        adminKey: topicInfo.adminKey?.toString(),
+        submitKey: topicInfo.submitKey?.toString(),
+        memo: topicInfo.topicMemo,
+        sequenceNumber: topicInfo.sequenceNumber.toString(),
+        runningHash: topicInfo.runningHash.toString(),
+        expirationTime: topicInfo.expirationTime?.toDate(),
+        autoRenewPeriod: topicInfo.autoRenewPeriod?.seconds.toString(),
+        autoRenewAccount: topicInfo.autoRenewAccountId?.toString(),
       };
-
-      return topicInfo;
     }, "getTopicInfo");
   }
 

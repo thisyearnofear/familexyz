@@ -30,7 +30,7 @@
         "vitest": "^3.0.2"
     },
     "scripts": {
-        "build": "tsup --format esm --dts",
+        "build": "tsup --format esm",
         "dev": "tsup --format esm --dts --watch",
         "test": "vitest run",
         "test:watch": "vitest"

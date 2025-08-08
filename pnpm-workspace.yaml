@@ -6,6 +6,7 @@ packages:
   - "packages/plugins/*"
   - "packages/family/*"
   - "packages/blockchain/*"
+  - "packages/auth/*"
   - "agent"
   - "client"
   - "packages/create-eliza-app"

@@ -17,20 +17,20 @@
       "@elizaos/config": ["packages/config/src", "packages/config/dist"],
       "@elizaos/core": ["packages/core/src", "packages/core/dist"],
       "@elizaos/hedera-core": [
-        "packages/hedera-core/src",
-        "packages/hedera-core/dist"
+        "packages/blockchain/hedera-core/src",
+        "packages/blockchain/hedera-core/dist"
       ],
       "@elizaos/plugin-node": [
         "packages/plugin-node/src",
         "packages/plugin-node/dist"
       ],
       "@elizaos/family-nlp-utils": [
-        "packages/family-nlp-utils/src",
-        "packages/family-nlp-utils/dist"
+        "packages/family/nlp-utils/src",
+        "packages/family/nlp-utils/dist"
       ],
       "@elizaos/family-plugin-*": [
-        "packages/family-plugin-*/src",
-        "packages/family-plugin-*/dist"
+        "packages/family/plugin-*/src",
+        "packages/family/plugin-*/dist"
       ]
     }
   },
@@ -43,13 +43,13 @@
       "path": "packages/client-slack"
     },
     {
-      "path": "packages/hedera-core"
+      "path": "packages/blockchain/hedera-core"
     },
     {
-      "path": "packages/family-nlp-utils"
+      "path": "packages/family/nlp-utils"
     },
     {
-      "path": "packages/family-plugin-hedera-template"
+      "path": "packages/blockchain/plugin-hedera-template"
     }
   ]
 }

@@ -1,471 +1,580 @@
-import type {
-  Plugin,
+import {
+  Action,
+  ActionExample,
   IAgentRuntime,
   Memory,
-  Action,
-  Evaluator,
-  Provider,
-  HandlerCallback,
   State,
-  Handler,
+  Plugin,
+  HandlerCallback,
+  Content,
+  ModelClass,
 } from "@elizaos/core";
 import {
-  classifySentiment,
-  detectInteractionType,
-  calculateFamilyHealthScore,
-  calculateTokenRewards,
-  generateMessageHash,
-  HederaMetricsLogger,
-  type HederaFamilyMetrics,
-  type SentimentAnalysis,
-  type InteractionType,
-  type FamilyHealthReward,
+  FamilyHederaIntegration,
+  createFamilyHederaIntegration,
+  FamilyAgentConfig,
+  FamilyTokenomics,
+  FamilyConversationContext,
+  FamilyInteractionType,
+  DEFAULT_AGENT_CONFIGS,
+  DEFAULT_TOKENOMICS,
+  HederaService,
 } from "@elizaos/family-nlp-utils";
-import { HederaService } from "@elizaos/hedera-core";
 import NodeCache from "node-cache";
 
-// Plugin configuration for wisdom interactions
-interface WisdomPluginConfig {
-  familyId: string;
-  enableHedera: boolean;
-  enableRewards: boolean;
-  privacyMode: boolean;
-  baseRewardAmount: number;
-  cacheTimeout: number;
-}
+/**
+ * Wisdom Agent - Philosophy & Emotional Intelligence
+ * Enhanced with Hedera blockchain integration for Stage 2A
+ */
 
-// Default configuration optimized for family wisdom sharing
-const DEFAULT_CONFIG: WisdomPluginConfig = {
-  familyId: "default_family",
-  enableHedera: true,
-  enableRewards: false, // Disabled until user validation
-  privacyMode: true, // Privacy-first approach
-  baseRewardAmount: 10,
-  cacheTimeout: 300, // 5 minutes
+// Wisdom-specific interaction types
+const WISDOM_INTERACTIONS: FamilyInteractionType[] = [
+  "wisdom_shared",
+  "conflict_resolved",
+  "empathy_expressed",
+];
+
+// Enhanced wisdom conversation prompts
+const WISDOM_PROMPTS = {
+  philosophical: `You are Sophia, a wise family counselor with deep expertise in emotional intelligence and philosophy.
+Your role is to guide families through thoughtful questioning and wisdom sharing.
+
+Key principles:
+- Use Socratic questioning to help families discover their own wisdom
+- Focus on emotional intelligence development
+- Provide age-appropriate guidance
+- Bridge generational perspectives
+- Foster empathy and understanding
+
+Current conversation context: {context}
+Family goals: {goals}
+Current challenges: {challenges}
+
+Respond with wisdom that strengthens family bonds and emotional intelligence.`,
+
+  conflictResolution: `You are an expert family mediator helping resolve conflicts with wisdom and empathy.
+
+Conflict situation: {situation}
+Participants: {participants}
+Family dynamics: {dynamics}
+
+Guide the family toward:
+1. Understanding all perspectives
+2. Identifying underlying needs
+3. Finding mutually beneficial solutions
+4. Strengthening relationships through resolution
+
+Use gentle guidance and ask thoughtful questions.`,
+
+  empathyBuilding: `You are guiding a family in developing deeper empathy and emotional connection.
+
+Family context: {context}
+Empathy opportunity: {opportunity}
+
+Help them:
+- See situations from different perspectives
+- Express emotions constructively
+- Practice active listening
+- Build emotional vocabulary
+- Strengthen emotional bonds
+
+Focus on practical empathy-building exercises.`,
 };
 
-// Enhanced memory interface for wisdom interactions
-interface WisdomMemory extends Memory {
-  wisdomAnalysis?: {
-    sentiment: SentimentAnalysis;
-    healthScore: number;
-    wisdomType: string;
-    insights: string[];
-    hederaLogged?: boolean;
-  };
-}
+// Wisdom-specific action for Hedera-integrated responses
+const wisdomAction: Action = {
+  name: "SHARE_FAMILY_WISDOM",
+  similes: [
+    "GUIDE_FAMILY_WISDOM",
+    "OFFER_PHILOSOPHICAL_INSIGHT",
+    "RESOLVE_FAMILY_CONFLICT",
+    "BUILD_EMPATHY",
+    "SHARE_EMOTIONAL_INTELLIGENCE",
+  ],
+  description:
+    "Share philosophical wisdom and emotional intelligence guidance for family growth, with Hedera consensus tracking",
+  validate: async (runtime: IAgentRuntime, message: Memory) => {
+    const content = message.content.text.toLowerCase();
 
-// Family wisdom plugin class
-class FamilyWisdomPlugin {
-  private cache: NodeCache;
-  private hederaService: HederaService | null = null;
-  private metricsLogger: HederaMetricsLogger | null = null;
-  private config: WisdomPluginConfig;
-
-  constructor(config: Partial<WisdomPluginConfig> = {}) {
-    this.config = { ...DEFAULT_CONFIG, ...config };
-    this.cache = new NodeCache({ stdTTL: this.config.cacheTimeout });
-  }
-
-  // Initialize Hedera services if enabled
-  async initialize(runtime: IAgentRuntime): Promise<void> {
-    if (!this.config.enableHedera) return;
-
-    try {
-      const hederaConfig = runtime.getSetting("HEDERA_CONFIG");
-      if (hederaConfig) {
-        this.hederaService = HederaService.getInstance(
-          JSON.parse(hederaConfig),
-        );
-        await this.hederaService.initialize();
-        this.metricsLogger = new HederaMetricsLogger(this.hederaService);
-        console.log("✅ Hedera services initialized for wisdom plugin");
-      }
-    } catch (error) {
-      console.warn(
-        "⚠️ Hedera initialization failed, continuing without blockchain logging:",
-        error,
-      );
-    }
-  }
-
-  // Main wisdom analysis action
-  createWisdomAnalysisAction(): Action {
-    const handler: Handler = async (
-      runtime: IAgentRuntime,
-      message: Memory,
-      state?: State,
-      options?: { [key: string]: unknown },
-      callback?: HandlerCallback,
-    ): Promise<boolean> => {
-      try {
-        await this.initialize(runtime);
-
-        const content = message.content.text;
-        if (!content || !this.isWisdomContent(content)) {
-          return false;
-        }
-
-        // Enhanced sentiment analysis with privacy-first LLM
-        const sentiment = await classifySentiment(content, runtime);
-
-        // Detect if this is actually wisdom-related
-        const interactionType = await detectInteractionType(content, runtime);
-        if (
-          interactionType.type !== "wisdom" &&
-          interactionType.confidence < 0.6
-        ) {
-          return false; // Not wisdom-related enough
-        }
-
-        // Calculate family health score
-        const healthScore = calculateFamilyHealthScore(
-          sentiment,
-          "wisdom",
-          content.length,
-        );
-
-        // Generate insights about the wisdom sharing
-        const insights = this.generateWisdomInsights(
-          sentiment,
-          healthScore,
-          content,
-        );
-
-        // Cache the analysis for performance
-        const cacheKey = `wisdom_${message.userId}_${Date.now()}`;
-        this.cache.set(cacheKey, { sentiment, healthScore, insights });
-
-        // Optional Hedera logging (privacy-first: only metadata)
-        let hederaLogged = false;
-        if (this.metricsLogger && this.config.enableHedera) {
-          try {
-            const messageHash = generateMessageHash(
-              content,
-              Date.now(),
-              runtime.agentId,
-            );
-            await this.metricsLogger.logSentimentWithRewards(
-              this.config.familyId,
-              runtime.agentId,
-              message.userId,
-              content,
-              runtime,
-            );
-            hederaLogged = true;
-          } catch (error) {
-            console.warn("Hedera logging failed (non-blocking):", error);
-          }
-        }
-
-        // Enhanced memory with wisdom analysis
-        const wisdomMemory: WisdomMemory = {
-          ...message,
-          wisdomAnalysis: {
-            sentiment,
-            healthScore,
-            wisdomType: this.categorizeWisdom(content),
-            insights,
-            hederaLogged,
-          },
-        };
-
-        // Generate natural response with insights
-        if (callback) {
-          const response = this.generateWisdomResponse(
-            sentiment,
-            healthScore,
-            insights,
-          );
-          await callback({
-            text: response,
-            action: "WISDOM_ANALYSIS",
-            source: message.content.source,
-          });
-        }
-
-        return true;
-      } catch (error) {
-        console.error("Error in wisdom analysis:", error);
-        return false;
-      }
-    };
-
-    return {
-      name: "WISDOM_ANALYSIS",
-      similes: [
-        "wisdom sharing",
-        "advice giving",
-        "life lessons",
-        "learning from experience",
-        "mentoring conversation",
-        "guidance seeking",
-      ],
-      description:
-        "Analyzes family wisdom sharing and provides emotional intelligence insights",
-      validate: async (runtime: IAgentRuntime, message: Memory) => {
-        return this.isWisdomContent(message.content.text);
-      },
-      handler,
-      examples: [
-        [
-          {
-            user: "user",
-            content: {
-              text: "Grandpa told me about how he started his business with just $50 and taught me that persistence is more valuable than talent.",
-            },
-          },
-          {
-            user: "assistant",
-            content: {
-              text: "What a beautiful wisdom-sharing moment! I can sense the deep respect and learning happening here. Your family connection strength is showing at 89/100 - this kind of intergenerational wisdom transfer is so valuable for family bonds. 🧠💝",
-              action: "WISDOM_ANALYSIS",
-            },
-          },
-        ],
-      ],
-    };
-  }
-
-  // Family health evaluator
-  createFamilyHealthEvaluator(): Evaluator {
-    return {
-      name: "FAMILY_WISDOM_HEALTH",
-      similes: ["family wisdom", "learning together", "teaching moments"],
-      description: "Evaluates family health through wisdom sharing patterns",
-      validate: async (runtime: IAgentRuntime, message: Memory) => {
-        return this.isWisdomContent(message.content.text);
-      },
-      handler: async (runtime: IAgentRuntime, message: Memory) => {
-        try {
-          const cachedAnalysis = this.getCachedAnalysis(message.userId);
-          if (!cachedAnalysis) return null;
-
-          const { sentiment, healthScore } = cachedAnalysis;
-
-          return {
-            score: healthScore / 100, // Normalize to 0-1
-            confidence: sentiment.confidence || 0.7,
-            recommendation: this.generateHealthRecommendation(
-              healthScore,
-              sentiment,
-            ),
-            metadata: {
-              wisdomType: this.categorizeWisdom(message.content.text),
-              interactionType: "wisdom",
-              familyHealthScore: healthScore,
-            },
-          };
-        } catch (error) {
-          console.error("Error in family health evaluation:", error);
-          return null;
-        }
-      },
-      examples: [
-        {
-          context: "Family sharing life lessons and advice",
-          messages: [
-            {
-              user: "user",
-              content: {
-                text: "My mom always told me to treat others the way I want to be treated, and now I'm teaching that to my kids.",
-              },
-            },
-          ],
-          outcome:
-            "High family wisdom score with strong intergenerational value transmission",
-        },
-      ],
-    };
-  }
-
-  // Wisdom metrics provider
-  createWisdomMetricsProvider(): Provider {
-    return {
-      get: async (runtime: IAgentRuntime, message: Memory, state?: State) => {
-        try {
-          const recentAnalyses = this.getRecentAnalyses();
-          const averageHealth = this.calculateAverageHealth(recentAnalyses);
-
-          return {
-            familyId: this.config.familyId,
-            wisdomMetrics: {
-              averageHealthScore: averageHealth,
-              totalAnalyses: recentAnalyses.length,
-              wisdomTypes: this.getWisdomTypeDistribution(recentAnalyses),
-              lastUpdated: Date.now(),
-            },
-            hederaStatus: {
-              enabled: this.config.enableHedera,
-              connected: this.hederaService?.isReady() || false,
-              privacyMode: this.config.privacyMode,
-            },
-          };
-        } catch (error) {
-          console.error("Error in wisdom metrics provider:", error);
-          return { error: "Failed to retrieve wisdom metrics" };
-        }
-      },
-    };
-  }
-
-  // Helper methods
-  private isWisdomContent(text: string): boolean {
-    if (!text) return false;
-
+    // Wisdom triggers
     const wisdomKeywords = [
       "advice",
       "wisdom",
-      "lesson",
-      "taught",
-      "learned",
-      "experience",
       "guidance",
-      "mentor",
-      "elder",
-      "grandpa",
-      "grandma",
-      "parent",
-      "told me",
-      "showed me",
-      "taught me",
-      "learned from",
-      "wise",
+      "philosophy",
+      "values",
+      "conflict",
+      "argument",
+      "disagreement",
+      "fight",
+      "resolution",
+      "empathy",
+      "understand",
+      "feelings",
+      "emotions",
+      "perspective",
+      "family values",
+      "right thing",
+      "moral",
+      "ethics",
+      "principle",
     ];
 
-    const lowerText = text.toLowerCase();
-    return wisdomKeywords.some((keyword) => lowerText.includes(keyword));
-  }
+    return wisdomKeywords.some((keyword) => content.includes(keyword));
+  },
+  handler: async (
+    runtime: IAgentRuntime,
+    message: Memory,
+    state?: State,
+    options: any = {},
+    callback?: HandlerCallback,
+  ) => {
+    try {
+      // Get or create Hedera integration
+      const hederaIntegration = await getOrCreateHederaIntegration(runtime);
 
-  private categorizeWisdom(text: string): string {
-    const categories = {
-      "life-advice": ["advice", "guidance", "should", "ought", "recommend"],
-      "experience-sharing": ["when I", "back then", "years ago", "experience"],
-      "value-teaching": ["important", "value", "principle", "believe"],
-      "skill-transfer": ["how to", "technique", "method", "way to"],
-    };
+      // Extract conversation context
+      const participants = extractParticipants(message, state);
+      const familyId = extractFamilyId(message) || "default_family";
 
-    const lowerText = text.toLowerCase();
-    for (const [category, keywords] of Object.entries(categories)) {
-      if (keywords.some((keyword) => lowerText.includes(keyword))) {
-        return category;
-      }
-    }
-    return "general-wisdom";
-  }
-
-  private generateWisdomInsights(
-    sentiment: SentimentAnalysis,
-    healthScore: number,
-    content: string,
-  ): string[] {
-    const insights: string[] = [];
-
-    if (sentiment.positive > 7) {
-      insights.push("Strong positive wisdom exchange detected");
-    }
-
-    if (healthScore > 80) {
-      insights.push("Excellent family connection through wisdom sharing");
-    } else if (healthScore > 60) {
-      insights.push(
-        "Good family learning moment with room for deeper connection",
+      // Create or get conversation context
+      let conversationContext = await hederaIntegration.getEnhancedContext(
+        message.roomId,
       );
+      if (!conversationContext) {
+        conversationContext = await hederaIntegration.createConversationContext(
+          familyId,
+          participants,
+          [
+            "Develop emotional intelligence",
+            "Strengthen family bonds",
+            "Resolve conflicts peacefully",
+          ],
+        );
+      }
+
+      // Determine interaction type based on content
+      const interactionType = determineWisdomInteractionType(
+        message.content.text,
+      );
+
+      // Generate contextual wisdom response
+      const wisdomResponse = await generateWisdomResponse(
+        runtime,
+        message.content.text,
+        interactionType,
+        conversationContext,
+      );
+
+      // Process through Hedera integration
+      const result = await hederaIntegration.processFamilyInteraction(
+        wisdomResponse.content,
+        interactionType,
+        conversationContext,
+      );
+
+      // Enhanced response with Hedera metadata
+      const enhancedResponse: Content = {
+        text: wisdomResponse.content,
+        action: "SHARE_FAMILY_WISDOM",
+        metadata: {
+          interactionType,
+          qualityScore: wisdomResponse.qualityScore,
+          hedera: {
+            rewardAmount: result.rewards.amount,
+            transactionId: result.rewards.transactionId,
+            healthImpact: result.familyHealthImpact,
+          },
+          wisdom: {
+            philosophicalDepth: wisdomResponse.philosophicalDepth,
+            empathyLevel: wisdomResponse.empathyLevel,
+            practicalGuidance: wisdomResponse.practicalGuidance,
+          },
+        },
+      };
+
+      // Cache the interaction for follow-up
+      await cacheWisdomInteraction(runtime, message.roomId, {
+        message: result.message,
+        context: conversationContext,
+        response: enhancedResponse,
+      });
+
+      // Log success metrics
+      console.log(`✅ Wisdom shared with Hedera integration:`, {
+        interactionType,
+        rewardAmount: result.rewards.amount,
+        healthImpact: result.familyHealthImpact,
+      });
+
+      callback?.(enhancedResponse);
+      return true;
+    } catch (error) {
+      console.error("❌ Error in wisdom action:", error);
+
+      // Fallback response
+      const fallbackContent: Content = {
+        text: "I'm here to offer wisdom and guidance for your family. Perhaps we could explore this together - what's most important to your family in this situation?",
+        action: "SHARE_FAMILY_WISDOM",
+      };
+
+      callback?.(fallbackContent);
+      return false;
     }
-
-    if (content.includes("grandpa") || content.includes("grandma")) {
-      insights.push("Beautiful intergenerational wisdom transfer");
-    }
-
-    return insights;
-  }
-
-  private generateWisdomResponse(
-    sentiment: SentimentAnalysis,
-    healthScore: number,
-    insights: string[],
-  ): string {
-    const healthEmoji =
-      healthScore >= 80 ? "💚" : healthScore >= 60 ? "💛" : "❤️";
-
-    let response = `🧠 I sense beautiful wisdom sharing here! `;
-
-    if (sentiment.dominantEmotion) {
-      response += `The ${sentiment.dominantEmotion} energy is really meaningful. `;
-    }
-
-    response += `Family connection strength: ${healthScore.toFixed(0)}/100 ${healthEmoji}`;
-
-    if (insights.length > 0) {
-      response += `\n\n✨ ${insights[0]}`;
-    }
-
-    if (healthScore >= 80) {
-      response += `\n\nThis kind of wisdom sharing strengthens family bonds beautifully! 🌟`;
-    }
-
-    return response;
-  }
-
-  private generateHealthRecommendation(
-    healthScore: number,
-    sentiment: SentimentAnalysis,
-  ): string {
-    if (healthScore >= 80) {
-      return "Excellent wisdom sharing! Continue fostering these meaningful conversations.";
-    } else if (healthScore >= 60) {
-      return "Good family learning happening. Consider asking follow-up questions to deepen the connection.";
-    } else {
-      return "This wisdom moment could be enhanced with more active listening and engagement.";
-    }
-  }
-
-  private getCachedAnalysis(userId: string): any {
-    const keys = this.cache.keys();
-    const userKey = keys.find((key) => key.includes(userId));
-    return userKey ? this.cache.get(userKey) : null;
-  }
-
-  private getRecentAnalyses(): any[] {
-    const keys = this.cache.keys();
-    return keys.map((key) => this.cache.get(key)).filter(Boolean);
-  }
-
-  private calculateAverageHealth(analyses: any[]): number {
-    if (analyses.length === 0) return 0;
-    return (
-      analyses.reduce((sum, analysis) => sum + analysis.healthScore, 0) /
-      analyses.length
-    );
-  }
-
-  private getWisdomTypeDistribution(analyses: any[]): Record<string, number> {
-    const distribution: Record<string, number> = {};
-    analyses.forEach((analysis) => {
-      const type = analysis.wisdomType || "unknown";
-      distribution[type] = (distribution[type] || 0) + 1;
-    });
-    return distribution;
-  }
-}
-
-// Create the plugin instance
-const wisdomPlugin = new FamilyWisdomPlugin({
-  familyId: "family-wisdom-plugin",
-  enableHedera: true,
-  enableRewards: false, // MVP: No tokens until user validation
-  privacyMode: true, // Privacy-first approach
-});
-
-// Export the plugin using pure ElizaOS structure
-const plugin: Plugin = {
-  name: "family-plugin-wisdom",
-  description:
-    "Enhanced family wisdom analysis with emotional intelligence and optional blockchain logging",
-  actions: [wisdomPlugin.createWisdomAnalysisAction()],
-  evaluators: [wisdomPlugin.createFamilyHealthEvaluator()],
-  providers: [wisdomPlugin.createWisdomMetricsProvider()],
-  services: [], // No custom services needed - leverages ElizaOS infrastructure
+  },
+  examples: [
+    [
+      {
+        user: "{{user1}}",
+        content: {
+          text: "My teenager and I keep arguing about everything. I don't know how to connect with them anymore.",
+        },
+      },
+      {
+        user: "{{agentName}}",
+        content: {
+          text: "It sounds like you're both feeling disconnected, which is painful for any parent. Let's explore this together - when you think about your teenager's perspective, what do you imagine they might be feeling or needing right now that could be driving these arguments?",
+          action: "SHARE_FAMILY_WISDOM",
+        },
+      },
+    ],
+    [
+      {
+        user: "{{user1}}",
+        content: {
+          text: "Our family seems to have lost its way. We're all busy with our own things and barely talk anymore.",
+        },
+      },
+      {
+        user: "{{agentName}}",
+        content: {
+          text: "This feeling of disconnection is actually a wisdom signal - your family's heart is calling for more togetherness. What would it look like if your family created one small, sacred tradition that brought everyone together regularly? Sometimes the simplest rituals create the deepest bonds.",
+          action: "SHARE_FAMILY_WISDOM",
+        },
+      },
+    ],
+    [
+      {
+        user: "{{user1}}",
+        content: {
+          text: "I want to teach my kids about empathy, but I'm not sure how to do it effectively.",
+        },
+      },
+      {
+        user: "{{agentName}}",
+        content: {
+          text: "Empathy grows best in the soil of curiosity. Try this: when someone in your family is upset, instead of rushing to fix it, ask 'What do you think they might be feeling?' This teaches children to pause and wonder about others' inner worlds - the foundation of true empathy.",
+          action: "SHARE_FAMILY_WISDOM",
+        },
+      },
+    ],
+  ] as ActionExample[][],
 };
 
-export default plugin;
+// Helper functions for wisdom processing
+function determineWisdomInteractionType(
+  content: string,
+): FamilyInteractionType {
+  const lowerContent = content.toLowerCase();
+
+  if (
+    lowerContent.includes("conflict") ||
+    lowerContent.includes("argument") ||
+    lowerContent.includes("fight") ||
+    lowerContent.includes("disagree")
+  ) {
+    return "conflict_resolved";
+  }
+
+  if (
+    lowerContent.includes("empathy") ||
+    lowerContent.includes("understand") ||
+    lowerContent.includes("feelings") ||
+    lowerContent.includes("perspective")
+  ) {
+    return "empathy_expressed";
+  }
+
+  return "wisdom_shared";
+}
+
+async function generateWisdomResponse(
+  runtime: IAgentRuntime,
+  content: string,
+  interactionType: FamilyInteractionType,
+  context: FamilyConversationContext,
+): Promise<{
+  content: string;
+  qualityScore: number;
+  philosophicalDepth: number;
+  empathyLevel: number;
+  practicalGuidance: number;
+}> {
+  // Select appropriate prompt template
+  let prompt = WISDOM_PROMPTS.philosophical;
+  if (interactionType === "conflict_resolved") {
+    prompt = WISDOM_PROMPTS.conflictResolution;
+  } else if (interactionType === "empathy_expressed") {
+    prompt = WISDOM_PROMPTS.empathyBuilding;
+  }
+
+  // Contextualize the prompt
+  const contextualizedPrompt = prompt
+    .replace("{context}", JSON.stringify(context.conversationHistory.slice(-3)))
+    .replace("{goals}", context.familyGoals.join(", "))
+    .replace("{challenges}", context.currentChallenges.join(", "))
+    .replace("{situation}", content)
+    .replace("{participants}", context.participants.join(", "))
+    .replace("{dynamics}", `${context.participants.length} family members`)
+    .replace("{opportunity}", content);
+
+  const response = await runtime.composeState(
+    {
+      content: { text: content },
+      agentId: runtime.agentId,
+      roomId: context.sessionId,
+      userId: runtime.agentId,
+    } as Memory,
+    {
+      wisdomContext: context,
+      interactionType,
+      agentPersonality: "wise, empathetic, thoughtful",
+    },
+  );
+
+  const wisdomText = await runtime.generateText({
+    context: contextualizedPrompt,
+    modelClass: ModelClass.LARGE,
+  });
+
+  // Calculate quality metrics
+  const qualityScore = calculateWisdomQuality(wisdomText, interactionType);
+  const philosophicalDepth = assessPhilosophicalDepth(wisdomText);
+  const empathyLevel = assessEmpathyLevel(wisdomText);
+  const practicalGuidance = assessPracticalGuidance(wisdomText);
+
+  return {
+    content: wisdomText,
+    qualityScore,
+    philosophicalDepth,
+    empathyLevel,
+    practicalGuidance,
+  };
+}
+
+function calculateWisdomQuality(
+  text: string,
+  interactionType: FamilyInteractionType,
+): number {
+  let score = 50; // Base score
+
+  // Quality indicators
+  const qualityIndicators = [
+    "question",
+    "perspective",
+    "understand",
+    "wisdom",
+    "guidance",
+    "empathy",
+    "feeling",
+    "experience",
+    "learn",
+    "grow",
+  ];
+
+  const lowerText = text.toLowerCase();
+  qualityIndicators.forEach((indicator) => {
+    if (lowerText.includes(indicator)) score += 5;
+  });
+
+  // Interaction type bonuses
+  switch (interactionType) {
+    case "conflict_resolved":
+      if (lowerText.includes("both") || lowerText.includes("all")) score += 10;
+      if (lowerText.includes("solution") || lowerText.includes("resolve"))
+        score += 10;
+      break;
+    case "empathy_expressed":
+      if (lowerText.includes("feel") || lowerText.includes("emotion"))
+        score += 10;
+      if (lowerText.includes("perspective") || lowerText.includes("viewpoint"))
+        score += 10;
+      break;
+    case "wisdom_shared":
+      if (lowerText.includes("wisdom") || lowerText.includes("insight"))
+        score += 10;
+      if (lowerText.includes("experience") || lowerText.includes("lesson"))
+        score += 10;
+      break;
+  }
+
+  // Length bonus for thoughtful responses
+  if (text.length > 100) score += 5;
+  if (text.length > 200) score += 5;
+
+  return Math.min(100, Math.max(0, score));
+}
+
+function assessPhilosophicalDepth(text: string): number {
+  const deepThinkingWords = [
+    "meaning",
+    "purpose",
+    "values",
+    "principles",
+    "wisdom",
+    "truth",
+    "existence",
+    "nature",
+    "essence",
+    "fundamental",
+    "deeper",
+  ];
+
+  let depth = 0;
+  const lowerText = text.toLowerCase();
+  deepThinkingWords.forEach((word) => {
+    if (lowerText.includes(word)) depth += 10;
+  });
+
+  return Math.min(100, depth);
+}
+
+function assessEmpathyLevel(text: string): number {
+  const empathyWords = [
+    "feel",
+    "emotion",
+    "understand",
+    "perspective",
+    "heart",
+    "compassion",
+    "care",
+    "support",
+    "listen",
+    "validate",
+    "acknowledge",
+  ];
+
+  let empathy = 0;
+  const lowerText = text.toLowerCase();
+  empathyWords.forEach((word) => {
+    if (lowerText.includes(word)) empathy += 8;
+  });
+
+  return Math.min(100, empathy);
+}
+
+function assessPracticalGuidance(text: string): number {
+  const practicalWords = [
+    "try",
+    "practice",
+    "action",
+    "step",
+    "approach",
+    "method",
+    "technique",
+    "strategy",
+    "tool",
+    "exercise",
+    "habit",
+  ];
+
+  let practical = 0;
+  const lowerText = text.toLowerCase();
+  practicalWords.forEach((word) => {
+    if (lowerText.includes(word)) practical += 8;
+  });
+
+  return Math.min(100, practical);
+}
+
+// Utility functions
+function extractParticipants(message: Memory, state?: State): string[] {
+  // Extract participant IDs from message context
+  const participants = [message.userId];
+
+  // Add other family members if mentioned
+  if (state?.recentMessages) {
+    const recentUserIds = state.recentMessages
+      .map((m: Memory) => m.userId)
+      .filter(
+        (id: string, index: number, arr: string[]) => arr.indexOf(id) === index,
+      );
+    participants.push(...recentUserIds);
+  }
+
+  return participants.filter(Boolean);
+}
+
+function extractFamilyId(message: Memory): string | null {
+  // Extract family ID from room or user context
+  return message.roomId || null;
+}
+
+// Cache management
+const wisdomCache = new NodeCache({ stdTTL: 3600 }); // 1 hour cache
+
+async function cacheWisdomInteraction(
+  runtime: IAgentRuntime,
+  roomId: string,
+  interaction: any,
+): Promise<void> {
+  const cacheKey = `wisdom_${roomId}_${Date.now()}`;
+  wisdomCache.set(cacheKey, interaction);
+}
+
+// Hedera integration management
+let hederaIntegrationInstance: FamilyHederaIntegration | null = null;
+
+async function getOrCreateHederaIntegration(
+  runtime: IAgentRuntime,
+): Promise<FamilyHederaIntegration> {
+  if (hederaIntegrationInstance) {
+    return hederaIntegrationInstance;
+  }
+
+  // Get Hedera service from runtime
+  const hederaService = (runtime as any).hederaService as HederaService;
+  if (!hederaService) {
+    throw new Error("Hedera service not available in runtime");
+  }
+
+  // Create wisdom agent configuration
+  const wisdomConfig: FamilyAgentConfig = {
+    agentType: "wisdom",
+    consensusTopicId: process.env.HEDERA_WISDOM_TOPIC_ID || "0.0.123456",
+    rewardTokenId: process.env.HEDERA_FAMILY_TOKEN_ID,
+    specializations: WISDOM_INTERACTIONS,
+    rewardMultiplier: 1.2, // 20% bonus for wisdom interactions
+    enableTokenomics: process.env.HEDERA_ENABLE_TOKENOMICS === "true",
+    enableConsensusLogging: process.env.HEDERA_ENABLE_CONSENSUS === "true",
+  };
+
+  // Create tokenomics configuration
+  const tokenomics: FamilyTokenomics = {
+    ...DEFAULT_TOKENOMICS,
+    enabled: process.env.HEDERA_ENABLE_TOKENOMICS === "true",
+    tokenId: process.env.HEDERA_FAMILY_TOKEN_ID,
+    treasuryAccountId: process.env.HEDERA_TREASURY_ACCOUNT_ID,
+  };
+
+  hederaIntegrationInstance = createFamilyHederaIntegration(
+    hederaService,
+    wisdomConfig,
+    tokenomics,
+  );
+
+  return hederaIntegrationInstance;
+}
+
+// Main plugin definition
+export const wisdomPlugin: Plugin = {
+  name: "familyWisdom",
+  description:
+    "Family wisdom and emotional intelligence guidance with Hedera blockchain integration",
+  actions: [wisdomAction],
+  evaluators: [],
+  providers: [],
+  services: [],
+};
+
+export default wisdomPlugin;

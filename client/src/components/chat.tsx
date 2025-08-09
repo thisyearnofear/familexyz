@@ -211,7 +211,7 @@ export default function Page({ agentId }: { agentId: UUID }) {
                                             {/* Attachments */}
                                             <div>
                                                 {message?.attachments?.map(
-                                                    (attachment, idx) => (
+                                                    (attachment: any, idx: number) => (
                                                         <div
                                                             className="flex flex-col gap-1 mt-2"
                                                             key={idx}

@@ -52,7 +52,7 @@ export function parseArguments(): {
   characters?: string;
 } {
   try {
-    return yargs(process.argv.slice(3))
+    return yargs(process.argv.slice(2))
       .option("character", {
         type: "string",
         description: "Path to the character JSON file",
@@ -626,7 +626,7 @@ export async function initializeClients(
 const oldStart = DirectClient.prototype.start;
 DirectClient.prototype.start = function (...args: any[]) {
   // Add family stats endpoint
-  this.router.get("/family/stats", (req, res) => {
+  this.app.get("/family/stats", (req, res) => {
     let total = 0,
       positive = 0,
       negative = 0;
@@ -636,20 +636,22 @@ DirectClient.prototype.start = function (...args: any[]) {
     let growth = { growth: 0, fixed: 0 };
 
     for (const agent of this.agents.values()) {
-      const fam = agent.runtime.meta.familyMetrics || {};
+      if (!agent || !agent.runtime) continue;
+      const meta = agent.runtime.meta || {};
+      const fam = meta.familyMetrics || {};
       total += fam.total || 0;
       positive += fam.positive || 0;
       negative += fam.negative || 0;
-      const im = agent.runtime.meta.intimacyMetrics || {};
+      const im = meta.intimacyMetrics || {};
       intimacy.affection += im.affection || 0;
       intimacy.tension += im.tension || 0;
-      const pm = agent.runtime.meta.presenceMetrics || {};
+      const pm = meta.presenceMetrics || {};
       presence.attention += pm.attention || 0;
       presence.distraction += pm.distraction || 0;
-      const gm = agent.runtime.meta.generationalMetrics || {};
+      const gm = meta.generationalMetrics || {};
       generational.bridge += gm.bridge || 0;
       generational.gap += gm.gap || 0;
-      const gr = agent.runtime.meta.growthMetrics || {};
+      const gr = meta.growthMetrics || {};
       growth.growth += gr.growth || 0;
       growth.fixed += gr.fixed || 0;
     }
@@ -667,11 +669,13 @@ DirectClient.prototype.start = function (...args: any[]) {
   });
 
   // --- NEW: metric history endpoint ---
-  this.router.get("/family/stats/history", (req, res) => {
+  this.app.get("/family/stats/history", (req, res) => {
     // aggregate timeline across all agents, by ts
     const all = [];
     for (const agent of this.agents.values()) {
-      const hist = agent.runtime.meta.metricHistory || [];
+      if (!agent || !agent.runtime) continue;
+      const meta = agent.runtime.meta || {};
+      const hist = meta.metricHistory || [];
       all.push(...hist);
     }
     // group by ts bucket (nearest 10s for smoothing)
@@ -696,7 +700,7 @@ DirectClient.prototype.start = function (...args: any[]) {
   });
 
   // --- NEW: metric history from SQLite ---
-  this.router.get("/family/stats/history/db", (req, res) => {
+  this.app.get("/family/stats/history/db", (req, res) => {
     try {
       const Database = require("better-sqlite3");
       const path = require("path");
@@ -1003,6 +1007,8 @@ const startAgents = async () => {
 
 startAgents().catch((error) => {
   elizaLogger.error("Unhandled error in startAgents:", error);
+  elizaLogger.error("Error stack:", error.stack);
+  elizaLogger.error("Error message:", error.message);
   process.exit(1);
 });
 

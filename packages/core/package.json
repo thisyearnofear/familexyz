@@ -67,6 +67,7 @@
         "@ai-sdk/mistral": "1.0.9",
         "@ai-sdk/openai": "1.0.5",
         "@fal-ai/client": "1.2.0",
+        "@huggingface/transformers": "3.0.2",
         "@tavily/core": "^0.0.2",
         "@types/uuid": "10.0.0",
         "ai": "3.4.33",

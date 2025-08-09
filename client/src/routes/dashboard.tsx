@@ -1,233 +1,452 @@
-import { Suspense } from "react";
-import { useNavigate } from "react-router-dom";
-import { Separator } from "@/components/ui/separator";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import ConsentModal from "@/components/consent-modal";
-import { 
-  FamilyRadarChart, 
-  FamilyLineChart, 
-  FamilyMetricsCards, 
-  ConnectionOpportunities 
-} from "@/components/family";
-import { useFamilyStats, useFamilyHistory } from "@/hooks/useFamilyData";
-import { useConsent } from "@/hooks/useConsent";
+import { FamilyMetricsCards } from "@/components/family";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { apiClient } from "@/lib/api";
+import { FamilyStats, FamilyHistory } from "@/types/family";
 import "chart.js/auto";
+import { Radar, Line } from "react-chartjs-2";
+import { 
+  Heart, 
+  MessageCircle, 
+  TrendingUp, 
+  Calendar,
+  Clock,
+  Users,
+  Star,
+  ArrowUp,
+  Target
+} from "lucide-react";
 
-// Loading fallback component - CLEAN principle
+// Enhanced connection opportunities with better structure
+const connectionOpportunities = [
+  {
+    id: 1,
+    title: "Family Game Night",
+    description: "Schedule a weekly game night to strengthen bonds and create lasting memories",
+    priority: "high",
+    estimatedTime: "2 hours",
+    category: "activity",
+    difficulty: "easy",
+    icon: "🎲",
+    benefits: ["Bonding", "Fun", "Communication"]
+  },
+  {
+    id: 2,
+    title: "Cooking Together",
+    description: "Try cooking a new recipe as a family and share stories while preparing meals",
+    priority: "medium", 
+    estimatedTime: "1 hour",
+    category: "activity",
+    difficulty: "medium",
+    icon: "👨‍🍳",
+    benefits: ["Teamwork", "Learning", "Tradition"]
+  },
+  {
+    id: 3,
+    title: "Nature Walk & Stories",
+    description: "Take a peaceful walk in the park and share meaningful stories together",
+    priority: "low",
+    estimatedTime: "30 minutes",
+    category: "conversation",
+    difficulty: "easy",
+    icon: "🌳",
+    benefits: ["Mindfulness", "Exercise", "Connection"]
+  }
+];
+
+// Enhanced loading skeleton with better visual hierarchy
 const DashboardSkeleton = () => (
-  <div className="space-y-6">
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="h-24 bg-muted animate-pulse rounded-lg" />
+  <div className="flex-1 space-y-8 p-4 md:p-8 pt-6">
+    {/* Header skeleton */}
+    <div className="space-y-4">
+      <div className="h-8 w-64 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded-lg animate-pulse" />
+      <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
+    </div>
+    
+    {/* Metrics cards skeleton */}
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+      {[...Array(4)].map((_, i) => (
+        <Card key={i} className="animate-pulse">
+          <CardHeader className="pb-2">
+            <div className="h-4 bg-gradient-to-r from-gray-200 to-gray-300 rounded" />
+          </CardHeader>
+          <CardContent>
+            <div className="h-8 bg-gradient-to-r from-gray-200 to-gray-300 rounded mb-2" />
+            <div className="h-3 w-3/4 bg-gradient-to-r from-gray-200 to-gray-300 rounded" />
+          </CardContent>
+        </Card>
       ))}
     </div>
+    
+    {/* Charts skeleton */}
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div className="h-80 bg-muted animate-pulse rounded-lg" />
-      <div className="h-80 bg-muted animate-pulse rounded-lg" />
+      <div className="h-80 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl animate-pulse" />
+      <div className="h-80 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl animate-pulse" />
+    </div>
+    
+    {/* Bottom section skeleton */}
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="h-64 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl animate-pulse" />
+      <div className="lg:col-span-2 h-64 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl animate-pulse" />
     </div>
   </div>
 );
 
+// Enhanced chart component with better visual design
 function ChartCard({ stats }: { stats: FamilyStats | undefined }) {
+  if (!stats) return null;
+
   const data = {
     labels: [
-      "Affection",
-      "Tension",
-      "Attention",
-      "Distraction",
-      "Bridge",
-      "Gap",
-      "Growth",
-      "Fixed"
+      'Health Score',
+      'Intimacy', 
+      'Presence',
+      'Generational Bridge',
+      'Growth',
+      'Overall Positive'
     ],
     datasets: [
       {
-        label: "Family Metrics",
+        label: 'Family Dynamics',
         data: [
-          stats?.intimacy?.affection || 0,
-          stats?.intimacy?.tension || 0,
-          stats?.presence?.attention || 0,
-          stats?.presence?.distraction || 0,
-          stats?.generational?.bridge || 0,
-          stats?.generational?.gap || 0,
-          stats?.growth?.growth || 0,
-          stats?.growth?.fixed || 0,
+          stats.healthScore,
+          stats.intimacy?.affection || 0,
+          stats.presence?.attention || 0,
+          stats.generational?.bridge || 0,
+          stats.growth?.growth || 0,
+          stats.positive
         ],
-        backgroundColor: "rgba(54, 162, 235, 0.2)",
-        borderColor: "rgba(54, 162, 235, 1)",
-        pointBackgroundColor: "rgba(54, 162, 235, 1)",
-      }
-    ]
+        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+        borderColor: 'rgba(99, 102, 241, 0.8)',
+        borderWidth: 2,
+        pointBackgroundColor: 'rgba(99, 102, 241, 1)',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointRadius: 4,
+      },
+    ],
   };
 
   const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false,
+      },
+    },
     scales: {
       r: {
-        angleLines: { display: true },
-        suggestedMin: 0,
-        suggestedMax: 5
-      }
+        beginAtZero: true,
+        max: 100,
+        ticks: {
+          display: false,
+        },
+        grid: {
+          color: 'rgba(0, 0, 0, 0.1)',
+        },
+        angleLines: {
+          color: 'rgba(0, 0, 0, 0.1)',
+        },
+      },
     },
-    plugins: {
-      legend: { display: false }
-    }
   };
 
   return (
-    <Card className="col-span-2">
-      <CardHeader>
-        <CardTitle>Family Dynamics Radar</CardTitle>
+    <Card className="hover:shadow-lg transition-all duration-300">
+      <CardHeader className="pb-4">
+        <CardTitle className="flex items-center gap-2">
+          <Target className="h-5 w-5 text-indigo-600" />
+          Family Dynamics Overview
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="p-4">
-          <Radar data={data} options={options as any} height={320} />
+        <div style={{ height: '300px' }}>
+          <Radar data={data} options={options as any} />
         </div>
       </CardContent>
     </Card>
   );
 }
 
+// Enhanced line chart with better visual design
 function LineChartCard({ history }: { history: FamilyHistory | undefined }) {
-  if (!history || !history.timeline.length) return null;
+  if (!history || !history.timeline) return null;
+
   const data = {
-    labels: history.timeline.map((d: any) => new Date(d.ts).toLocaleTimeString()),
+    labels: history.timeline.map(point => new Date(point.ts).toLocaleDateString()),
     datasets: [
       {
-        label: "Health Score",
-        data: history.timeline.map((d: any) => d.health),
-        fill: false,
-        borderColor: "rgba(75,192,192,1)",
-        tension: 0.3,
-        pointRadius: 1,
+        label: 'Health Score',
+        data: history.timeline.map(point => point.health),
+        borderColor: 'rgb(34, 197, 94)',
+        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+        tension: 0.4,
+        borderWidth: 3,
+        pointBackgroundColor: 'rgb(34, 197, 94)',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        fill: true,
       },
     ],
   };
+
   const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false,
+      },
+    },
     scales: {
+      x: {
+        grid: {
+          display: false,
+        },
+        ticks: {
+          color: 'rgba(0, 0, 0, 0.6)',
+        },
+      },
       y: {
         beginAtZero: true,
         max: 100,
-        title: { display: true, text: "Health Score" },
+        grid: {
+          color: 'rgba(0, 0, 0, 0.1)',
+        },
+        ticks: {
+          color: 'rgba(0, 0, 0, 0.6)',
+        },
       },
-      x: {
-        title: { display: false },
-        ticks: { display: false }
-      }
     },
-    plugins: {
-      legend: { display: false }
-    }
   };
+
   return (
-    <Card className="col-span-2">
-      <CardHeader>
-        <CardTitle>Health Score Over Time</CardTitle>
+    <Card className="hover:shadow-lg transition-all duration-300">
+      <CardHeader className="pb-4">
+        <CardTitle className="flex items-center gap-2">
+          <TrendingUp className="h-5 w-5 text-green-600" />
+          Health Score Trend
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="p-4"><Line data={data} options={options as any} height={200} /></div>
+        <div style={{ height: '300px' }}>
+          <Line data={data} options={options as any} />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Enhanced Connection Opportunities Component
+function EnhancedConnectionOpportunities() {
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'high': return 'bg-red-100 text-red-800 border-red-200';
+      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'low': return 'bg-green-100 text-green-800 border-green-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  return (
+    <Card className="hover:shadow-lg transition-all duration-300">
+      <CardHeader className="pb-4">
+        <CardTitle className="flex items-center gap-2">
+          <Calendar className="h-5 w-5 text-blue-600" />
+          Connection Opportunities
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {connectionOpportunities.map((opportunity) => (
+          <div
+            key={opportunity.id}
+            className="group p-4 border border-gray-200 rounded-xl hover:border-blue-300 hover:shadow-md transition-all duration-300 cursor-pointer"
+          >
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">{opportunity.icon}</span>
+                <div>
+                  <h4 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                    {opportunity.title}
+                  </h4>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Badge 
+                      variant="outline" 
+                      className={`text-xs ${getPriorityColor(opportunity.priority)}`}
+                    >
+                      {opportunity.priority} priority
+                    </Badge>
+                    <span className="flex items-center gap-1 text-xs text-gray-500">
+                      <Clock className="h-3 w-3" />
+                      {opportunity.estimatedTime}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <p className="text-sm text-gray-600 mb-3 leading-relaxed">
+              {opportunity.description}
+            </p>
+            
+            <div className="flex items-center justify-between">
+              <div className="flex gap-1">
+                {opportunity.benefits.map((benefit, idx) => (
+                  <Badge key={idx} variant="secondary" className="text-xs">
+                    {benefit}
+                  </Badge>
+                ))}
+              </div>
+              <Button size="sm" variant="outline" className="group-hover:bg-blue-50 group-hover:border-blue-300">
+                Schedule
+              </Button>
+            </div>
+          </div>
+        ))}
       </CardContent>
     </Card>
   );
 }
 
 export default function Dashboard() {
-  const navigate = useNavigate();
   const [consentOpen, setConsentOpen] = useState(false);
 
   useEffect(() => {
-    if (!localStorage.getItem("familyConsent")) {
+    // Check if user has given consent
+    const hasConsent = localStorage.getItem('familyConsent');
+    if (!hasConsent) {
       setConsentOpen(true);
     }
   }, []);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["familyStats"],
+    queryKey: ['familyStats'],
     queryFn: apiClient.getFamilyStats,
-    refetchInterval: 5000,
   });
 
   const { data: history } = useQuery({
-    queryKey: ["familyStatsHistory"],
+    queryKey: ['familyHistory'],
     queryFn: () => apiClient.getFamilyHistory("/family/stats/history/db"),
-    refetchInterval: 10000,
   });
 
-  const healthScore =
-    !isLoading && data ? Math.round(data.healthScore) : 80;
-  const total = data?.total ?? "-";
-  const positive = data?.positive ?? "-";
-  const negative = data?.negative ?? "-";
-
-  function handleConsent(accepted: boolean, scopes?: any) {
-    if (accepted) {
-      localStorage.setItem("familyConsent", "accepted");
-      if (scopes) {
-        localStorage.setItem("familyConsentScopes", JSON.stringify(scopes));
-      }
-      setConsentOpen(false);
-    } else {
-      setConsentOpen(false);
-      navigate("/about");
-    }
+  if (isLoading) {
+    return <DashboardSkeleton />;
   }
 
   return (
-    <div className="max-w-3xl mx-auto py-8 px-4">
-      <ConsentModal open={consentOpen} onConsent={handleConsent} />
-      <h1 className="text-3xl font-bold mb-6">Family Dashboard</h1>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Family Health Score</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center space-x-4">
-              <span className="text-5xl font-semibold text-green-600">{healthScore}%</span>
-              <span className="text-gray-500">
-                {healthScore >= 75
-                  ? "Strong connection"
-                  : healthScore >= 50
-                  ? "Moderate connection"
-                  : "Needs attention"}
-              </span>
+    <ErrorBoundary>
+      <div className="flex-1 space-y-8 p-4 md:p-8 pt-6 bg-gradient-to-br from-gray-50 via-white to-blue-50 min-h-screen">
+        {/* Enhanced Header */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-600 bg-clip-text text-transparent">
+                Family Dashboard
+              </h1>
+              <p className="text-gray-600 mt-2">
+                Track your family's connection and growth journey
+              </p>
             </div>
-            <div className="mt-4 text-sm text-gray-500 flex gap-6">
-              <div>
-                <span className="font-semibold">{total}</span> messages
-              </div>
-              <div>
-                <span className="font-semibold text-green-600">{positive}</span> positive
-              </div>
-              <div>
-                <span className="font-semibold text-red-600">{negative}</span> negative
-              </div>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                <Star className="h-3 w-3 mr-1" />
+                Active
+              </Badge>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+          <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
+        </div>
+        
+        {/* Enhanced Family Health Score Overview */}
+        <div className="space-y-6">
+          <FamilyMetricsCards stats={data} isLoading={isLoading} />
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Upcoming Connection Opportunities</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2">
-              {connectionOpportunities.map((item, idx) => (
-                <li key={idx}>
-                  <span className="font-medium">{item.title}:</span> {item.description}
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-        <ChartCard stats={data} />
-        <LineChartCard history={history} />
+        {/* Enhanced Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <ChartCard stats={data} />
+          <LineChartCard history={history} />
+        </div>
+
+        {/* Enhanced Bottom Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Family Health Score Details */}
+          <Card className="hover:shadow-lg transition-all duration-300">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2">
+                <Heart className="h-5 w-5 text-red-500" />
+                Health Score Details
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-700">Overall Score</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-bold text-gray-900">
+                      {data?.healthScore || 0}%
+                    </span>
+                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                      <ArrowUp className="h-3 w-3 mr-1" />
+                      +2%
+                    </Badge>
+                  </div>
+                </div>
+                <Progress value={data?.healthScore || 0} className="h-2" />
+              </div>
+              
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <MessageCircle className="h-4 w-4 text-blue-500" />
+                    <span className="text-sm text-gray-600">Positive Interactions</span>
+                  </div>
+                  <span className="font-semibold text-gray-900">{data?.positive || 0}%</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Heart className="h-4 w-4 text-pink-500" />
+                    <span className="text-sm text-gray-600">Intimacy</span>
+                  </div>
+                  <span className="font-semibold text-gray-900">{data?.intimacy?.affection || 0}%</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-green-500" />
+                    <span className="text-sm text-gray-600">Presence</span>
+                  </div>
+                  <span className="font-semibold text-gray-900">{data?.presence?.attention || 0}%</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Enhanced Connection Opportunities */}
+          <div className="lg:col-span-2">
+            <EnhancedConnectionOpportunities />
+          </div>
+        </div>
+
+        <ConsentModal 
+          open={consentOpen} 
+          onConsent={(accepted, scopes) => {
+            setConsentOpen(false);
+            if (accepted) {
+              localStorage.setItem('familyConsent', JSON.stringify({ accepted, scopes, timestamp: Date.now() }));
+            }
+            console.log('Consent:', accepted, scopes);
+          }}
+        />
       </div>
-      <Separator />
-      <p className="mt-6 text-gray-500 text-sm">
-        More insights, reminders, and personalized suggestions coming soon!
-      </p>
-    </div>
+    </ErrorBoundary>
   );
 }

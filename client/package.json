@@ -1,5 +1,7 @@
 {
-  "name": "client",
+  "name": "familexyz-client",
+  "version": "1.0.0-beta",
+  "description": "FamilyXYZ web client - AI-powered family connection dashboard",
   "private": true,
   "sideEffects": false,
   "type": "module",

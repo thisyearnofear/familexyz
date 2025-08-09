@@ -36,16 +36,13 @@ export function AppSidebar() {
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
                             <NavLink to="/">
-                                <img
-                                    src="/elizaos-icon.png"
-                                    width="100%"
-                                    height="100%"
-                                    className="size-7"
-                                />
+                                <div className="flex items-center justify-center size-7 text-2xl">
+                                    👨‍👩‍👧‍👦
+                                </div>
 
                                 <div className="flex flex-col gap-0.5 leading-none">
                                     <span className="font-semibold">
-                                        Family Agents
+                                        FamilyXYZ
                                     </span>
                                     <span className="">v{info?.version}</span>
                                 </div>
@@ -115,7 +112,7 @@ export function AppSidebar() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <NavLink
-                            to="https://elizaos.github.io/eliza/docs/intro/"
+                            to="/docs"
                             target="_blank"
                         >
                             <SidebarMenuButton>

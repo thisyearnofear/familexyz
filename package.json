@@ -1,5 +1,15 @@
 {
-  "name": "eliza",
+  "name": "familexyz",
+  "version": "1.0.0-beta",
+  "description": "AI-powered family connection platform with five specialized family agents",
+  "keywords": ["family", "AI agents", "relationships", "communication", "emotional intelligence"],
+  "author": "FamilyXYZ Team",
+  "license": "MIT",
+  "homepage": "https://familexyz.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/familexyz.git"
+  },
   "scripts": {
     "format": "biome format --write . --config-path config/biome.json",
     "lint": "biome lint . --config-path config/biome.json",

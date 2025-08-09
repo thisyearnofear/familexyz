@@ -1,0 +1,16 @@
+{
+  "productName": "Family-Connection AI Agents",
+  "version": "1.0.0-beta",
+  "releaseDate": "2025-01-09",
+  "features": [
+    "Five specialized family agents",
+    "Multi-platform integration (Web, Telegram, Discord, WhatsApp)",
+    "Privacy-first family data protection",
+    "Progressive disclosure dashboard",
+    "Multi-generational accessibility"
+  ],
+  "updateChannel": "beta",
+  "checkForUpdates": false,
+  "releaseNotesUrl": "https://your-family-product.com/releases",
+  "supportUrl": "https://your-family-product.com/support"
+}

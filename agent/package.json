@@ -1,6 +1,7 @@
 {
-    "name": "@elizaos/agent",
-    "version": "0.1.10-alpha.0",
+    "name": "@familexyz/agent",
+    "version": "1.0.0-beta",
+    "description": "FamilyXYZ AI agent backend - Five specialized family connection agents",
     "main": "src/index.ts",
     "type": "module",
     "scripts": {

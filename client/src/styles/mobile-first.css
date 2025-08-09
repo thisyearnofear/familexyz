@@ -1,0 +1,208 @@
+/* Mobile-First Design Enhancements for Multi-Generational Use */
+
+/* Touch-friendly button sizes */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 12px 16px;
+}
+
+/* Large, readable text for all ages */
+.text-large {
+  font-size: 18px;
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+.text-readable {
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* High contrast for better visibility */
+.high-contrast {
+  color: #1f2937;
+  background-color: #ffffff;
+  border: 2px solid #e5e7eb;
+}
+
+.high-contrast:hover {
+  border-color: #3b82f6;
+  background-color: #f8fafc;
+}
+
+/* Comfortable spacing for easy interaction */
+.comfortable-spacing {
+  margin: 16px 0;
+  padding: 16px;
+}
+
+/* Agent quick access buttons - optimized for all ages */
+.agent-button {
+  @apply touch-target;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.agent-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.agent-button:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Tab navigation - thumb-friendly */
+.tab-button {
+  @apply touch-target;
+  min-width: 80px;
+  border-radius: 8px 8px 0 0;
+  transition: all 0.2s ease;
+}
+
+.tab-button.active {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  border-bottom: 3px solid #3b82f6;
+}
+
+/* Collapsible sections - easy to tap */
+.collapsible-header {
+  @apply touch-target;
+  width: 100%;
+  text-align: left;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.collapsible-header:hover {
+  background-color: #f8fafc;
+}
+
+/* Platform integration cards - clear visual hierarchy */
+.platform-card {
+  padding: 16px;
+  border-radius: 12px;
+  border: 2px solid #e5e7eb;
+  transition: all 0.2s ease;
+}
+
+.platform-card:hover {
+  border-color: #3b82f6;
+  background-color: #f8fafc;
+}
+
+.platform-card.active {
+  border-color: #10b981;
+  background-color: #ecfdf5;
+}
+
+.platform-card.coming-soon {
+  border-color: #f59e0b;
+  background-color: #fffbeb;
+}
+
+/* Chat interface - optimized for conversation */
+.chat-message {
+  padding: 12px 16px;
+  border-radius: 18px;
+  margin: 8px 0;
+  max-width: 80%;
+  word-wrap: break-word;
+}
+
+.chat-message.user {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  margin-left: auto;
+}
+
+.chat-message.agent {
+  background-color: #f3f4f6;
+  color: #1f2937;
+  margin-right: auto;
+}
+
+.chat-input {
+  @apply touch-target;
+  border-radius: 24px;
+  padding: 12px 20px;
+  border: 2px solid #e5e7eb;
+  font-size: 16px; /* Prevents zoom on iOS */
+}
+
+.chat-input:focus {
+  border-color: #3b82f6;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Responsive breakpoints */
+@media (max-width: 640px) {
+  .agent-button {
+    min-height: 60px;
+    font-size: 14px;
+  }
+  
+  .tab-button {
+    min-width: 60px;
+    font-size: 14px;
+    padding: 8px 12px;
+  }
+  
+  .comfortable-spacing {
+    margin: 12px 0;
+    padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .text-large {
+    font-size: 16px;
+  }
+  
+  .text-readable {
+    font-size: 14px;
+  }
+  
+  .agent-button {
+    min-height: 56px;
+    font-size: 13px;
+  }
+}
+
+/* Dark mode support for better accessibility */
+@media (prefers-color-scheme: dark) {
+  .high-contrast {
+    color: #f9fafb;
+    background-color: #1f2937;
+    border-color: #374151;
+  }
+  
+  .high-contrast:hover {
+    background-color: #111827;
+    border-color: #60a5fa;
+  }
+  
+  .chat-message.agent {
+    background-color: #374151;
+    color: #f9fafb;
+  }
+}
+
+/* Reduced motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .agent-button,
+  .tab-button,
+  .platform-card,
+  .collapsible-header {
+    transition: none;
+  }
+  
+  .agent-button:hover {
+    transform: none;
+  }
+}

@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import ConsentModal from "@/components/consent-modal";
 import { FamilyMetricsCards } from "@/components/family";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ChatInterface } from "@/components/ChatInterface";
 import { apiClient } from "@/lib/api";
 import { FamilyStats, FamilyHistory } from "@/types/family";
 import "chart.js/auto";
@@ -377,8 +378,12 @@ export default function Dashboard() {
           <LineChartCard history={history} />
         </div>
 
-        {/* Enhanced Bottom Section */}
+        {/* Chat Interface Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <ChatInterface />
+          </div>
+          
           {/* Family Health Score Details */}
           <Card className="hover:shadow-lg transition-all duration-300">
             <CardHeader className="pb-4">
@@ -429,9 +434,12 @@ export default function Dashboard() {
               </div>
             </CardContent>
           </Card>
+        </div>
 
+        {/* Enhanced Bottom Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Enhanced Connection Opportunities */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-3">
             <EnhancedConnectionOpportunities />
           </div>
         </div>

@@ -3,11 +3,13 @@ import { message } from "telegraf/filters";
 import { type IAgentRuntime, elizaLogger } from "@elizaos/core";
 import { MessageManager } from "./messageManager.ts";
 import { getOrCreateRecommenderInBe } from "./getOrCreateRecommenderInBe.ts";
+import { GoodDollarTelegramBot } from "./gooddollarBot.ts";
 
 export class TelegramClient {
     private bot: Telegraf<Context>;
     private runtime: IAgentRuntime;
     private messageManager: MessageManager;
+    private goodDollarBot: GoodDollarTelegramBot;
     private backend;
     private backendToken;
     private tgTrader;
@@ -23,6 +25,7 @@ export class TelegramClient {
         this.runtime = runtime;
         this.bot = new Telegraf(botToken,this.options);
         this.messageManager = new MessageManager(this.bot, this.runtime);
+        this.goodDollarBot = new GoodDollarTelegramBot(this.runtime);
         this.backend = runtime.getSetting("BACKEND_URL");
         this.backendToken = runtime.getSetting("BACKEND_TOKEN");
         this.tgTrader = runtime.getSetting("TG_TRADER"); // boolean To Be added to the settings
@@ -34,6 +37,7 @@ export class TelegramClient {
         try {
             await this.initializeBot();
             this.setupMessageHandlers();
+            this.setupGoodDollarIntegration();
             this.setupShutdownHandlers();
         } catch (error) {
             elizaLogger.error("❌ Failed to launch Telegram bot:", error);
@@ -171,6 +175,31 @@ export class TelegramClient {
             elizaLogger.error(`❌ Telegram Error for ${ctx.updateType}:`, err);
             ctx.reply("An unexpected error occurred. Please try again later.");
         });
+    }
+
+    /**
+     * Setup GoodDollar integration with family-focused commands
+     */
+    private setupGoodDollarIntegration(): void {
+        elizaLogger.log("🏠 Setting up GoodDollar family integration...");
+        
+        try {
+            // Setup GoodDollar command handlers
+            this.goodDollarBot.setupGoodDollarHandlers(this.bot);
+            
+            elizaLogger.success("✅ GoodDollar Telegram integration ready!");
+            elizaLogger.log("🌟 Family commands available:");
+            elizaLogger.log("   • /wallet - Family G$ balance");
+            elizaLogger.log("   • /family - Verification status");
+            elizaLogger.log("   • /streams - Active allowances");
+            elizaLogger.log("   • /dashboard - Complete overview");
+            elizaLogger.log("   • /start - Family onboarding");
+            elizaLogger.log("   • Natural language support enabled");
+            
+        } catch (error) {
+            elizaLogger.warn("⚠️ GoodDollar integration failed:", error);
+            elizaLogger.log("Continuing without GoodDollar features...");
+        }
     }
 
     private setupShutdownHandlers(): void {

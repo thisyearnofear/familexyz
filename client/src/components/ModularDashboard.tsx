@@ -8,13 +8,12 @@ import { ChatInterface } from './ChatInterface';
 import { PlatformIntegration } from './platform/PlatformIntegration';
 import { FamilyLogo } from './FamilyLogo';
 import { apiClient } from "@/lib/api";
-import { FamilyStats } from "@/types/family";
 import { telegramIntegration } from "@/services/telegramIntegration";
+import type { FamilyStats } from "@/types/family";
+
 import { 
   MessageCircle, 
   TrendingUp, 
-  Users,
-  Settings,
   ChevronRight,
   ChevronDown,
   Heart,
@@ -23,9 +22,8 @@ import {
   Calendar,
   BarChart3,
   Smartphone,
-  MessageSquare,
-  Hash,
-  Phone
+  Users,
+  Settings
 } from "lucide-react";
 
 // Simplified agent cards for quick access - reuse existing data
@@ -44,23 +42,47 @@ interface ModularDashboardProps {
 export const ModularDashboard: React.FC<ModularDashboardProps> = ({ onAgentSelect }) => {
   const [activeView, setActiveView] = useState<'overview' | 'chat' | 'insights' | 'platforms'>('overview');
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['quick-access']));
-  const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
+  const [, setSelectedAgent] = useState<string | null>(null);
+  const [, setIsLoading] = useState(false);
 
-  const { data: stats, isLoading } = useQuery({
+  const { data: familyStats } = useQuery<FamilyStats>({
     queryKey: ['familyStats'],
     queryFn: apiClient.getFamilyStats,
   });
 
   // Platform integration handlers
   const handlePlatformConnect = async (platformId: string) => {
-    if (platformId === 'telegram') {
-      // For now, show setup instructions
-      alert('Telegram integration setup:\n1. Contact @FamilyWisdomBot\n2. Add to your family group\n3. Type /start to activate');
+    setIsLoading(true);
+    try {
+      if (platformId === 'telegram') {
+        const status = await telegramIntegration.getStatus();
+        if (status.isConnected) {
+          alert('Telegram bot is already connected! Check your family group.');
+        } else {
+          // Show setup instructions instead of attempting direct connection
+          alert('Telegram Integration Setup:\n\n1. Contact your family admin for bot token\n2. Configure bot in family settings\n3. Add bot to your family group\n4. Type /start to activate');
+        }
+      }
+    } catch (error) {
+      console.error('Platform connection error:', error);
+      alert('Failed to connect platform. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handlePlatformConfigure = (platformId: string) => {
-    console.log(`Configure ${platformId} platform`);
+  const handlePlatformConfigure = async (platformId: string) => {
+    if (platformId === 'telegram') {
+      try {
+        const familyGroups = await telegramIntegration.getFamilyGroups();
+        // Open configuration modal or navigate to settings
+        console.log('Current Telegram groups:', familyGroups);
+        alert('Telegram configuration panel would open here.');
+      } catch (error) {
+        console.error('Configuration error:', error);
+        alert('Failed to load configuration. Please ensure Telegram is connected.');
+      }
+    }
   };
 
   const toggleSection = (sectionId: string) => {
@@ -79,6 +101,15 @@ export const ModularDashboard: React.FC<ModularDashboardProps> = ({ onAgentSelec
     onAgentSelect?.(agentId);
   };
 
+  // Settings and user management handlers
+  const handleUserManagement = () => {
+    alert('User management panel would open here.\n\nFeatures:\n- Add/remove family members\n- Set permissions\n- Manage agent access');
+  };
+
+  const handleSettings = () => {
+    alert('Settings panel would open here.\n\nFeatures:\n- Notification preferences\n- Privacy settings\n- Agent configurations\n- Platform integrations');
+  };
+
   // Main navigation tabs
   const navigationTabs = [
     { id: 'overview', label: 'Overview', icon: BarChart3 },
@@ -86,6 +117,11 @@ export const ModularDashboard: React.FC<ModularDashboardProps> = ({ onAgentSelec
     { id: 'insights', label: 'Insights', icon: TrendingUp },
     { id: 'platforms', label: 'Platforms', icon: Smartphone }
   ];
+
+  // Load initial data
+  useEffect(() => {
+    // Any initialization logic can go here
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
@@ -100,6 +136,24 @@ export const ModularDashboard: React.FC<ModularDashboardProps> = ({ onAgentSelec
             </div>
           </div>
           <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleUserManagement}
+              className="flex items-center space-x-1"
+            >
+              <Users className="w-4 h-4" />
+              <span>Users</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSettings}
+              className="flex items-center space-x-1"
+            >
+              <Settings className="w-4 h-4" />
+              <span>Settings</span>
+            </Button>
             <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
               <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
               All Agents Online
@@ -176,7 +230,7 @@ export const ModularDashboard: React.FC<ModularDashboardProps> = ({ onAgentSelec
                   </CardTitle>
                   <div className="flex items-center space-x-2">
                     <Badge variant="outline" className="bg-green-50 text-green-700">
-                      {stats?.healthScore || 0}%
+                      {familyStats?.healthScore || 0}%
                     </Badge>
                     {expandedSections.has('health-score') ? 
                       <ChevronDown className="w-4 h-4" /> : 
@@ -188,22 +242,22 @@ export const ModularDashboard: React.FC<ModularDashboardProps> = ({ onAgentSelec
               {expandedSections.has('health-score') && (
                 <CardContent>
                   <div className="space-y-4">
-                    <Progress value={stats?.healthScore || 0} className="h-3" />
+                    <Progress value={familyStats?.healthScore || 0} className="h-3" />
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div className="text-center">
-                        <div className="font-semibold text-blue-600">{stats?.intimacy?.affection || 0}</div>
+                        <div className="font-semibold text-blue-600">{familyStats?.intimacy?.affection || 0}</div>
                         <div className="text-gray-600">Intimacy</div>
                       </div>
                       <div className="text-center">
-                        <div className="font-semibold text-green-600">{stats?.presence?.attention || 0}</div>
+                        <div className="font-semibold text-green-600">{familyStats?.presence?.attention || 0}</div>
                         <div className="text-gray-600">Presence</div>
                       </div>
                       <div className="text-center">
-                        <div className="font-semibold text-purple-600">{stats?.generational?.bridge || 0}</div>
+                        <div className="font-semibold text-purple-600">{familyStats?.generational?.bridge || 0}</div>
                         <div className="text-gray-600">Bridge</div>
                       </div>
                       <div className="text-center">
-                        <div className="font-semibold text-orange-600">{stats?.growth?.growth || 0}</div>
+                        <div className="font-semibold text-orange-600">{familyStats?.growth?.growth || 0}</div>
                         <div className="text-gray-600">Growth</div>
                       </div>
                     </div>

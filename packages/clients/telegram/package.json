@@ -20,6 +20,7 @@
     ],
     "dependencies": {
         "@elizaos/core": "workspace:*",
+        "@elizaos/plugin-gooddollar": "workspace:*",
         "bs58": "^6.0.0",
         "@types/bs58": "^5.0.0",
         "@telegraf/types": "7.1.0",

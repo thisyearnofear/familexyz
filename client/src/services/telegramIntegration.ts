@@ -1,5 +1,4 @@
 // Telegram Integration Service - Leverages existing backend client
-import { apiClient } from "@/lib/api";
 
 export interface TelegramBotConfig {
   botToken: string;

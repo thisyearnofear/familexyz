@@ -38,11 +38,53 @@ pnpm install
 cp environments/development/.env.development .env
 # Edit .env with your API keys (see docs/setup/environments.md)
 
-# 3. Start all family agents
+# 3. Launch the full stack
 pnpm dev
 ```
 
-> **Note:** `pnpm dev` launches all five family agents automatically.
+> **Note:** `pnpm dev` launches both the backend (all five family agents) and frontend dashboard automatically.
+
+### 🔧 Development Options
+
+**Launch Everything (Recommended)**
+```bash
+pnpm dev
+```
+This starts:
+- Backend: All five family agents (Wisdom, Intimacy, Generational Bridge, Presence, Growth)
+- Frontend: Web dashboard at `http://localhost:5173`
+- Hot reload for both backend and frontend
+
+**Backend Only**
+```bash
+# Start all family agents
+pnpm start
+
+# Or start with debug logging
+pnpm start:debug
+
+# Or clean start (resets database)
+pnpm cleanstart
+```
+
+**Frontend Only**
+```bash
+# Start the web dashboard
+pnpm start:client
+```
+The dashboard will be available at `http://localhost:5173`
+
+**Individual Components**
+```bash
+# Backend agent server
+cd agent && pnpm dev
+
+# Frontend dashboard
+cd client && pnpm dev
+
+# Core packages (for development)
+cd packages/core && pnpm dev
+```
 
 ### 🔐 Environment Setup
 

@@ -1,0 +1,40 @@
+{
+  "name": "@elizaos/plugin-gooddollar",
+  "version": "0.1.0",
+  "description": "GoodDollar G$ integration plugin for FamilyXYZ - UBI rewards for family interactions",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint . --ext .ts,.tsx --fix",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": ["gooddollar", "ubi", "family", "rewards", "blockchain", "g$", "superfluid"],
+  "author": "FamilyXYZ Team",
+  "license": "MIT",
+  "dependencies": {
+    "@elizaos/core": "workspace:*",
+    "@elizaos/plugin-evm": "workspace:*",
+    "@gooddollar/goodlogin-sdk": "^1.0.0",
+    "@superfluid-finance/sdk-core": "^0.6.0",
+    "ethers": "^6.13.0",
+    "viem": "^2.21.58",
+    "node-cache": "^5.1.2",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.6.3",
+    "eslint": "^9.0.0"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

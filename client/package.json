@@ -6,14 +6,12 @@
   "sideEffects": false,
   "type": "module",
   "scripts": {
-    "extract-version": "sh version.sh",
+    "extract-version": "echo '{\"version\": \"1.0.0-beta\"}' > src/lib/info.json",
     "dev": "pnpm run extract-version && vite",
     "build": "pnpm run extract-version && tsc -b && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
-    "@elizaos/core": "workspace:*",
-    "@elizaos/hedera-wallet": "workspace:*",
     "@radix-ui/react-avatar": "^1.1.2",
     "@radix-ui/react-collapsible": "^1.1.2",
     "@radix-ui/react-dialog": "^1.1.4",

@@ -1,0 +1,23 @@
+# PNPM configuration for CI builds
+auto-install-peers=false
+strict-peer-dependencies=false
+prefer-offline=true
+fund=false
+audit=false
+update-notifier=false
+
+# Skip problematic optional dependencies in CI
+optional=false
+
+# Use shallow install strategy for faster builds
+install-strategy=shallow
+
+# Ignore engines check for CI compatibility
+engine-strict=false
+
+# Skip native dependencies that cause build issues
+ignore-dep-scripts=true
+ignore-scripts=false
+
+# Specific package exclusions for CI
+exclude-links-from-lockfile=true

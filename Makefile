@@ -19,7 +19,7 @@ all: eliza.manifest.sgx eliza.sig
 endif
 
 .PHONY: eliza.manifest
-eliza.manifest: eliza.manifest.template
+eliza.manifest: config/eliza.manifest.template
 	gramine-manifest \
 		-Dlog_level=$(GRAMINE_LOG_LEVEL) \
 		-Darch_libdir=$(ARCH_LIBDIR) \

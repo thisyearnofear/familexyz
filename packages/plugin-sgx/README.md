@@ -39,7 +39,7 @@ SGX=1 make start
 SGX=1 make start -- --character "character/trump.character.json"
 ```
 
-After starting Eliza, the provider `sgxAttestationProvider` will be registered into Eliza through plugin-sgx. The environment variable `SGX` is required to be set to `1` to enable plugin-sgx. And the `SGX` is always set to `1` in the SGX environment through the `eliza.manifest.template` file.
+After starting Eliza, the provider `sgxAttestationProvider` will be registered into Eliza through plugin-sgx. The environment variable `SGX` is required to be set to `1` to enable plugin-sgx. And the `SGX` is always set to `1` in the SGX environment through the `config/eliza.manifest.template` file.
 
 When Eliza starts, the `sgxAttestationProvider` will generate SGX attestation in each request. And you can use the `SgxAttestationProvider` to generate SGX remote attestations for your own plugins / clients.
 

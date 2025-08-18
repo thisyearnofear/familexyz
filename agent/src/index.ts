@@ -33,6 +33,7 @@ import { getEnabledPlugins } from "./pluginLoader";
 
 // NEW: Platform integrations
 import "./integrations/telegram.js";
+import { healthCheck, readinessCheck } from './health.js';
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
@@ -628,6 +629,10 @@ export async function initializeClients(
 
 const oldStart = DirectClient.prototype.start;
 DirectClient.prototype.start = function (...args: any[]) {
+  // Add health check endpoints
+  this.app.get("/health", healthCheck);
+  this.app.get("/ready", readinessCheck);
+  
   // Add family stats endpoint
   this.app.get("/family/stats", (req, res) => {
     let total = 0,

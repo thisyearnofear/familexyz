@@ -4,6 +4,7 @@ packages:
   - "packages/adapters/*"
   - "packages/clients/*"
   - "packages/plugins/*"
+  - "packages/plugin-*"
   - "packages/family/*"
   - "packages/blockchain/*"
   - "packages/auth/*"

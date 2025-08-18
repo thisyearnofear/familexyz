@@ -1,0 +1,32 @@
+[build]
+  base = "client"
+  publish = "client/dist"
+  command = "cd .. && pnpm install --no-frozen-lockfile && pnpm build:client"
+
+[build.environment]
+  NODE_VERSION = "23"
+  PNPM_VERSION = "9.4.0"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[context.production]
+  environment = { VITE_SERVER_PORT = "3000" }
+
+[context.deploy-preview]
+  environment = { VITE_SERVER_PORT = "3000" }
+
+[context.branch-deploy]
+  environment = { VITE_SERVER_PORT = "3000" }
+
+# Headers for security
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"

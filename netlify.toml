@@ -1,8 +1,7 @@
 [build]
-  base = "."
-  publish = "client/dist"
-  command = "pnpm install --filter './client...' --no-frozen-lockfile && pnpm --filter './client...' run build"
-  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF client/"
+  base = "client"
+  publish = "dist"
+  command = "npm install && npm run build"
 
 [build.environment]
   NODE_VERSION = "22"

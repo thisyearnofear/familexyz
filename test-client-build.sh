@@ -1,19 +1,22 @@
 #!/bin/bash
 
-# Simple test to verify client build works with pnpm filter
-echo "🧪 Testing client build with pnpm filter..."
+# Simple test to verify client build works like Netlify
+echo "🧪 Testing client build (Netlify simulation)..."
 
-# Test the exact command Netlify will run
-echo "📦 Installing client dependencies..."
-pnpm install --filter './client...' --no-frozen-lockfile
+# Change to client directory like Netlify does
+cd client
+
+# Test the exact commands Netlify will run
+echo "📦 Installing client dependencies with npm..."
+npm install
 
 echo "🔨 Building client..."
-pnpm --filter './client...' run build
+npm run build
 
 echo "📋 Verifying build output..."
-if [ -d "client/dist" ]; then
+if [ -d "dist" ]; then
     echo "✅ Build successful! Output in client/dist:"
-    ls -la client/dist/
+    ls -la dist/
 else
     echo "❌ Build failed - no dist directory found"
     exit 1

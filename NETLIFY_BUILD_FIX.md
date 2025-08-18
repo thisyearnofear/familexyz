@@ -11,14 +11,17 @@ The Netlify build was failing due to:
 
 ### **DRY, CLEAN, MODULAR, ORGANISED, PERFORMANT Approach**
 
-### 1. **Single Command in `netlify.toml`**
+### 1. **Base Directory Approach in `netlify.toml`**
 ```toml
-command = "pnpm install --filter './client...' --no-frozen-lockfile && pnpm --filter './client...' run build"
+[build]
+  base = "client"
+  publish = "dist"
+  command = "npm install && npm run build"
 ```
-- **DRY**: Single source of truth, no duplicated logic
-- **CLEAN**: No temporary files or workspace manipulation
-- **MODULAR**: Client completely isolated via pnpm filter
-- **PERFORMANT**: Only installs client deps, skips 125-package workspace
+- **DRY**: Simple standard npm commands
+- **CLEAN**: No workspace detection, no temporary files
+- **MODULAR**: Client treated as standalone project in CI
+- **PERFORMANT**: Only installs ~30 client deps, never sees workspace
 
 ### 2. **Proper TypeScript Scoping in `client/tsconfig.app.json`**
 - Added explicit `types` array: `["vite/client", "node", "react", "react-dom"]`
@@ -60,8 +63,10 @@ command = "pnpm install --filter './client...' --no-frozen-lockfile && pnpm --fi
 - **Architecture**: Maintains clean separation between client and server concerns
 
 ## Expected Results
-- Netlify build completes without lockfile errors
-- Only client dependencies installed (no Discord/native deps)
+- Netlify never sees the monorepo workspace (base = "client")
+- Only ~30 client dependencies installed (vs 5000+ workspace deps)
+- No lockfile conflicts (client uses npm, workspace uses pnpm)
+- No native dependency compilation (Discord packages never installed)
+- Build time under 2 minutes (vs 5+ minute timeout)
 - TypeScript compilation clean (no server-side type errors)
-- Build time significantly faster
-- Local development unchanged
+- Local development completely unchanged

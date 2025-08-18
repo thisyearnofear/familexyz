@@ -55,6 +55,9 @@ out/
 node-compile-cache
 .eslintcache
 tsup.config.bundled_*.mjs
+# Netlify build temp files
+package.json.bak
+client-only-package.json
 
 # =============================================================================
 # DATABASE & DATA FILES

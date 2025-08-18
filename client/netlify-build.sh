@@ -1,30 +1,54 @@
 #!/bin/bash
 
 # Netlify build script for FamilyXYZ client
-# This script ensures the client builds in complete isolation from the workspace
+# This script runs from repo root and completely isolates the client build
 
 set -e
 
-echo "🚀 Starting FamilyXYZ client build..."
+echo "🚀 Starting FamilyXYZ client build from root..."
+echo "📁 Current directory: $(pwd)"
 echo "🔧 Node version: $(node --version)"
-echo "📦 PNPM version: $(pnpm --version)"
+echo "📦 NPM version: $(npm --version)"
 
-# Completely isolate from workspace - remove ALL workspace traces
-echo "📦 Completely isolating from workspace..."
-rm -f ../pnpm-workspace.yaml ../pnpm-lock.yaml
-rm -f ../package.json  # Remove root package.json to prevent workspace detection
-rm -rf ../node_modules  # Remove any existing node_modules
-rm -rf ../packages  # Remove packages directory reference
+# STEP 1: Completely destroy workspace structure
+echo "💥 Destroying workspace structure..."
+rm -f pnpm-workspace.yaml || true
+rm -f pnpm-lock.yaml || true
+rm -f .npmrc || true
+rm -rf node_modules || true
+rm -rf packages || true
 
-# Create a minimal package.json in parent to prevent workspace detection
-echo '{}' > ../package.json
+# Backup original package.json and replace with minimal version
+echo "📦 Replacing root package.json..."
+mv package.json package.json.bak || true
+echo '{
+  "name": "temp-build",
+  "private": true,
+  "scripts": {}
+}' > package.json
 
-# Install dependencies using npm instead of pnpm to avoid workspace issues
-echo "📥 Installing dependencies with npm (to avoid workspace detection)..."
-npm install --legacy-peer-deps
+# STEP 2: Navigate to client and do clean build
+echo "📁 Moving to client directory..."
+cd client
 
-# Build the application
+echo "🧹 Cleaning client directory..."
+rm -rf node_modules dist || true
+
+# STEP 3: Install dependencies in isolation
+echo "📥 Installing client dependencies with npm..."
+export NPM_CONFIG_FUND=false
+export NPM_CONFIG_AUDIT=false
+export NPM_CONFIG_UPDATE_NOTIFIER=false
+npm install --no-optional --legacy-peer-deps --production=false
+
+# STEP 4: Build the application
 echo "🔨 Building application..."
 npm run build
 
-echo "✅ Build completed successfully!"
+# STEP 5: Verify build output
+echo "📋 Build verification:"
+ls -la dist/ || echo "❌ No dist directory found!"
+echo "📊 Build size:"
+du -sh dist/* 2>/dev/null || echo "No files to measure"
+
+echo "✅ Client build completed successfully!"

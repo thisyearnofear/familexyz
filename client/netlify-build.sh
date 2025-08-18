@@ -15,7 +15,10 @@ rm -f ../pnpm-workspace.yaml ../pnpm-lock.yaml
 
 # Install dependencies in isolation
 echo "📥 Installing dependencies..."
-pnpm install --no-frozen-lockfile --shamefully-hoist
+# Skip optional native modules that aren't needed for client build
+export SKIP_OPTIONAL_BINARIES=1
+export NO_OPTIONAL=1
+pnpm install --no-frozen-lockfile --shamefully-hoist --no-optional
 
 # Build the application
 echo "🔨 Building application..."

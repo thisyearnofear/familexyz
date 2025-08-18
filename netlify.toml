@@ -1,7 +1,7 @@
 [build]
   base = "client"
-  publish = "client/dist"
-  command = "bash netlify-build.sh"
+  publish = "dist"
+  command = "chmod +x netlify-build.sh && bash netlify-build.sh"
 
 [build.environment]
   NODE_VERSION = "20.18.0"

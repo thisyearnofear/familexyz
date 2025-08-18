@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Netlify build script for FamilyXYZ client
-# This script ensures the client builds in isolation from the workspace
+# This script ensures the client builds in complete isolation from the workspace
 
 set -e
 
@@ -9,19 +9,22 @@ echo "🚀 Starting FamilyXYZ client build..."
 echo "🔧 Node version: $(node --version)"
 echo "📦 PNPM version: $(pnpm --version)"
 
-# Remove workspace configuration to prevent pnpm from detecting the workspace
-echo "📦 Removing workspace configuration..."
+# Completely isolate from workspace - remove ALL workspace traces
+echo "📦 Completely isolating from workspace..."
 rm -f ../pnpm-workspace.yaml ../pnpm-lock.yaml
+rm -f ../package.json  # Remove root package.json to prevent workspace detection
+rm -rf ../node_modules  # Remove any existing node_modules
+rm -rf ../packages  # Remove packages directory reference
 
-# Install dependencies in isolation
-echo "📥 Installing dependencies..."
-# Skip optional native modules that aren't needed for client build
-export SKIP_OPTIONAL_BINARIES=1
-export NO_OPTIONAL=1
-pnpm install --no-frozen-lockfile --shamefully-hoist --no-optional
+# Create a minimal package.json in parent to prevent workspace detection
+echo '{}' > ../package.json
+
+# Install dependencies using npm instead of pnpm to avoid workspace issues
+echo "📥 Installing dependencies with npm (to avoid workspace detection)..."
+npm install --legacy-peer-deps
 
 # Build the application
 echo "🔨 Building application..."
-pnpm run build
+npm run build
 
 echo "✅ Build completed successfully!"

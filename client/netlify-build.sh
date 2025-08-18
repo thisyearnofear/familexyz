@@ -6,10 +6,8 @@
 set -e
 
 echo "🚀 Starting FamilyXYZ client build..."
-
-# Override .nvmrc to use Node 20 for better native module compatibility
-echo "🔧 Setting Node version to 20..."
-echo "20" > ../.nvmrc
+echo "🔧 Node version: $(node --version)"
+echo "📦 PNPM version: $(pnpm --version)"
 
 # Remove workspace configuration to prevent pnpm from detecting the workspace
 echo "📦 Removing workspace configuration..."

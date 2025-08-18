@@ -4,7 +4,7 @@
   command = "bash netlify-build.sh"
 
 [build.environment]
-  NODE_VERSION = "20"
+  NODE_VERSION = "20.18.0"
   PNPM_VERSION = "9"
   # Production environment variables
   VITE_API_BASE_URL = "https://famile.xyz/api"

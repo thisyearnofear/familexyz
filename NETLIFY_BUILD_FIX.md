@@ -1,66 +1,67 @@
-# Netlify Build Fix Summary
+# Netlify Build Fix Summary - CLEAN SOLUTION
 
 ## Problem
 The Netlify build was failing due to:
 1. Node version mismatch (project requires >=22.0.0, Netlify using 20.19.4)
-2. Native dependency `@discordjs/opus` failing to compile in CI environment
-3. TypeScript configuration inheriting types from monorepo workspace
-4. Monorepo workspace structure interfering with client-only build
+2. Lockfile mismatch - contained workspace references that don't exist in client package.json
+3. TypeScript configuration seeing entire monorepo instead of just client types
+4. Native dependency `@discordjs/opus` being installed unnecessarily for client build
 
-## Solution Applied
+## Clean Solution Applied
 
-### 1. Updated `netlify.toml`
-- Changed NODE_VERSION from "20.18.0" to "22"
-- Added environment variables to skip optional dependencies
-- Added PNPM configuration for CI builds
-- Added debugging output to build command
+### **DRY, CLEAN, MODULAR, ORGANISED, PERFORMANT Approach**
 
-### 2. Updated root `package.json`
-- Added `peerDependencyRules.ignoreMissing` for problematic packages
-- Added `resolutions` for Discord packages
-- Added empty `optionalDependencies` object
+### 1. **Single Command in `netlify.toml`**
+```toml
+command = "pnpm install --filter './client...' --no-frozen-lockfile && pnpm --filter './client...' run build"
+```
+- **DRY**: Single source of truth, no duplicated logic
+- **CLEAN**: No temporary files or workspace manipulation
+- **MODULAR**: Client completely isolated via pnpm filter
+- **PERFORMANT**: Only installs client deps, skips 125-package workspace
 
-### 3. Created `.pnpmrc`
-- Configured PNPM to skip optional dependencies
-- Set aggressive CI-friendly options
-- Disabled peer dependency checks
+### 2. **Proper TypeScript Scoping in `client/tsconfig.app.json`**
+- Added explicit `types` array: `["vite/client", "node", "react", "react-dom"]`
+- Added `exclude` to prevent workspace bleeding
+- **ORGANISED**: Standard TypeScript configuration approach
 
-### 4. Created `client/.npmrc`
-- Client-specific npm configuration
-- Legacy peer deps support
-- Disabled optional dependencies
+### 3. **Node Version Consistency**
+- Updated NODE_VERSION to "22" in netlify.toml
+- Added `.nvmrc` files with "22"
+- **CLEAN**: Simple, standard Node version management
 
-### 5. Updated `client/tsconfig.app.json`
-- Added explicit `types` array to control type definitions
-- Prevents server-side types from bleeding into client build
-
-### 6. Enhanced `client/netlify-build.sh`
-- More aggressive workspace cleanup
-- Better error handling with fallback install options
-- Added verification steps
-- Improved debugging output
-
-### 7. Created test script `test-build.sh`
-- Local testing capability to simulate Netlify environment
+### 4. **Removed All Hacky Workarounds**
+- Deleted `netlify-build-wrapper.sh` (complex workspace manipulation)
+- Deleted `client/netlify-build.sh` (isolation script)
+- Deleted `.pnpmrc` and `client/.npmrc` (CI-specific overrides)
+- Removed CI-specific package.json modifications
 
 ## Files Modified
-- `netlify.toml`
-- `package.json` (root)
-- `client/package.json` (no changes needed)
-- `client/tsconfig.app.json`
-- `client/netlify-build.sh`
+- `netlify.toml` - Clean single command
+- `client/tsconfig.app.json` - Proper type scoping
+- `package.json` (root) - Removed CI hacks
 
 ## Files Created
-- `.pnpmrc`
-- `client/.npmrc`
-- `test-build.sh`
-- `NETLIFY_BUILD_FIX.md`
+- `.nvmrc` - Node version consistency
+- `client/.nvmrc` - Node version consistency
+
+## Files Removed (Cleanup)
+- `netlify-build-wrapper.sh` - Hacky workspace manipulation
+- `client/netlify-build.sh` - Complex isolation script
+- `.pnpmrc` - CI-specific overrides
+- `client/.npmrc` - CI-specific overrides
+- `test-build.sh` - No longer needed
+
+## Benefits
+- **Local Development**: Zero changes, continue using `pnpm install` at root
+- **CI Performance**: Only installs client deps (~30 packages vs 125+ workspace packages)
+- **Maintainability**: Standard tooling (pnpm filters) instead of custom scripts
+- **Reliability**: No temporary file manipulation or workspace modification
+- **Architecture**: Maintains clean separation between client and server concerns
 
 ## Expected Results
-- Build uses Node 22.x as required
-- Native dependencies are skipped or use fallbacks
-- Client build completes successfully without server-side type errors
-- Deployment succeeds on Netlify
-
-## Testing
-Run `./test-build.sh` locally to simulate the Netlify build environment.
+- Netlify build completes without lockfile errors
+- Only client dependencies installed (no Discord/native deps)
+- TypeScript compilation clean (no server-side type errors)
+- Build time significantly faster
+- Local development unchanged

@@ -1,4 +1,4 @@
-import pino, { type LogFn } from "pino";
+import pino, { type LogFn, type Logger } from "pino";
 import pretty from "pino-pretty";
 
 const customLevels: Record<string, number> = {
@@ -64,6 +64,30 @@ const options = {
     },
 };
 
-export const elizaLogger = pino(options, createStream());
+// Create the base logger
+const baseLogger = pino(options, createStream());
+
+// Define flexible log method signature
+type FlexibleLogFn = {
+    (message: string, ...args: any[]): void;
+    (context: Record<string, unknown>, message?: string, ...args: any[]): void;
+    (obj: unknown, msg?: string, ...args: any[]): void;
+};
+
+// Define a flexible logger interface that accepts various argument patterns
+type FlexibleLogger = {
+    fatal: FlexibleLogFn;
+    error: FlexibleLogFn;
+    warn: FlexibleLogFn;
+    info: FlexibleLogFn;
+    log: FlexibleLogFn;
+    progress: FlexibleLogFn;
+    success: FlexibleLogFn;
+    debug: FlexibleLogFn;
+    trace: FlexibleLogFn;
+} & Omit<Logger, 'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace'>;
+
+// Export the logger with flexible typing
+export const elizaLogger = baseLogger as unknown as FlexibleLogger;
 
 export default elizaLogger;

@@ -5,6 +5,7 @@
     "type": "module",
     "main": "dist/index.js",
     "module": "dist/index.js",
+    "types": "dist/index.d.ts",
     "exports": {
         "./package.json": "./package.json",
         ".": {
@@ -18,7 +19,7 @@
         "dist"
     ],
     "scripts": {
-        "build": "tsup --format esm --no-dts",
+        "build": "tsup --format esm --dts",
         "watch": "tsc --watch",
         "dev": "tsup --format esm --no-dts --watch",
         "build:docs": "cd docs && pnpm run build",

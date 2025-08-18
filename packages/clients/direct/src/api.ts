@@ -24,9 +24,40 @@ import {
     StreamingService 
 } from "@elizaos/plugin-gooddollar";
 
+// Standardized API response interfaces
+interface ApiResponse<T = any> {
+    success: boolean;
+    data?: T;
+    error?: string;
+    message?: string;
+    timestamp?: string;
+}
+
 interface UUIDParams {
     agentId: UUID;
     roomId?: UUID;
+}
+
+// Standardized error response helper
+function sendErrorResponse(res: express.Response, statusCode: number, error: string, details?: any): void {
+    const response: ApiResponse = {
+        success: false,
+        error,
+        timestamp: new Date().toISOString(),
+        ...(details && { data: details })
+    };
+    res.status(statusCode).json(response);
+}
+
+// Standardized success response helper
+function sendSuccessResponse<T>(res: express.Response, data: T, message?: string): void {
+    const response: ApiResponse<T> = {
+        success: true,
+        data,
+        timestamp: new Date().toISOString(),
+        ...(message && { message })
+    };
+    res.json(response);
 }
 
 function validateUUIDParams(
@@ -35,8 +66,9 @@ function validateUUIDParams(
 ): UUIDParams | null {
     const agentId = validateUuid(params.agentId);
     if (!agentId) {
-        res.status(400).json({
-            error: "Invalid AgentId format. Expected to be a UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+        sendErrorResponse(res, 400, "Invalid AgentId format", {
+            expected: "UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+            received: params.agentId
         });
         return null;
     }
@@ -44,8 +76,9 @@ function validateUUIDParams(
     if (params.roomId) {
         const roomId = validateUuid(params.roomId);
         if (!roomId) {
-            res.status(400).json({
-                error: "Invalid RoomId format. Expected to be a UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+            sendErrorResponse(res, 400, "Invalid RoomId format", {
+                expected: "UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                received: params.roomId
             });
             return null;
         }
@@ -70,12 +103,19 @@ export function createApiRouter(
         })
     );
 
+    // API status endpoint
     router.get("/", (req, res) => {
-        res.send("Welcome, this is the REST API!");
+        sendSuccessResponse(res, {
+            service: "FamilyXYZ API",
+            version: "1.0.0",
+            status: "operational",
+            uptime: process.uptime(),
+            environment: process.env.NODE_ENV || "development"
+        }, "API is operational");
     });
 
     router.get("/hello", (req, res) => {
-        res.json({ message: "Hello World!" });
+        sendSuccessResponse(res, { message: "Hello World!" }, "API greeting endpoint");
     });
 
     router.get("/agents", (req, res) => {
@@ -83,17 +123,28 @@ export function createApiRouter(
             id: agent.agentId,
             name: agent.character.name,
             clients: Object.keys(agent.clients),
+            status: "running"
         }));
-        res.json({ agents: agentsList });
+        sendSuccessResponse(res, { 
+            agents: agentsList,
+            total: agentsList.length 
+        }, "Retrieved all active agents");
     });
 
     router.get('/storage', async (req, res) => {
         try {
             const uploadDir = path.join(process.cwd(), "data", "characters");
             const files = await fs.promises.readdir(uploadDir);
-            res.json({ files });
+            sendSuccessResponse(res, { 
+                files,
+                count: files.length,
+                directory: uploadDir 
+            }, "Retrieved character storage files");
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            sendErrorResponse(res, 500, "Failed to read storage directory", {
+                directory: uploadDir,
+                originalError: error.message
+            });
         }
     });
 
@@ -106,7 +157,7 @@ export function createApiRouter(
         const agent = agents.get(agentId);
 
         if (!agent) {
-            res.status(404).json({ error: "Agent not found" });
+            sendErrorResponse(res, 404, "Agent not found", { agentId });
             return;
         }
 

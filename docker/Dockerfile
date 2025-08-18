@@ -1,3 +1,6 @@
+# ====================================
+# Backend-only Dockerfile for Production
+# ====================================
 # Use a specific Node.js version for better reproducibility
 FROM node:23.3.0-slim AS builder
 
@@ -34,47 +37,77 @@ RUN ln -sf /usr/bin/python3 /usr/bin/python
 # Set the working directory
 WORKDIR /app
 
-# Copy application code
-COPY . .
+# Copy package files first for better caching
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY packages/*/package.json ./packages/
+COPY agent/package.json ./agent/
 
-# Install dependencies
-RUN pnpm install --no-frozen-lockfile
+# Install dependencies (backend only)
+RUN pnpm install --frozen-lockfile --filter="!familexyz-client"
 
-# Build the project
-RUN pnpm run build && pnpm prune --prod
+# Copy source code
+COPY packages ./packages
+COPY agent ./agent
+COPY characters ./characters
+COPY scripts ./scripts
+COPY config ./config
+COPY .eslintrc.json eslint.config.mjs .npmrc ./
 
-# Final runtime image
-FROM node:23.3.0-slim
+# Build backend packages only
+RUN pnpm --filter="!familexyz-client" build
 
-# Install runtime dependencies
-RUN npm install -g pnpm@9.4.0 && \
+# Prune to production dependencies
+RUN pnpm prune --prod --filter="!familexyz-client"
+
+# ====================================
+# Production Runtime Image
+# ====================================
+FROM node:23.3.0-slim AS production
+
+# Install runtime dependencies and PM2
+RUN npm install -g pnpm@9.4.0 pm2@5.3.0 && \
     apt-get update && \
     apt-get install -y \
         git \
         python3 \
-        ffmpeg && \
+        ffmpeg \
+        curl \
+        && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+# Create non-root user for security
+RUN groupadd -r familexyz && useradd -r -g familexyz familexyz
 
 # Set the working directory
 WORKDIR /app
 
-# Copy built artifacts and production dependencies from the builder stage
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/pnpm-workspace.yaml ./
-COPY --from=builder /app/eslint.config.mjs ./
-COPY --from=builder /app/.eslintrc.json ./
-COPY --from=builder /app/.npmrc ./
-COPY --from=builder /app/config ./config
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/agent ./agent
-COPY --from=builder /app/client ./client
-COPY --from=builder /app/packages ./packages
-COPY --from=builder /app/scripts ./scripts
-COPY --from=builder /app/characters ./characters
+# Copy built artifacts from builder stage
+COPY --from=builder --chown=familexyz:familexyz /app/package.json ./
+COPY --from=builder --chown=familexyz:familexyz /app/pnpm-workspace.yaml ./
+COPY --from=builder --chown=familexyz:familexyz /app/.npmrc ./
+COPY --from=builder --chown=familexyz:familexyz /app/node_modules ./node_modules
+COPY --from=builder --chown=familexyz:familexyz /app/packages ./packages
+COPY --from=builder --chown=familexyz:familexyz /app/agent ./agent
+COPY --from=builder --chown=familexyz:familexyz /app/characters ./characters
+COPY --from=builder --chown=familexyz:familexyz /app/scripts ./scripts
 
-# Expose necessary ports
-EXPOSE 3000 5173
+# Create data directories
+RUN mkdir -p /app/data/uploads /app/data/characters /app/logs && \
+    chown -R familexyz:familexyz /app
 
-# Command to start the application
-CMD ["sh", "-c", "pnpm start & pnpm start:client"]
+# Copy PM2 ecosystem file
+COPY --chown=familexyz:familexyz ecosystem.config.js ./
+
+# Switch to non-root user
+USER familexyz
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:3000/ || exit 1
+
+# Expose backend port only
+EXPOSE 3000
+
+# Start with PM2 for production process management
+CMD ["pm2-runtime", "start", "ecosystem.config.js", "--env", "production"]

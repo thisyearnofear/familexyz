@@ -44,7 +44,9 @@ const G_DOLLAR_ABI = [
 ];
 
 export class GoodDollarService extends Service {
-  static serviceType: ServiceType = ServiceType.OTHER;
+  static get serviceType(): ServiceType {
+    return ServiceType.OTHER;
+  }
   
   private config: GDollarConfig;
   private provider: ethers.JsonRpcProvider;

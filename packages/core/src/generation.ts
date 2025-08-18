@@ -131,7 +131,7 @@ async function truncateAuto(
         // Decode back to text - js-tiktoken decode() returns a string directly
         return tokenizer.decode(truncatedTokens);
     } catch (error) {
-        elizaLogger.error("Error in trimTokens:", error);
+            elizaLogger.error("Error in trimTokens", error);
         // Return truncated string if tokenization fails
         return context.slice(-maxTokens * 4); // Rough estimate of 4 chars per token
     }
@@ -159,7 +159,7 @@ async function truncateTiktoken(
         // Decode back to text - js-tiktoken decode() returns a string directly
         return encoding.decode(truncatedTokens);
     } catch (error) {
-        elizaLogger.error("Error in trimTokens:", error);
+        elizaLogger.error("Error in trimTokens", error);
         // Return truncated string if tokenization fails
         return context.slice(-maxTokens * 4); // Rough estimate of 4 chars per token
     }
@@ -211,17 +211,16 @@ async function getOnChainEternalAISystemPrompt(
                 args: [new BigNumber(agentId)],
             });
             if (result) {
-                elizaLogger.info("on-chain system-prompt response", result[0]);
+                elizaLogger.info("on-chain system-prompt response", { result: result[0] });
                 const value = result[0].toString().replace("0x", "");
                 const content = Buffer.from(value, "hex").toString("utf-8");
-                elizaLogger.info("on-chain system-prompt", content);
+                elizaLogger.info("on-chain system-prompt", { content });
                 return await fetchEternalAISystemPrompt(runtime, content);
             } else {
                 return undefined;
             }
         } catch (error) {
-            elizaLogger.error(error);
-            elizaLogger.error("err", error);
+            elizaLogger.error("Error reading contract", error);
         }
     }
     return undefined;
@@ -242,11 +241,11 @@ async function fetchEternalAISystemPrompt(
             IPFS,
             "https://gateway.lighthouse.storage/ipfs/"
         );
-        elizaLogger.info("fetch lightHouse", lightHouse);
+        elizaLogger.info("fetch lightHouse", { lightHouse });
         const responseLH = await fetch(lightHouse, {
             method: "GET",
         });
-        elizaLogger.info("fetch lightHouse resp", responseLH);
+        elizaLogger.info("fetch lightHouse resp", { status: responseLH.status });
         if (responseLH.ok) {
             const data = await responseLH.text();
             return data;
@@ -255,11 +254,11 @@ async function fetchEternalAISystemPrompt(
                 IPFS,
                 "https://cdn.eternalai.org/upload/"
             );
-            elizaLogger.info("fetch gcs", gcs);
+            elizaLogger.info("fetch gcs", { gcs });
             const responseGCS = await fetch(gcs, {
                 method: "GET",
             });
-            elizaLogger.info("fetch lightHouse gcs", responseGCS);
+            elizaLogger.info("fetch lightHouse gcs", { status: responseGCS.status });
             if (responseGCS.ok) {
                 const data = await responseGCS.text();
                 return data;
@@ -287,7 +286,7 @@ function getCloudflareGatewayBaseURL(
     const cloudflareAccountId = runtime.getSetting("CLOUDFLARE_AI_ACCOUNT_ID");
     const cloudflareGatewayId = runtime.getSetting("CLOUDFLARE_AI_GATEWAY_ID");
 
-    elizaLogger.debug("Cloudflare Gateway Configuration:", {
+    elizaLogger.debug("Cloudflare Gateway Configuration", {
         isEnabled: isCloudflareEnabled,
         hasAccountId: !!cloudflareAccountId,
         hasGatewayId: !!cloudflareGatewayId,
@@ -314,7 +313,7 @@ function getCloudflareGatewayBaseURL(
     }
 
     const baseURL = `https://gateway.ai.cloudflare.com/v1/${cloudflareAccountId}/${cloudflareGatewayId}/${provider.toLowerCase()}`;
-    elizaLogger.info("Using Cloudflare Gateway:", {
+    elizaLogger.info("Using Cloudflare Gateway", {
         provider,
         baseURL,
         accountId: cloudflareAccountId,
@@ -368,17 +367,17 @@ export async function generateText({
 
     elizaLogger.log("Generating text...");
 
-    elizaLogger.info("Generating text with options:", {
+    elizaLogger.info("Generating text with options", {
         modelProvider: runtime.modelProvider,
         model: modelClass,
         verifiableInference,
     });
-    elizaLogger.log("Using provider:", runtime.modelProvider);
+    elizaLogger.log("Using provider", { provider: runtime.modelProvider });
     // If verifiable inference is requested and adapter is provided, use it
     if (verifiableInference && runtime.verifiableInferenceAdapter) {
         elizaLogger.log(
-            "Using verifiable inference adapter:",
-            runtime.verifiableInferenceAdapter
+            "Using verifiable inference adapter",
+            { adapter: runtime.verifiableInferenceAdapter }
         );
         try {
             const result: VerifiableInferenceResult =
@@ -387,7 +386,7 @@ export async function generateText({
                     modelClass,
                     verifiableInferenceOptions
                 );
-            elizaLogger.log("Verifiable inference result:", result);
+            elizaLogger.log("Verifiable inference result", { result });
             // Verify the proof
             const isValid =
                 await runtime.verifiableInferenceAdapter.verifyProof(result);
@@ -397,13 +396,13 @@ export async function generateText({
 
             return result.text;
         } catch (error) {
-            elizaLogger.error("Error in verifiable inference:", error);
+            elizaLogger.error("Error in verifiable inference", error);
             throw error;
         }
     }
 
     const provider = runtime.modelProvider;
-    elizaLogger.debug("Provider settings:", {
+    elizaLogger.debug("Provider settings", {
         provider,
         hasRuntime: !!runtime,
         runtimeSettings: {
@@ -488,7 +487,7 @@ export async function generateText({
             break;
     }
 
-    elizaLogger.info("Selected model:", model);
+    elizaLogger.info("Selected model", { model });
 
     const modelConfiguration = runtime.character?.settings?.modelConfig;
     const temperature =
@@ -599,16 +598,16 @@ export async function generateText({
                                 runtime.getSetting("ETERNALAI_LOG")
                             )
                         ) {
-                            elizaLogger.info(
-                                "Request data: ",
-                                JSON.stringify(options, null, 2)
-                            );
+                elizaLogger.info(
+                    "Request data",
+                    { data: JSON.stringify(options, null, 2) }
+                );
                             const clonedResponse = fetching.clone();
                             try {
                                 clonedResponse.json().then((data) => {
                                     elizaLogger.info(
-                                        "Response data: ",
-                                        JSON.stringify(data, null, 2)
+                                        "Response data",
+                                        { data: JSON.stringify(data, null, 2) }
                                     );
                                 });
                             } catch (e) {
@@ -634,7 +633,7 @@ export async function generateText({
                         system_prompt = on_chain_system_prompt;
                         elizaLogger.info(
                             "new on-chain system prompt",
-                            system_prompt
+                            { prompt: system_prompt }
                         );
                     }
                 } catch (e) {
@@ -712,7 +711,7 @@ export async function generateText({
                 const baseURL =
                     getCloudflareGatewayBaseURL(runtime, "anthropic") ||
                     "https://api.anthropic.com/v1";
-                elizaLogger.debug("Anthropic baseURL result:", { baseURL });
+                elizaLogger.debug("Anthropic baseURL result", { baseURL });
 
                 const anthropic = createAnthropic({
                     apiKey,
@@ -810,7 +809,7 @@ export async function generateText({
                     "Initializing Groq model with Cloudflare check"
                 );
                 const baseURL = getCloudflareGatewayBaseURL(runtime, "groq");
-                elizaLogger.debug("Groq baseURL result:", { baseURL });
+                elizaLogger.debug("Groq baseURL result", { baseURL });
                 const groq = createGroq({
                     apiKey,
                     fetch: runtime.fetch,
@@ -936,7 +935,7 @@ export async function generateText({
                     });
                     const ollama = ollamaProvider(model);
 
-                    elizaLogger.debug("****** MODEL\n", model);
+                    elizaLogger.debug("****** MODEL", { model });
 
                     const { text: ollamaResponse } = await aiGenerateText({
                         model: ollama,
@@ -1010,7 +1009,7 @@ export async function generateText({
                     }
                 }
 
-                elizaLogger.debug("Using GAIANET model with baseURL:", baseURL);
+                elizaLogger.debug("Using GAIANET model with baseURL", { baseURL });
 
                 const openai = createOpenAI({
                     apiKey,
@@ -1290,7 +1289,7 @@ export async function generateText({
 
         return response;
     } catch (error) {
-        elizaLogger.error("Error in generateText:", error);
+        elizaLogger.error("Error in generateText", error);
         throw error;
     }
 }
@@ -1322,8 +1321,8 @@ export async function generateShouldRespond({
     while (true) {
         try {
             elizaLogger.debug(
-                "Attempting to generate text with context:",
-                context
+                "Attempting to generate text with context",
+                { context }
             );
             const response = await generateText({
                 runtime,
@@ -1331,16 +1330,16 @@ export async function generateShouldRespond({
                 modelClass,
             });
 
-            elizaLogger.debug("Received response from generateText:", response);
+            elizaLogger.debug("Received response from generateText", { response });
             const parsedResponse = parseShouldRespondFromText(response.trim());
             if (parsedResponse) {
-                elizaLogger.debug("Parsed response:", parsedResponse);
+                elizaLogger.debug("Parsed response", { parsedResponse });
                 return parsedResponse;
             } else {
                 elizaLogger.debug("generateShouldRespond no response");
             }
         } catch (error) {
-            elizaLogger.error("Error in generateShouldRespond:", error);
+            elizaLogger.error("Error in generateShouldRespond", error);
             if (
                 error instanceof TypeError &&
                 error.message.includes("queueTextCompletion")
@@ -1377,7 +1376,7 @@ export async function splitChunks(
     });
 
     const chunks = await textSplitter.splitText(content);
-    elizaLogger.debug(`[splitChunks] Split complete:`, {
+    elizaLogger.debug(`[splitChunks] Split complete`, {
         numberOfChunks: chunks.length,
         averageChunkSize:
             chunks.reduce((acc, chunk) => acc + chunk.length, 0) /
@@ -1430,7 +1429,7 @@ export async function generateTrueOrFalse({
                 return parsedResponse;
             }
         } catch (error) {
-            elizaLogger.error("Error in generateTrueOrFalse:", error);
+            elizaLogger.error("Error in generateTrueOrFalse", error);
         }
 
         await new Promise((resolve) => setTimeout(resolve, retryDelay));
@@ -1481,7 +1480,7 @@ export async function generateTextArray({
                 return parsedResponse;
             }
         } catch (error) {
-            elizaLogger.error("Error in generateTextArray:", error);
+            elizaLogger.error("Error in generateTextArray", error);
         }
 
         await new Promise((resolve) => setTimeout(resolve, retryDelay));
@@ -1517,7 +1516,7 @@ export async function generateObjectDeprecated({
                 return parsedResponse;
             }
         } catch (error) {
-            elizaLogger.error("Error in generateObject:", error);
+            elizaLogger.error("Error in generateObject", error);
         }
 
         await new Promise((resolve) => setTimeout(resolve, retryDelay));
@@ -1553,7 +1552,7 @@ export async function generateObjectArray({
                 return parsedResponse;
             }
         } catch (error) {
-            elizaLogger.error("Error in generateTextArray:", error);
+            elizaLogger.error("Error in generateTextArray", error);
         }
 
         await new Promise((resolve) => setTimeout(resolve, retryDelay));
@@ -1586,7 +1585,7 @@ export async function generateMessageResponse({
     const max_context_length = modelSettings.maxInputTokens;
 
     context = await trimTokens(context, max_context_length, runtime);
-    elizaLogger.debug("Context:", context);
+    elizaLogger.debug("Context", { context });
     let retryLength = 1000; // exponential backoff
     while (true) {
         try {
@@ -1607,7 +1606,7 @@ export async function generateMessageResponse({
 
             return parsedContent;
         } catch (error) {
-            elizaLogger.error("ERROR:", error);
+            elizaLogger.error("ERROR", error);
             // wait for 2 seconds
             retryLength *= 2;
             await new Promise((resolve) => setTimeout(resolve, retryLength));
@@ -1641,7 +1640,7 @@ export const generateImage = async (
 }> => {
     const modelSettings = getImageModelSettings(runtime.imageModelProvider);
     const model = modelSettings.name;
-    elizaLogger.info("Generating image with options:", {
+    elizaLogger.info("Generating image with options", {
         imageModelProvider: model,
     });
 
@@ -1744,7 +1743,7 @@ export const generateImage = async (
             const base64s = await Promise.all(
                 togetherResponse.data.map(async (image) => {
                     if (!image.url) {
-                        elizaLogger.error("Missing URL in image data:", image);
+                        elizaLogger.error("Missing URL in image data", { image });
                         throw new Error("Missing URL in Together AI response");
                     }
 
@@ -2261,7 +2260,7 @@ async function handleAnthropic({
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
     elizaLogger.debug("Handling Anthropic request with Cloudflare check");
     const baseURL = getCloudflareGatewayBaseURL(runtime, "anthropic");
-    elizaLogger.debug("Anthropic handleAnthropic baseURL:", { baseURL });
+    elizaLogger.debug("Anthropic handleAnthropic baseURL", { baseURL });
 
     const anthropic = createAnthropic({ apiKey, baseURL });
     return await aiGenerateObject({
@@ -2318,7 +2317,7 @@ async function handleGroq({
 }: ProviderOptions): Promise<GenerateObjectResult<unknown>> {
     elizaLogger.debug("Handling Groq request with Cloudflare check");
     const baseURL = getCloudflareGatewayBaseURL(runtime, "groq");
-    elizaLogger.debug("Groq handleGroq baseURL:", { baseURL });
+    elizaLogger.debug("Groq handleGroq baseURL", { baseURL });
 
     const groq = createGroq({ apiKey, baseURL });
     return await aiGenerateObject({
@@ -2561,7 +2560,7 @@ export async function generateTweetActions({
                 elizaLogger.debug("generateTweetActions no valid response");
             }
         } catch (error) {
-            elizaLogger.error("Error in generateTweetActions:", error);
+            elizaLogger.error("Error in generateTweetActions", error);
             if (
                 error instanceof TypeError &&
                 error.message.includes("queueTextCompletion")

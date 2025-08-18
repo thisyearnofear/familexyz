@@ -102,7 +102,7 @@ async function getRemoteEmbedding(
         const response = await fetch(fullUrl, requestOptions);
 
         if (!response.ok) {
-            elizaLogger.error("API Response:", await response.text()); // Debug log
+            elizaLogger.error({}, "API Response: " + String(await response.text())); // Debug log
             throw new Error(
                 `Embedding API Error: ${response.status} ${response.statusText}`
             );
@@ -115,7 +115,7 @@ async function getRemoteEmbedding(
         const data: EmbeddingResponse = await response.json();
         return data?.data?.[0].embedding;
     } catch (e) {
-        elizaLogger.error("Full error details:", e);
+        elizaLogger.error({}, "Full error details: " + String(e));
         throw e;
     }
 }
@@ -180,7 +180,7 @@ export function getEmbeddingZeroVector(): number[] {
  */
 
 export async function embed(runtime: IAgentRuntime, input: string) {
-    elizaLogger.debug("Embedding request:", {
+    elizaLogger.debug({
         modelProvider: runtime.character.modelProvider,
         useOpenAI: process.env.USE_OPENAI_EMBEDDING,
         input: input?.slice(0, 50) + "...",
@@ -188,15 +188,15 @@ export async function embed(runtime: IAgentRuntime, input: string) {
         inputLength: input?.length,
         isString: typeof input === "string",
         isEmpty: !input,
-    });
+    }, "Embedding request");
 
     // Validate input
     if (!input || typeof input !== "string" || input.trim().length === 0) {
-        elizaLogger.warn("Invalid embedding input:", {
+        elizaLogger.warn({
             input,
             type: typeof input,
             length: input?.length,
-        });
+        }, "Invalid embedding input");
         return []; // Return empty embedding array
     }
 
@@ -257,8 +257,8 @@ export async function embed(runtime: IAgentRuntime, input: string) {
             return await getLocalEmbedding(input);
         } catch (error) {
             elizaLogger.warn(
-                "Local embedding failed, falling back to remote",
-                error
+                {error: String(error)},
+                "Local embedding failed, falling back to remote"
             );
         }
     }
@@ -280,7 +280,7 @@ export async function embed(runtime: IAgentRuntime, input: string) {
             const embeddingManager = LocalEmbeddingModelManager.getInstance();
             return await embeddingManager.generateEmbedding(input);
         } catch (error) {
-            elizaLogger.error("Local embedding failed:", error);
+            elizaLogger.error({}, "Local embedding failed: " + String(error));
             throw error;
         }
     }

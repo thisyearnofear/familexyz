@@ -10,7 +10,7 @@ export default defineConfig({
     target: "node18",
     bundle: true,
     splitting: true, // Add this for better code splitting
-    dts: false, // Temporarily disable declaration files
+    dts: true, // Enable declaration files for type support
     external: [
         "dotenv", // Externalize dotenv to prevent bundling
         "fs", // Externalize fs to use Node.js built-in module

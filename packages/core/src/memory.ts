@@ -68,7 +68,7 @@ export class MemoryManager implements IMemoryManager {
             // Generate embedding from text content
             memory.embedding = await embed(this.runtime, memoryText);
         } catch (error) {
-            elizaLogger.error("Failed to generate embedding:", error);
+            elizaLogger.error({error: String(error)}, "Failed to generate embedding");
             // Fallback to zero vector if embedding fails
             memory.embedding = getEmbeddingZeroVector().slice();
         }
@@ -180,7 +180,7 @@ export class MemoryManager implements IMemoryManager {
             return;
         }
 
-        elizaLogger.log("Creating Memory", memory.id, memory.content.text);
+        elizaLogger.log({id: memory.id, content: memory.content.text}, "Creating Memory");
 
         await this.runtime.databaseAdapter.createMemory(
             memory,

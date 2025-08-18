@@ -2,9 +2,9 @@
 
 // API Configuration
 export const API_CONFIG = {
-  BASE_URL: `http://localhost:${import.meta.env.VITE_SERVER_PORT ?? 3000}`,
-  TIMEOUT: 10000,
-  RETRY_ATTEMPTS: 3,
+  BASE_URL: import.meta.env.VITE_API_BASE_URL || `http://localhost:${import.meta.env.VITE_SERVER_PORT ?? 3000}`,
+  TIMEOUT: Number(import.meta.env.VITE_API_TIMEOUT) || 10000,
+  RETRY_ATTEMPTS: Number(import.meta.env.VITE_API_RETRY_ATTEMPTS) || 3,
 } as const;
 
 // Polling intervals (in milliseconds)

@@ -8,7 +8,7 @@
   "scripts": {
     "extract-version": "echo '{\"version\": \"1.0.0-beta\"}' > src/lib/info.json",
     "dev": "pnpm run extract-version && vite",
-    "build": "pnpm run extract-version && tsc -b && vite build",
+    "build": "pnpm run extract-version && vite build",
     "preview": "vite preview"
   },
   "dependencies": {

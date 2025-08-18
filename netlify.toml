@@ -1,7 +1,7 @@
 [build]
   base = "client"
   publish = "client/dist"
-  command = "pnpm install && pnpm build"
+  command = "bash netlify-build.sh"
 
 [build.environment]
   NODE_VERSION = "23"

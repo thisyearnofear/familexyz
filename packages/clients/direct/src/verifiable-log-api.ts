@@ -2,7 +2,7 @@ import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
 
-import { type AgentRuntime, elizaLogger, ServiceType }  from "@elizaos/core";
+import { type AgentRuntime, elizaLogger, ServiceType } from "@elizaos/core";
 import type {
     VerifiableLogService,
     VerifiableLogQuery,
@@ -12,7 +12,28 @@ export function createVerifiableLogApiRouter(
     agents: Map<string, AgentRuntime>
 ) {
     const router = express.Router();
-    router.use(cors());
+
+    // Configure CORS with proper origins
+    const corsOrigins = process.env.CORS_ORIGINS
+        ? process.env.CORS_ORIGINS.split(",").map((origin) => origin.trim())
+        : [
+              "http://localhost:3000",
+              "http://localhost:5173",
+              "https://familexyz.netlify.app",
+          ];
+
+    router.use(
+        cors({
+            origin: corsOrigins,
+            credentials: true,
+            methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            allowedHeaders: [
+                "Content-Type",
+                "Authorization",
+                "X-Requested-With",
+            ],
+        })
+    );
     router.use(bodyParser.json());
     router.use(bodyParser.urlencoded({ extended: true }));
 
@@ -21,7 +42,9 @@ export function createVerifiableLogApiRouter(
         async (req: express.Request, res: express.Response) => {
             try {
                 // call the listAgent method
-                const agentRuntime: AgentRuntime | undefined = agents.values().next().value;
+                const agentRuntime: AgentRuntime | undefined = agents
+                    .values()
+                    .next().value;
                 const pageQuery = await agentRuntime
                     .getService<VerifiableLogService>(
                         ServiceType.VERIFIABLE_LOGGING
@@ -53,7 +76,9 @@ export function createVerifiableLogApiRouter(
                     agentId: query.agentId || "",
                     publicKey: query.publicKey || "",
                 };
-                const agentRuntime: AgentRuntime | undefined = agents.values().next().value;
+                const agentRuntime: AgentRuntime | undefined = agents
+                    .values()
+                    .next().value;
                 const pageQuery = await agentRuntime
                     .getService<VerifiableLogService>(
                         ServiceType.VERIFIABLE_LOGGING
@@ -92,7 +117,9 @@ export function createVerifiableLogApiRouter(
                     contLike: query.contLike || "",
                     signatureEq: query.signatureEq || "",
                 };
-                const agentRuntime: AgentRuntime | undefined = agents.values().next().value;
+                const agentRuntime: AgentRuntime | undefined = agents
+                    .values()
+                    .next().value;
                 const pageQuery = await agentRuntime
                     .getService<VerifiableLogService>(
                         ServiceType.VERIFIABLE_LOGGING

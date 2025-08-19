@@ -119,7 +119,7 @@ SOLANA_PRIVATE_KEY=
 SOLANA_PUBLIC_KEY=
 
 # Security
-CORS_ORIGINS=https://your-frontend-domain.com
+CORS_ORIGINS=http://localhost:3000,http://localhost:5173,https://familexyz.netlify.app,https://famile.xyz
 TRUST_PROXY=true
 
 # Logging
@@ -372,13 +372,13 @@ cat > /etc/nginx/sites-available/familexyz << 'EOF'
 server {
     listen 80;
     server_name _;
-    
+
     # Security headers
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-XSS-Protection "1; mode=block" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-    
+
     # API proxy
     location /api/ {
         proxy_pass http://localhost:3000/;
@@ -393,14 +393,14 @@ server {
         proxy_read_timeout 300s;
         proxy_connect_timeout 75s;
     }
-    
+
     # Health check
     location /health {
         access_log off;
         return 200 "healthy\n";
         add_header Content-Type text/plain;
     }
-    
+
     # Default route for API documentation or status
     location / {
         proxy_pass http://localhost:3000/;

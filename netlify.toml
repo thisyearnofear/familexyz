@@ -1,10 +1,12 @@
 [build]
   base = "client"
   publish = "dist"
-  command = "npm install && npm run build"
+  command = "pnpm install --filter . --no-frozen-lockfile && pnpm run build"
 
 [build.environment]
   NODE_VERSION = "22"
+  PNPM_VERSION = "9"
+  PNPM_FLAGS = "--filter ."
   CI = "true"
   # Production environment variables
   VITE_API_BASE_URL = "https://famile.xyz/api"

@@ -1,79 +1,79 @@
 name: Deploy Backend to Hetzner
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'agent/**'
-      - 'packages/**'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
-      - '.env.example'
-  workflow_dispatch:
+    push:
+        branches: [main, develop]
+        paths:
+            - "agent/**"
+            - "packages/**"
+            - "package.json"
+            - "pnpm-lock.yaml"
+            - ".env.example"
+    workflow_dispatch:
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    deploy:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '23'
-          cache: 'npm'
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "23"
+                  cache: "npm"
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 9.4.0
+            - name: Setup pnpm
+              uses: pnpm/action-setup@v3
+              with:
+                  version: 9.4.0
 
-      - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+            - name: Install dependencies
+              run: pnpm install --no-frozen-lockfile
 
-      - name: Build project
-        run: pnpm build
+            - name: Build project
+              run: pnpm build
 
-      - name: Deploy to Hetzner Server
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.HETZNER_HOST }}
-          username: ${{ secrets.HETZNER_USERNAME }}
-          key: ${{ secrets.HETZNER_SSH_KEY }}
-          port: ${{ secrets.HETZNER_PORT || 22 }}
-          script: |
-            cd /opt/familexyz
-            
-            # Backup current deployment
-            if [ -d "current" ]; then
-              mv current backup-$(date +%Y%m%d-%H%M%S)
-            fi
-            
-            # Clone latest code
-            git clone https://github.com/${{ github.repository }}.git current
-            cd current
-            
-            # Install dependencies and build
-            pnpm install --no-frozen-lockfile
-            pnpm build
-            
-            # Copy environment file
-            cp /opt/familexyz/.env .env
-            
-            # Copy PM2 ecosystem file
-            cp ecosystem.config.js /opt/familexyz/
-            
-            # Restart services using ecosystem file
-            cd /opt/familexyz
-            pm2 restart ecosystem.config.js || pm2 start ecosystem.config.js
-            pm2 save
-            
-            # Clean up old backups (keep last 3)
-            cd /opt/familexyz
-            ls -t backup-* | tail -n +4 | xargs rm -rf
+            - name: Deploy to Hetzner Server
+              uses: appleboy/ssh-action@v1.0.3
+              with:
+                  host: ${{ secrets.HETZNER_HOST }}
+                  username: ${{ secrets.HETZNER_USERNAME }}
+                  key: ${{ secrets.HETZNER_SSH_KEY }}
+                  port: ${{ secrets.HETZNER_PORT || 22 }}
+                  script: |
+                      cd /opt/familexyz
 
-      - name: Health Check
-        run: |
-          sleep 30
-          curl -f http://${{ secrets.HETZNER_HOST }}:3000/health || exit 1
+                      # Backup current deployment
+                      if [ -d "current" ]; then
+                        mv current backup-$(date +%Y%m%d-%H%M%S)
+                      fi
+
+                      # Clone latest code
+                      git clone --branch ${{ github.ref_name }} https://github.com/${{ github.repository }}.git current
+                      cd current
+
+                      # Install dependencies and build
+                      pnpm install --no-frozen-lockfile
+                      pnpm build
+
+                      # Copy environment file
+                      cp /opt/familexyz/.env .env
+
+                      # Copy PM2 ecosystem file
+                      cp ecosystem.config.js /opt/familexyz/
+
+                      # Restart services using ecosystem file
+                      cd /opt/familexyz
+                      pm2 restart ecosystem.config.js || pm2 start ecosystem.config.js
+                      pm2 save
+
+                      # Clean up old backups (keep last 3)
+                      cd /opt/familexyz
+                      ls -t backup-* | tail -n +4 | xargs rm -rf
+
+            - name: Health Check
+              run: |
+                  sleep 30
+                  curl -f http://${{ secrets.HETZNER_HOST }}:3000/health || exit 1

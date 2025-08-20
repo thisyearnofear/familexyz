@@ -1,4 +1,5 @@
 // Telegram Integration Service - Leverages existing backend client
+import { API_CONFIG } from "@/lib/constants";
 
 export interface TelegramBotConfig {
   botToken: string;
@@ -24,7 +25,7 @@ export interface TelegramFamilyGroup {
 }
 
 class TelegramIntegrationService {
-  private baseUrl = 'http://localhost:3000';
+  private baseUrl = API_CONFIG.BASE_URL;
 
   /**
    * Get current Telegram integration status

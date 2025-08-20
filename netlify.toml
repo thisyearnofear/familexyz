@@ -9,7 +9,7 @@
   PNPM_FLAGS = "--filter ."
   CI = "true"
   # Production environment variables
-  VITE_API_BASE_URL = "https://famile.xyz/api"
+  VITE_API_BASE_URL = "https://api.famile.xyz"
   VITE_APP_VERSION = "1.0.0-beta"
   VITE_APP_NAME = "FamilyXYZ"
   VITE_API_TIMEOUT = "30000"
@@ -44,4 +44,4 @@
     X-XSS-Protection = "1; mode=block"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.famile.xyz https:;"

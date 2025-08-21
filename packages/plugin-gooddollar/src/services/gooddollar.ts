@@ -45,7 +45,7 @@ const G_DOLLAR_ABI = [
 
 export class GoodDollarService extends Service {
   static get serviceType(): ServiceType {
-    return ServiceType.OTHER;
+    return ServiceType.TEXT_GENERATION;
   }
   
   private config: GDollarConfig;
@@ -278,13 +278,18 @@ export class GoodDollarService extends Service {
 
       for (const event of allEvents.slice(-limit)) {
         const block = await event.getBlock();
+        const parsedEvent = this.tokenContract!.interface.parseLog({
+          topics: event.topics,
+          data: event.data
+        });
+        
         const transaction: GDollarTransaction = {
           hash: event.transactionHash,
-          from: event.args![0],
-          to: event.args![1],
-          amount: event.args![2].toString(),
-          type: event.eventName === "TransferAndCall" ? "transferAndCall" : "transfer",
-          data: event.eventName === "TransferAndCall" ? event.args![3] : undefined,
+          from: parsedEvent!.args[0],
+          to: parsedEvent!.args[1],
+          amount: parsedEvent!.args[2].toString(),
+          type: parsedEvent!.name === "TransferAndCall" ? "transferAndCall" : "transfer",
+          data: parsedEvent!.name === "TransferAndCall" ? parsedEvent!.args[3] : undefined,
           blockNumber: event.blockNumber,
           status: "confirmed",
           timestamp: block.timestamp * 1000,

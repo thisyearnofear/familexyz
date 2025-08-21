@@ -1,6 +1,6 @@
 import { IAgentRuntime } from "@elizaos/core";
 import { z } from "zod";
-import type { GDollarConfig, GDollarEnvironment } from "./types.js";
+import type { GDollarConfig } from "./types.js";
 
 export const gdollarEnvSchema = z.object({
   GOODDOLLAR_NETWORK: z.enum(["celo", "fuse"]).default("fuse"),

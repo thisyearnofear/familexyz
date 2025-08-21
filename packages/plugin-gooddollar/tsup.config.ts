@@ -6,6 +6,8 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   format: ["esm"],
+  platform: "node",
+  bundle: false,
   external: [
     "dotenv",
     "fs",
@@ -14,5 +16,6 @@ export default defineConfig({
     "@node-rs/crc32",
     "nodejs-polars",
     "duckdb",
+    "fsevents",
   ],
 });

@@ -8,18 +8,32 @@ export default defineConfig({
     format: ["esm"], // Ensure you're targeting CommonJS
     platform: "node",
     target: "node18",
-    bundle: true,
-    splitting: true, // Add this for better code splitting
-    dts: true, // Enable declaration files for type support
+    bundle: false, // Don't bundle for library
+    splitting: false,
+    dts: false, // Disable declaration files for simple build
     external: [
-        "dotenv", // Externalize dotenv to prevent bundling
-        "fs", // Externalize fs to use Node.js built-in module
-        "path", // Externalize other built-ins if necessary
+        "dotenv",
+        "fs",
+        "path",
         "http",
         "https",
-        // Add other modules you want to externalize
         "onnxruntime-node",
         "sharp",
-        "@huggingface/transformers", // Large ML package should be external
+        "@huggingface/transformers",
+        "bignumber.js",
+        "fsevents",
+        // Add all the packages that are causing issues
+        "aws-lambda",
+        "better-sqlite3",
+        "body-parser",
+        "chrome",
+        "cors",
+        "lodash",
+        "node-fetch",
+        "nodemailer",
+        "pdfjs-dist",
+        "pg",
+        "react",
+        "react-dom",
     ],
 });

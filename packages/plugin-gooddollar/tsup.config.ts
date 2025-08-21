@@ -7,6 +7,7 @@ export default defineConfig({
   clean: true,
   format: ["esm"],
   platform: "node",
+  target: "node18",
   bundle: false,
   external: [
     "dotenv",
@@ -17,5 +18,7 @@ export default defineConfig({
     "nodejs-polars",
     "duckdb",
     "fsevents",
+    "chokidar",
+    "@elizaos/core",
   ],
 });

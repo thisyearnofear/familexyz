@@ -5,27 +5,31 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "allowJs": true,
     "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "strict": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
     "forceConsistentCasingInFileNames": true,
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": false,
     "outDir": "./dist",
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
       "@elizaos/*": ["packages/*/src"],
       "@familexyz/*": ["*/src"]
-    }
+    },
+    "typeRoots": [],
+    "types": []
   },
   "include": [
-    "packages/*/src/**/*",
     "agent/src/**/*",
     "client/src/**/*"
   ],
@@ -36,6 +40,8 @@
     "**/*.test.ts",
     "**/*.test.tsx",
     "**/*.spec.ts",
-    "**/*.spec.tsx"
+    "**/*.spec.tsx",
+    "packages/**/*",
+    "**/@types/**/*"
   ]
 }

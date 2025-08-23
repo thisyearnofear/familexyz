@@ -128,8 +128,11 @@ export async function loadCharacterFromOnchain(): Promise<Character[]> {
         const character = JSON.parse(jsonText);
         validateCharacterConfig(character);
 
-        // .id isn't really valid
-        const characterId = character.id || character.name;
+        // Generate UUID from character name if no ID provided
+        if (!character.id) {
+            character.id = stringToUuid(character.name.toLowerCase());
+        }
+        const characterId = character.id;
         const characterPrefix = `CHARACTER.${characterId
             .toUpperCase()
             .replace(/ /g, "_")}.`;
@@ -202,10 +205,14 @@ async function jsonToCharacter(
     filePath: string,
     character: any,
 ): Promise<Character> {
+    // Generate UUID from character name if no ID provided
+    if (!character.id) {
+        character.id = stringToUuid(character.name.toLowerCase());
+    }
+
     validateCharacterConfig(character);
 
-    // .id isn't really valid
-    const characterId = character.id || character.name;
+    const characterId = character.id;
     const characterPrefix = `CHARACTER.${characterId
         .toUpperCase()
         .replace(/ /g, "_")}.`;

@@ -17,56 +17,89 @@ interface Agent {
     color: string;
 }
 
-const agents: Agent[] = [
-    {
-        id: "wisdom",
-        name: "Wisdom",
+// Agent configurations with static metadata
+const agentConfigs: Record<string, { description: string; color: string }> = {
+    Wisdom: {
         description: "Philosophy & Emotional Intelligence",
         color: "bg-purple-500",
     },
-    {
-        id: "intimacy",
-        name: "Intimacy",
+    Intimacy: {
         description: "Relationship Coaching",
         color: "bg-pink-500",
     },
-    {
-        id: "generationalbridge",
-        name: "Generational Bridge",
+    GenerationalBridge: {
         description: "Cross-generational Connection",
         color: "bg-blue-500",
     },
-    {
-        id: "presence",
-        name: "Presence",
+    Presence: {
         description: "Mindful Presence",
         color: "bg-green-500",
     },
-    {
-        id: "growth",
-        name: "Growth",
+    Growth: {
         description: "Family Growth Challenges",
         color: "bg-orange-500",
     },
-];
+};
 
-export const ChatInterface: React.FC = () => {
+interface ChatInterfaceProps {
+    initialAgentId?: string;
+}
+
+export const ChatInterface: React.FC<ChatInterfaceProps> = ({
+    initialAgentId,
+}) => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputMessage, setInputMessage] = useState("");
-    const [selectedAgent, setSelectedAgent] = useState<Agent>(agents[0]);
+    const [agents, setAgents] = useState<Agent[]>([]);
+    const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [agentsLoading, setAgentsLoading] = useState(true);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
 
+    // Load agents from server
+    useEffect(() => {
+        const loadAgents = async () => {
+            try {
+                const response = await apiClient.getAgents();
+                const loadedAgents: Agent[] = response.data.agents.map(
+                    (agent: any) => ({
+                        id: agent.id,
+                        name: agent.name,
+                        description:
+                            agentConfigs[agent.name]?.description ||
+                            "Family Agent",
+                        color: agentConfigs[agent.name]?.color || "bg-gray-500",
+                    }),
+                );
+                setAgents(loadedAgents);
+                if (loadedAgents.length > 0) {
+                    // Pre-select agent if initialAgentId is provided
+                    const targetAgent = initialAgentId
+                        ? loadedAgents.find(
+                              (agent) => agent.id === initialAgentId,
+                          )
+                        : null;
+                    setSelectedAgent(targetAgent || loadedAgents[0]);
+                }
+            } catch (error) {
+                console.error("Failed to load agents:", error);
+            } finally {
+                setAgentsLoading(false);
+            }
+        };
+        loadAgents();
+    }, [initialAgentId]);
+
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
 
     const sendMessage = async () => {
-        if (!inputMessage.trim() || isLoading) return;
+        if (!inputMessage.trim() || isLoading || !selectedAgent) return;
 
         const userMessage: Message = {
             id: Date.now().toString(),
@@ -117,12 +150,13 @@ export const ChatInterface: React.FC = () => {
             const errorMessage: Message = {
                 id: (Date.now() + 1).toString(),
                 content:
-                    errorResponses[
-                        selectedAgent.id as keyof typeof errorResponses
-                    ] ||
-                    `I'm ${selectedAgent.name}, here to help with ${selectedAgent.description.toLowerCase()}. While I'm getting connected, please share what's on your mind.`,
+                    (selectedAgent &&
+                        errorResponses[
+                            selectedAgent.id as keyof typeof errorResponses
+                        ]) ||
+                    `I'm ${selectedAgent?.name || "your agent"}, here to help with ${selectedAgent?.description.toLowerCase() || "family matters"}. While I'm getting connected, please share what's on your mind.`,
                 sender: "agent",
-                agentName: selectedAgent.name,
+                agentName: selectedAgent?.name || "Agent",
                 timestamp: new Date(),
             };
             setMessages((prev) => [...prev, errorMessage]);
@@ -151,34 +185,43 @@ export const ChatInterface: React.FC = () => {
                     </div>
 
                     {/* Agent Selector */}
-                    <select
-                        value={selectedAgent.id}
-                        onChange={(e) =>
-                            setSelectedAgent(
-                                agents.find((a) => a.id === e.target.value) ||
-                                    agents[0],
-                            )
-                        }
-                        className="px-3 py-1 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    >
-                        {agents.map((agent) => (
-                            <option key={agent.id} value={agent.id}>
-                                {agent.name} - {agent.description}
-                            </option>
-                        ))}
-                    </select>
+                    {agentsLoading ? (
+                        <div className="text-sm text-gray-500">
+                            Loading agents...
+                        </div>
+                    ) : (
+                        <select
+                            value={selectedAgent?.id || ""}
+                            onChange={(e) =>
+                                setSelectedAgent(
+                                    agents.find(
+                                        (a) => a.id === e.target.value,
+                                    ) || agents[0],
+                                )
+                            }
+                            className="px-3 py-1 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        >
+                            {agents.map((agent) => (
+                                <option key={agent.id} value={agent.id}>
+                                    {agent.name} - {agent.description}
+                                </option>
+                            ))}
+                        </select>
+                    )}
                 </div>
 
                 {/* Selected Agent Info */}
-                <div className="mt-2 flex items-center space-x-2">
-                    <div
-                        className={`w-3 h-3 rounded-full ${selectedAgent.color}`}
-                    ></div>
-                    <span className="text-sm text-gray-600">
-                        Chatting with <strong>{selectedAgent.name}</strong> -{" "}
-                        {selectedAgent.description}
-                    </span>
-                </div>
+                {selectedAgent && (
+                    <div className="mt-2 flex items-center space-x-2">
+                        <div
+                            className={`w-3 h-3 rounded-full ${selectedAgent.color}`}
+                        ></div>
+                        <span className="text-sm text-gray-600">
+                            Chatting with <strong>{selectedAgent.name}</strong>{" "}
+                            - {selectedAgent.description}
+                        </span>
+                    </div>
+                )}
             </div>
 
             {/* Messages */}
@@ -248,7 +291,7 @@ export const ChatInterface: React.FC = () => {
                             <div className="flex items-center space-x-2">
                                 <Bot className="w-4 h-4" />
                                 <span className="text-xs font-medium text-gray-600">
-                                    {selectedAgent.name}
+                                    {selectedAgent?.name || "Agent"}
                                 </span>
                             </div>
                             <div className="flex space-x-1 mt-2">
@@ -276,7 +319,7 @@ export const ChatInterface: React.FC = () => {
                         value={inputMessage}
                         onChange={(e) => setInputMessage(e.target.value)}
                         onKeyPress={handleKeyPress}
-                        placeholder={`Ask ${selectedAgent.name} about family relationships...`}
+                        placeholder={`Ask ${selectedAgent?.name || "your agent"} about family relationships...`}
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                         rows={2}
                         disabled={isLoading}

@@ -27,7 +27,7 @@ export function AppSidebar() {
         refetchInterval: 5_000,
     });
 
-    const agents = query?.data?.agents;
+    const agents = query?.data?.data?.agents;
 
     return (
         <Sidebar>
@@ -56,8 +56,19 @@ export function AppSidebar() {
                         <NavLink to="/dashboard">
                             <SidebarMenuButton>
                                 {/* Home icon */}
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7m-9 2v8m0 0h4m-4 0a2 2 0 01-2-2v-5a2 2 0 012-2h4a2 2 0 012 2v5a2 2 0 01-2 2z" />
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="h-5 w-5 mr-2"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M3 12l2-2m0 0l7-7 7 7m-9 2v8m0 0h4m-4 0a2 2 0 01-2-2v-5a2 2 0 012-2h4a2 2 0 012 2v5a2 2 0 01-2 2z"
+                                    />
                                 </svg>
                                 Dashboard
                             </SidebarMenuButton>
@@ -77,7 +88,7 @@ export function AppSidebar() {
                                             <SidebarMenuItem key={index}>
                                                 <SidebarMenuSkeleton />
                                             </SidebarMenuItem>
-                                        )
+                                        ),
                                     )}
                                 </div>
                             ) : (
@@ -90,7 +101,7 @@ export function AppSidebar() {
                                                 >
                                                     <SidebarMenuButton
                                                         isActive={location.pathname.includes(
-                                                            agent.id
+                                                            agent.id,
                                                         )}
                                                     >
                                                         <User />
@@ -100,7 +111,7 @@ export function AppSidebar() {
                                                     </SidebarMenuButton>
                                                 </NavLink>
                                             </SidebarMenuItem>
-                                        )
+                                        ),
                                     )}
                                 </div>
                             )}
@@ -111,10 +122,7 @@ export function AppSidebar() {
             <SidebarFooter>
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <NavLink
-                            to="/docs"
-                            target="_blank"
-                        >
+                        <NavLink to="/docs" target="_blank">
                             <SidebarMenuButton>
                                 <Book /> Documentation
                             </SidebarMenuButton>

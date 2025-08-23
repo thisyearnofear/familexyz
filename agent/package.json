@@ -5,7 +5,7 @@
     "main": "src/index.ts",
     "type": "module",
     "scripts": {
-        "start": "node --loader ts-node/esm src/index.ts",
+        "start": "node --loader ts-node/esm src/index.ts --characters=../characters/wisdom.character.json,../characters/intimacy.character.json,../characters/generationalBridge.character.json,../characters/presence.character.json,../characters/growth.character.json",
         "dev": "node --loader ts-node/esm src/index.ts",
         "check-types": "tsc --noEmit",
         "test": "jest"

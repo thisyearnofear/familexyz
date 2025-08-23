@@ -1,5 +1,5 @@
 import { useParams } from "react-router";
-import Chat from "@/components/chat";
+import { ChatInterface } from "@/components/ChatInterface";
 import type { UUID } from "@elizaos/core";
 
 export default function AgentRoute() {
@@ -7,5 +7,5 @@ export default function AgentRoute() {
 
     if (!agentId) return <div>No data.</div>;
 
-    return <Chat agentId={agentId} />;
+    return <ChatInterface initialAgentId={agentId} />;
 }

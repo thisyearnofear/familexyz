@@ -8,9 +8,10 @@ export default defineConfig({
     format: ["esm"], // Ensure you're targeting CommonJS
     platform: "node",
     target: "node18",
-    bundle: false, // Don't bundle for library
+    bundle: true, // Bundle all internal modules so runtime has a single file
     splitting: false,
-    dts: false, // Disable declaration files for simple build
+    dts: false,
+    noExternal: ["bignumber.js"],
     external: [
         "dotenv",
         "fs",
@@ -20,7 +21,7 @@ export default defineConfig({
         "onnxruntime-node",
         "sharp",
         "@huggingface/transformers",
-        "bignumber.js",
+
         "fsevents",
         // Add all the packages that are causing issues
         "aws-lambda",

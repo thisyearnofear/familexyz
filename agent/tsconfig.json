@@ -1,32 +1,55 @@
 {
-  "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": ".",
-    "module": "ESNext",
-    "moduleResolution": "node",
-    "target": "ES2020",
-    "types": ["node", "jest"],
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "skipLibCheck": true,
-    "strict": false,
-    "noEmit": true,
-    "baseUrl": "../",
-    "paths": {
-      "@elizaos/config": ["packages/config/dist/index.js"],
-      "@elizaos/core": ["packages/core/dist/index.js"],
-      "@elizaos/hedera-core": ["packages/hedera-core/dist/index.js"],
-      "@elizaos/plugin-node": ["packages/plugin-node/dist/index.js"],
-      "@elizaos/family-nlp-utils": ["packages/family-nlp-utils/dist/index.js"],
-      "@elizaos/adapter-*": ["packages/adapter-*/dist/index.js"],
-      "@elizaos/client-*": ["packages/client-*/dist/index.js"]
-    }
-  },
-  "ts-node": {
-    "experimentalSpecifierResolution": "node",
-    "transpileOnly": true,
-    "esm": true
-  },
-  "include": ["src/**/*", "../packages/*/dist/**/*.d.ts"],
-  "exclude": ["node_modules", "dist"]
+    "compilerOptions": {
+        "outDir": "dist",
+        "rootDir": ".",
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "target": "ES2020",
+        "types": [
+            "node",
+            "jest"
+        ],
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "skipLibCheck": true,
+        "strict": false,
+        "noEmit": true,
+        "baseUrl": "../",
+        "paths": {
+            "@elizaos/config": [
+                "packages/config/dist/index.js"
+            ],
+            "@elizaos/core": [
+                "packages/core/dist/index.js"
+            ],
+            "@elizaos/hedera-core": [
+                "packages/hedera-core/dist/index.js"
+            ],
+            "@elizaos/plugin-node": [
+                "packages/plugin-node/dist/index.js"
+            ],
+            "@elizaos/family-nlp-utils": [
+                "packages/family-nlp-utils/dist/index.js"
+            ],
+            "@elizaos/adapter-*": [
+                "packages/adapter-*/dist/index.js"
+            ],
+            "@elizaos/client-*": [
+                "packages/client-*/dist/index.js"
+            ]
+        }
+    },
+    "ts-node": {
+        "experimentalSpecifierResolution": "node",
+        "transpileOnly": true,
+        "esm": true
+    },
+    "include": [
+        "src/**/*",
+        "../packages/*/dist/**/*.d.ts"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist"
+    ]
 }

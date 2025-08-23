@@ -43,7 +43,7 @@ function sendErrorResponse(
     res: express.Response,
     statusCode: number,
     error: string,
-    details?: any
+    details?: any,
 ): void {
     const response: ApiResponse = {
         success: false,
@@ -58,7 +58,7 @@ function sendErrorResponse(
 function sendSuccessResponse<T>(
     res: express.Response,
     data: T,
-    message?: string
+    message?: string,
 ): void {
     const response: ApiResponse<T> = {
         success: true,
@@ -71,7 +71,7 @@ function sendSuccessResponse<T>(
 
 function validateUUIDParams(
     params: { agentId: string; roomId?: string },
-    res: express.Response
+    res: express.Response,
 ): UUIDParams | null {
     const agentId = validateUuid(params.agentId);
     if (!agentId) {
@@ -99,7 +99,7 @@ function validateUUIDParams(
 
 export function createApiRouter(
     agents: Map<string, AgentRuntime>,
-    directClient: DirectClient
+    directClient: DirectClient,
 ) {
     const router = express.Router();
 
@@ -122,14 +122,14 @@ export function createApiRouter(
                 "Authorization",
                 "X-Requested-With",
             ],
-        })
+        }),
     );
     router.use(bodyParser.json());
     router.use(bodyParser.urlencoded({ extended: true }));
     router.use(
         express.json({
             limit: getEnvVariable("EXPRESS_MAX_PAYLOAD") || "100kb",
-        })
+        }),
     );
 
     // API status endpoint
@@ -143,7 +143,7 @@ export function createApiRouter(
                 uptime: process.uptime(),
                 environment: process.env.NODE_ENV || "development",
             },
-            "API is operational"
+            "API is operational",
         );
     });
 
@@ -151,7 +151,7 @@ export function createApiRouter(
         sendSuccessResponse(
             res,
             { message: "Hello World!" },
-            "API greeting endpoint"
+            "API greeting endpoint",
         );
     });
 
@@ -168,7 +168,7 @@ export function createApiRouter(
                 agents: agentsList,
                 total: agentsList.length,
             },
-            "Retrieved all active agents"
+            "Retrieved all active agents",
         );
     });
 
@@ -183,7 +183,7 @@ export function createApiRouter(
                     count: files.length,
                     directory: uploadDir,
                 },
-                "Retrieved character storage files"
+                "Retrieved character storage files",
             );
         } catch (error) {
             sendErrorResponse(res, 500, "Failed to read storage directory", {
@@ -285,7 +285,7 @@ export function createApiRouter(
                 const uploadDir = path.join(
                     process.cwd(),
                     "data",
-                    "characters"
+                    "characters",
                 );
                 const filepath = path.join(uploadDir, filename);
                 await fs.promises.mkdir(uploadDir, { recursive: true });
@@ -294,15 +294,15 @@ export function createApiRouter(
                     JSON.stringify(
                         { ...characterJson, id: agent.agentId },
                         null,
-                        2
-                    )
+                        2,
+                    ),
                 );
                 elizaLogger.info(
-                    `Character stored successfully at ${filepath}`
+                    `Character stored successfully at ${filepath}`,
                 );
             } catch (error) {
                 elizaLogger.error(
-                    `Failed to store character: ${error.message}`
+                    `Failed to store character: ${error.message}`,
                 );
             }
         }
@@ -355,7 +355,7 @@ export function createApiRouter(
         // if runtime is null, look for runtime with the same name
         if (!runtime) {
             runtime = Array.from(agents.values()).find(
-                (a) => a.character.name.toLowerCase() === agentId.toLowerCase()
+                (a) => a.character.name.toLowerCase() === agentId.toLowerCase(),
             );
         }
 
@@ -391,7 +391,7 @@ export function createApiRouter(
                                 description: attachment.description,
                                 text: attachment.text,
                                 contentType: attachment.contentType,
-                            })
+                            }),
                         ),
                     },
                     embedding: memory.embedding,
@@ -426,7 +426,7 @@ export function createApiRouter(
                 .getService<TeeLogService>(ServiceType.TEE_LOG)
                 .getInstance();
             const attestation = await teeLogService.generateAttestation(
-                JSON.stringify(allAgents)
+                JSON.stringify(allAgents),
             );
             res.json({ agents: allAgents, attestation: attestation });
         } catch (error) {
@@ -452,7 +452,7 @@ export function createApiRouter(
 
             const teeAgent = await teeLogService.getAgent(agentId);
             const attestation = await teeLogService.generateAttestation(
-                JSON.stringify(teeAgent)
+                JSON.stringify(teeAgent),
             );
             res.json({ agent: teeAgent, attestation: attestation });
         } catch (error) {
@@ -487,10 +487,10 @@ export function createApiRouter(
                 const pageQuery = await teeLogService.getLogs(
                     teeLogQuery,
                     page,
-                    pageSize
+                    pageSize,
                 );
                 const attestation = await teeLogService.generateAttestation(
-                    JSON.stringify(pageQuery)
+                    JSON.stringify(pageQuery),
                 );
                 res.json({
                     logs: pageQuery,
@@ -502,7 +502,7 @@ export function createApiRouter(
                     error: "Failed to get TEE logs",
                 });
             }
-        }
+        },
     );
 
     router.post("/agent/start", async (req, res) => {
@@ -514,12 +514,11 @@ export function createApiRouter(
             if (characterJson) {
                 character = await directClient.jsonToCharacter(
                     characterPath,
-                    characterJson
+                    characterJson,
                 );
             } else if (characterPath) {
-                character = await directClient.loadCharacterTryPath(
-                    characterPath
-                );
+                character =
+                    await directClient.loadCharacterTryPath(characterPath);
             } else {
                 throw new Error("No character path or JSON provided");
             }
@@ -570,7 +569,7 @@ export function createApiRouter(
         let runtime = agents.get(agentId);
         if (!runtime) {
             runtime = Array.from(agents.values()).find(
-                (a) => a.character.name.toLowerCase() === agentId.toLowerCase()
+                (a) => a.character.name.toLowerCase() === agentId.toLowerCase(),
             );
         }
 
@@ -656,7 +655,7 @@ export function createApiRouter(
         let runtime = agents.get(agentId);
         if (!runtime) {
             runtime = Array.from(agents.values()).find(
-                (a) => a.character.name.toLowerCase() === agentId.toLowerCase()
+                (a) => a.character.name.toLowerCase() === agentId.toLowerCase(),
             );
         }
 
@@ -717,7 +716,7 @@ export function createApiRouter(
             ];
 
             const verifiedMembers = mockFamilyMembers.filter(
-                (member) => member.isVerified
+                (member) => member.isVerified,
             );
 
             res.json({
@@ -760,7 +759,7 @@ export function createApiRouter(
         let runtime = agents.get(agentId);
         if (!runtime) {
             runtime = Array.from(agents.values()).find(
-                (a) => a.character.name.toLowerCase() === agentId.toLowerCase()
+                (a) => a.character.name.toLowerCase() === agentId.toLowerCase(),
             );
         }
 
@@ -860,13 +859,13 @@ export function createApiRouter(
                     estimatedMonthly: monthlyRate.toFixed(2),
                     streamTypes: {
                         allowance: mockActiveStreams.filter(
-                            (s) => s.type === "allowance"
+                            (s) => s.type === "allowance",
                         ).length,
                         milestone: mockActiveStreams.filter(
-                            (s) => s.type === "milestone"
+                            (s) => s.type === "milestone",
                         ).length,
                         continuous: mockActiveStreams.filter(
-                            (s) => s.type === "continuous_reward"
+                            (s) => s.type === "continuous_reward",
                         ).length,
                     },
                     superTokenAddress:
@@ -892,7 +891,7 @@ export function createApiRouter(
         let runtime = agents.get(agentId);
         if (!runtime) {
             runtime = Array.from(agents.values()).find(
-                (a) => a.character.name.toLowerCase() === agentId.toLowerCase()
+                (a) => a.character.name.toLowerCase() === agentId.toLowerCase(),
             );
         }
 
@@ -964,10 +963,14 @@ export function createApiRouter(
                 .filter((a) => a.amount)
                 .reduce((sum, a) => sum + parseFloat(a.amount), 0);
 
-            const categoryStats = mockActivity.reduce((stats, activity) => {
-                stats[activity.category] = (stats[activity.category] || 0) + 1;
-                return stats;
-            }, {} as Record<string, number>);
+            const categoryStats = mockActivity.reduce(
+                (stats, activity) => {
+                    stats[activity.category] =
+                        (stats[activity.category] || 0) + 1;
+                    return stats;
+                },
+                {} as Record<string, number>,
+            );
 
             res.json({
                 success: true,
@@ -987,7 +990,7 @@ export function createApiRouter(
                             "family_interaction",
                             "generational_bridge",
                             "milestone",
-                        ].includes(a.category)
+                        ].includes(a.category),
                     ).length,
                 },
             });
@@ -1010,7 +1013,7 @@ export function createApiRouter(
         let runtime = agents.get(agentId);
         if (!runtime) {
             runtime = Array.from(agents.values()).find(
-                (a) => a.character.name.toLowerCase() === agentId.toLowerCase()
+                (a) => a.character.name.toLowerCase() === agentId.toLowerCase(),
             );
         }
 
@@ -1029,23 +1032,23 @@ export function createApiRouter(
             ] = await Promise.all([
                 fetch(
                     `${req.protocol}://${req.get(
-                        "host"
-                    )}/agents/${agentId}/gooddollar/wallet`
+                        "host",
+                    )}/agents/${agentId}/gooddollar/wallet`,
                 ),
                 fetch(
                     `${req.protocol}://${req.get(
-                        "host"
-                    )}/agents/${agentId}/gooddollar/family`
+                        "host",
+                    )}/agents/${agentId}/gooddollar/family`,
                 ),
                 fetch(
                     `${req.protocol}://${req.get(
-                        "host"
-                    )}/agents/${agentId}/gooddollar/streams`
+                        "host",
+                    )}/agents/${agentId}/gooddollar/streams`,
                 ),
                 fetch(
                     `${req.protocol}://${req.get(
-                        "host"
-                    )}/agents/${agentId}/gooddollar/activity?limit=10`
+                        "host",
+                    )}/agents/${agentId}/gooddollar/activity?limit=10`,
                 ),
             ]);
 
@@ -1064,7 +1067,7 @@ export function createApiRouter(
             if (streams.success && streams.streaming.activeStreams.length > 0) {
                 familyScore += Math.min(
                     streams.streaming.activeStreams.length * 20,
-                    40
+                    40,
                 ); // Max 40% for streaming
             }
             if (
@@ -1073,7 +1076,7 @@ export function createApiRouter(
             ) {
                 familyScore += Math.min(
                     activity.activity.stats.totalActivities * 2,
-                    30
+                    30,
                 ); // Max 30% for activity
             }
 
@@ -1119,11 +1122,11 @@ export function createApiRouter(
                         weeklyRewards: parseFloat(
                             activity.success
                                 ? activity.activity.stats.totalRewards
-                                : "0"
+                                : "0",
                         ),
                         streamingIncome: streams.success
                             ? parseFloat(
-                                  streams.streaming.estimatedDaily || "0"
+                                  streams.streaming.estimatedDaily || "0",
                               ) * 7
                             : 0,
                         goalProgress: familyScore, // Use family score as goal progress

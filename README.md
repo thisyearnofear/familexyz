@@ -172,3 +172,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **Ready to strengthen your family connections?** Start with our [Installation Guide](docs/setup/installation.md) and join the growing community of families using AI to deepen their relationships.
+# Trigger CI/CD deployment

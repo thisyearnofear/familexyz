@@ -42,7 +42,7 @@ jobs:
                   host: ${{ secrets.HETZNER_HOST }}
                   username: ${{ secrets.HETZNER_USERNAME }}
                   key: ${{ secrets.HETZNER_SSH_KEY }}
-                  port: ${{ secrets.HETZNER_PORT || 22 }}
+                  port: ${{ secrets.HETZNER_PORT }}
                   source: "/tmp/familexyz-image.tar"
                   target: "/tmp/"
 
@@ -52,7 +52,7 @@ jobs:
                   host: ${{ secrets.HETZNER_HOST }}
                   username: ${{ secrets.HETZNER_USERNAME }}
                   key: ${{ secrets.HETZNER_SSH_KEY }}
-                  port: ${{ secrets.HETZNER_PORT || 22 }}
+                  port: ${{ secrets.HETZNER_PORT }}
                   script: |
                       set -e
 
@@ -107,7 +107,7 @@ jobs:
                   host: ${{ secrets.HETZNER_HOST }}
                   username: ${{ secrets.HETZNER_USERNAME }}
                   key: ${{ secrets.HETZNER_SSH_KEY }}
-                  port: ${{ secrets.HETZNER_PORT || 22 }}
+                  port: ${{ secrets.HETZNER_PORT }}
                   script: |
                       echo "🔄 Deployment failed, attempting rollback..."
                       cd /opt/familexyz

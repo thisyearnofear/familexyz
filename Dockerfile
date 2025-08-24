@@ -1,9 +1,14 @@
 # Multi-stage build for @familexyz/agent
 # --- base: sets up pnpm and workspace tools
-FROM node:22-alpine AS base
+FROM node:22-slim AS base
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 RUN corepack enable && corepack prepare pnpm@9.12.3 --activate
+# Build tools for native deps like better-sqlite3
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 make g++ pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 # --- deps: install only prod deps for the agent via filter to avoid monorepo bloat

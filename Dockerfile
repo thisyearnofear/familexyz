@@ -50,8 +50,7 @@ EXPOSE 3000
 # Default envs (override via compose)
 ENV NODE_ENV=production
 
-# Healthcheck (adjust path if your agent exposes a health endpoint)
-# HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD wget -qO- http://localhost:3000/health || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD curl -fsS http://localhost:3000/health || exit 1
 
 # Start the agent (characters are relative to /app/agent)
 WORKDIR /app/agent

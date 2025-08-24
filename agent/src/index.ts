@@ -1103,6 +1103,19 @@ const startAgents = async () => {
 
     directClient.start(serverPort);
 
+    // Minimal HTTP health server without extra deps
+    const http = await import("http");
+    const server = http.createServer(async (_req, res) => {
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "application/json");
+        // readinessCheck is imported at top
+        const ready = await readinessCheck();
+        res.end(JSON.stringify({ status: "ok", ready }));
+    });
+    server.listen(serverPort, "0.0.0.0", () => {
+        elizaLogger.success(`Health server listening on :${serverPort}`);
+    });
+
     if (serverPort !== Number.parseInt(settings.SERVER_PORT || "3000")) {
         elizaLogger.log(`Server started on alternate port ${serverPort}`);
     }

@@ -1,0 +1,54 @@
+# Multi-stage build for @familexyz/agent
+# --- base: sets up pnpm and workspace tools
+FROM node:22-alpine AS base
+ENV PNPM_HOME=/pnpm
+ENV PATH=$PNPM_HOME:$PATH
+RUN corepack enable && corepack prepare pnpm@9.12.3 --activate
+WORKDIR /app
+
+# --- deps: install only prod deps for the agent via filter to avoid monorepo bloat
+FROM base AS deps
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY agent/package.json ./agent/package.json
+# Copy only the packages needed to resolve filtered dependencies
+# Add more package.json files if pnpm needs them for workspace resolution
+COPY packages ./packages
+COPY characters ./characters
+# Install dev deps for the agent only (ts-node), prod deps for its workspace deps
+RUN pnpm -r --filter "@familexyz/agent" install --no-optional --frozen-lockfile
+
+# --- build: (optional) if we ever switch to a compiled build; currently ts-node runs
+FROM deps AS build
+COPY agent ./agent
+# no separate build step needed; start uses ts-node
+
+# --- runtime: minimal image
+FROM node:22-alpine AS runtime
+ENV PNPM_HOME=/pnpm
+ENV PATH=$PNPM_HOME:$PATH
+RUN corepack enable && corepack prepare pnpm@9.12.3 --activate
+WORKDIR /app
+
+# Persist database/data inside container path; recommend mounting a volume
+VOLUME ["/app/data"]
+
+# Copy node_modules and sources from build
+COPY --from=deps /app/node_modules /app/node_modules
+COPY --from=deps /app/agent/node_modules /app/agent/node_modules
+COPY --from=deps /app/packages /app/packages
+COPY --from=build /app/agent /app/agent
+COPY characters ./characters
+
+# Expose backend port
+EXPOSE 3000
+
+# Default envs (override via compose)
+ENV NODE_ENV=production
+
+# Healthcheck (adjust path if your agent exposes a health endpoint)
+# HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD wget -qO- http://localhost:3000/health || exit 1
+
+# Start the agent (characters are relative to /app/agent)
+WORKDIR /app/agent
+CMD ["pnpm", "start"]
+

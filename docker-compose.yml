@@ -1,0 +1,22 @@
+version: "3.9"
+services:
+  familexyz-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: familexyz/agent:latest
+    container_name: familexyz-backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+    ports:
+      - "3000:3000"
+    volumes:
+      - familexyz-data:/app/data
+    working_dir: /app/agent
+    command: ["pnpm", "start"]
+volumes:
+  familexyz-data:
+

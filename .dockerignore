@@ -17,3 +17,17 @@ node_modules
 # Ignore build artifacts from the host
 dist
 build
+
+# Ignore entire client app from server backend image
+client
+
+# Ignore CI and misc
+.github
+scripts
+**/*.md
+
+# pnpm store cache on host
+.pnpm-store
+
+# Environment files (compose will mount env)
+.env*

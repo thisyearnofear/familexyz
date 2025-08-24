@@ -73,7 +73,7 @@
         }
     },
     "engines": {
-        "node": ">=22.0.0"
+        "node": ">=22 <23"
     },
     "dependencies": {
         "@0glabs/0g-ts-sdk": "0.2.1",

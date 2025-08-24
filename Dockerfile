@@ -20,7 +20,7 @@ COPY agent/package.json ./agent/package.json
 COPY packages ./packages
 COPY characters ./characters
 # Install dev deps for the agent only (ts-node), prod deps for its workspace deps
-RUN pnpm -r --filter "@familexyz/agent" install --no-optional --frozen-lockfile
+RUN pnpm -r --filter "@familexyz/agent" install --frozen-lockfile
 
 # --- build: (optional) if we ever switch to a compiled build; currently ts-node runs
 FROM deps AS build

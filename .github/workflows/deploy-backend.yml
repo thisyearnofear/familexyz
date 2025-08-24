@@ -32,8 +32,14 @@ jobs:
                   echo "📦 Saving Docker image to tar file..."
                   docker save ${{ env.IMAGE_NAME }}:latest -o familexyz-image.tar
 
-                  echo "✅ Image saved. File size:"
+                  echo "🔧 Setting file permissions..."
+                  chmod 644 familexyz-image.tar
+
+                  echo "✅ Image saved. File details:"
                   ls -lh familexyz-image.tar
+
+                  echo "📁 Current directory contents:"
+                  ls -la
 
             - name: Upload image to server
               uses: appleboy/scp-action@v0.1.7

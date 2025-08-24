@@ -30,10 +30,10 @@ jobs:
                   docker build -t ${{ env.IMAGE_NAME }}:latest -t ${{ env.IMAGE_NAME }}:${{ github.sha }} .
 
                   echo "📦 Saving Docker image to tar file..."
-                  docker save ${{ env.IMAGE_NAME }}:latest -o /tmp/familexyz-image.tar
+                  docker save ${{ env.IMAGE_NAME }}:latest -o familexyz-image.tar
 
                   echo "✅ Image saved. File size:"
-                  ls -lh /tmp/familexyz-image.tar
+                  ls -lh familexyz-image.tar
 
             - name: Upload image to server
               uses: appleboy/scp-action@v0.1.7
@@ -42,7 +42,7 @@ jobs:
                   username: ${{ secrets.HETZNER_USERNAME }}
                   key: ${{ secrets.HETZNER_SSH_KEY }}
                   port: ${{ secrets.HETZNER_PORT }}
-                  source: "/tmp/familexyz-image.tar"
+                  source: "familexyz-image.tar"
                   target: "/tmp/"
 
             - name: Deploy to Hetzner Server
@@ -63,7 +63,9 @@ jobs:
                           docker load -i /tmp/familexyz-image.tar
                           echo "✅ Docker image loaded successfully"
                       else
-                          echo "❌ Docker image tar file not found!"
+                          echo "❌ Docker image tar file not found at /tmp/familexyz-image.tar!"
+                          echo "Available files in /tmp:"
+                          ls -la /tmp/
                           exit 1
                       fi
 

@@ -1,9 +1,3 @@
-import { PGLiteDatabaseAdapter } from "@elizaos/adapter-pglite";
-import { PostgresDatabaseAdapter } from "@elizaos/adapter-postgres";
-import { QdrantDatabaseAdapter } from "@elizaos/adapter-qdrant";
-import { RedisClient } from "@elizaos/adapter-redis";
-import { SqliteDatabaseAdapter } from "@elizaos/adapter-sqlite";
-import { SupabaseDatabaseAdapter } from "@elizaos/adapter-supabase";
 import { DirectClient } from "@elizaos/client-direct";
 import {
     AgentRuntime,
@@ -580,9 +574,12 @@ export function getTokenForProvider(
     }
 }
 
-function initializeDatabase(dataDir: string) {
+async function initializeDatabase(dataDir: string) {
     if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
         elizaLogger.info("Initializing Supabase connection...");
+        const { SupabaseDatabaseAdapter } = await import(
+            "@elizaos/adapter-supabase"
+        );
         const db = new SupabaseDatabaseAdapter(
             process.env.SUPABASE_URL,
             process.env.SUPABASE_ANON_KEY,
@@ -602,6 +599,9 @@ function initializeDatabase(dataDir: string) {
         return db;
     } else if (process.env.POSTGRES_URL) {
         elizaLogger.info("Initializing PostgreSQL connection...");
+        const { PostgresDatabaseAdapter } = await import(
+            "@elizaos/adapter-postgres"
+        );
         const db = new PostgresDatabaseAdapter({
             connectionString: process.env.POSTGRES_URL,
             parseInputs: true,
@@ -622,6 +622,9 @@ function initializeDatabase(dataDir: string) {
     } else if (process.env.PGLITE_DATA_DIR) {
         elizaLogger.info("Initializing PgLite adapter...");
         // `dataDir: memory://` for in memory pg
+        const { PGLiteDatabaseAdapter } = await import(
+            "@elizaos/adapter-pglite"
+        );
         const db = new PGLiteDatabaseAdapter({
             dataDir: process.env.PGLITE_DATA_DIR,
         });
@@ -633,6 +636,9 @@ function initializeDatabase(dataDir: string) {
         process.env.QDRANT_VECTOR_SIZE
     ) {
         elizaLogger.info("Initializing Qdrant adapter...");
+        const { QdrantDatabaseAdapter } = await import(
+            "@elizaos/adapter-qdrant"
+        );
         const db = new QdrantDatabaseAdapter(
             process.env.QDRANT_URL,
             process.env.QDRANT_KEY,
@@ -646,6 +652,9 @@ function initializeDatabase(dataDir: string) {
         elizaLogger.info(`Initializing SQLite database at ${filePath}...`);
         const req = createRequire(import.meta.url);
         const BetterSqlite3 = req("better-sqlite3");
+        const { SqliteDatabaseAdapter } = await import(
+            "@elizaos/adapter-sqlite"
+        );
         const db = new SqliteDatabaseAdapter(new BetterSqlite3(filePath));
 
         // Test the connection
@@ -895,7 +904,7 @@ function initializeDbCache(character: Character, db: IDatabaseCacheAdapter) {
     return cache;
 }
 
-function initializeCache(
+async function initializeCache(
     cacheStore: string,
     character: Character,
     baseDir?: string,
@@ -905,6 +914,7 @@ function initializeCache(
         case CacheStore.REDIS:
             if (process.env.REDIS_URL) {
                 elizaLogger.info("Connecting to Redis...");
+                const { RedisClient } = await import("@elizaos/adapter-redis");
                 const redisClient = new RedisClient(process.env.REDIS_URL);
                 if (!character?.id) {
                     throw new Error(
@@ -960,12 +970,12 @@ async function startAgent(
             fs.mkdirSync(dataDir, { recursive: true });
         }
 
-        db = initializeDatabase(dataDir) as IDatabaseAdapter &
+        db = (await initializeDatabase(dataDir)) as IDatabaseAdapter &
             IDatabaseCacheAdapter;
 
         await db.init();
 
-        const cache = initializeCache(
+        const cache = await initializeCache(
             process.env.CACHE_STORE ?? CacheStore.DATABASE,
             character,
             "",

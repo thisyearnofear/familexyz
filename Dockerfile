@@ -28,7 +28,7 @@ COPY agent ./agent
 # no separate build step needed; start uses ts-node
 
 # --- runtime: minimal image
-FROM node:22-alpine AS runtime
+FROM node:22-slim AS runtime
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 RUN corepack enable && corepack prepare pnpm@9.12.3 --activate

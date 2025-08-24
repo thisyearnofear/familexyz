@@ -1,3 +1,5 @@
+name: familexyz
+
 services:
     familexyz-backend:
         build:

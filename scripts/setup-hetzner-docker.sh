@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# FamilyXYZ Hetzner Server Setup Script
-# Optimized setup for separated frontend/backend architecture
-# Version 2.0 - Production Ready with Monitoring
+# FamilyXYZ Hetzner Server Setup Script - Docker Edition
+# Optimized setup for Docker-based deployment
+# Version 3.0 - Clean, Modern, Resource-Efficient
 
 set -e  # Exit on any error
 set -u  # Exit on undefined variables
@@ -14,7 +14,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Logging function
+# Logging functions
 log() {
     echo -e "${BLUE}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $1"
 }
@@ -32,48 +32,49 @@ error() {
     exit 1
 }
 
-log "🚀 Starting FamilyXYZ Hetzner Server Setup v2.0..."
+log "🚀 Starting FamilyXYZ Hetzner Server Setup v3.0 (Docker Edition)..."
 
 # Update system packages
-echo "📦 Updating system packages..."
+log "📦 Updating system packages..."
 apt update && apt upgrade -y
 
 # Install essential packages
 log "🔧 Installing essential packages..."
-apt install -y curl wget git unzip software-properties-common build-essential \
+apt install -y curl wget git unzip software-properties-common \
     htop iotop nethogs tree jq zip unzip fail2ban ufw certbot nginx-full \
-    logrotate rsync cron
+    logrotate rsync cron ca-certificates gnupg lsb-release
 
-# Install Node.js 23 and Docker
-log "📦 Installing Node.js 23..."
-curl -fsSL https://deb.nodesource.com/setup_23.x | bash -
-apt install -y nodejs
-
+# Install Docker and Docker Compose
 log "🐳 Installing Docker and Docker Compose..."
-curl -fsSL https://get.docker.com -o get-docker.sh
-sh get-docker.sh
-apt install -y docker-compose-plugin
+# Add Docker's official GPG key
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 
-# Add docker to startup
+# Add Docker repository
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# Install Docker
+apt update
+apt install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+
+# Start and enable Docker
 systemctl enable docker
 systemctl start docker
 
-# Install pnpm globally
-log "📦 Installing pnpm..."
-npm install -g pnpm@9.14.4
+# Add current user to docker group (if not root)
+if [ "$USER" != "root" ]; then
+    usermod -aG docker $USER
+fi
 
-# Install PM2 globally for process management
-log "📦 Installing PM2..."
-npm install -g pm2@5.3.0
+success "Docker installed and configured"
 
 # Create deployment directory structure
-echo "📁 Creating deployment directories..."
-mkdir -p /opt/familexyz/{current,releases,logs,backups,data}
+log "📁 Creating deployment directories..."
+mkdir -p /opt/familexyz/{logs,backups,data}
 chown -R root:root /opt/familexyz
 chmod -R 755 /opt/familexyz
 
 # Create .env template
-echo "📝 Creating .env template..."
+log "📝 Creating .env template..."
 cat > /opt/familexyz/.env.template << 'EOF'
 # FamilyXYZ Production Environment Configuration
 # Copy this file to .env and fill in your actual values
@@ -81,18 +82,11 @@ cat > /opt/familexyz/.env.template << 'EOF'
 # Server Configuration
 NODE_ENV=production
 PORT=3000
+HEALTH_PORT=3001
 PREVENT_UNHANDLED_EXIT=true
 
-# Cache Configuration
-REDIS_URL=redis://localhost:6379
-REDIS_PASSWORD=
-
-# Database Configuration (Choose one)
-# SQLite (default)
-DATABASE_URL=sqlite:///opt/familexyz/data/familexyz.db
-
-# PostgreSQL (optional)
-# DATABASE_URL=postgresql://username:password@localhost:5432/familexyz
+# Database Configuration
+DATABASE_URL=sqlite:///app/data/familexyz.db
 
 # Required API Keys
 OPENAI_API_KEY=your_openai_api_key_here
@@ -129,37 +123,19 @@ LOG_LEVEL=info
 MAX_MEMORY_USAGE=1024
 EOF
 
-# Check if Redis is installed and running
-if ! systemctl is-active --quiet redis-server; then
-    echo "📦 Installing and configuring Redis..."
-    apt install -y redis-server
-    systemctl enable redis-server
-    systemctl start redis-server
-    echo "✅ Redis installed and started"
-else
-    echo "✅ Redis is already running"
-fi
+success ".env template created"
 
-# Configure firewall (allow SSH and port 3000)
-echo "🔥 Configuring firewall..."
+# Configure firewall
+log "🔥 Configuring firewall..."
 ufw --force enable
 ufw allow ssh
+ufw allow 80/tcp
+ufw allow 443/tcp
 ufw allow 3000/tcp
-echo "✅ Firewall configured"
-
-# Setup PM2 startup
-echo "🔄 Setting up PM2 startup..."
-pm2 startup systemd -u root --hp /root
-pm2 save
-
-# Create systemd service for PM2
-log "📋 Creating PM2 systemd service..."
-systemctl enable pm2-root
-
-# Setup monitoring and security
-log "🔒 Configuring security and monitoring..."
+success "Firewall configured"
 
 # Configure fail2ban
+log "🔒 Configuring fail2ban..."
 cat > /etc/fail2ban/jail.local << 'EOF'
 [DEFAULT]
 bantime = 1h
@@ -180,7 +156,8 @@ systemctl enable fail2ban
 systemctl start fail2ban
 success "Fail2ban configured and started"
 
-# Setup log rotation
+# Setup log rotation for Docker containers
+log "📋 Setting up log rotation..."
 cat > /etc/logrotate.d/familexyz << 'EOF'
 /opt/familexyz/logs/*.log {
     daily
@@ -189,82 +166,54 @@ cat > /etc/logrotate.d/familexyz << 'EOF'
     compress
     delaycompress
     notifempty
-    create 644 familexyz familexyz
-    postrotate
-        /bin/kill -USR1 $(cat /var/run/familexyz.pid 2>/dev/null) 2>/dev/null || true
-    endscript
+    create 644 root root
 }
 EOF
 success "Log rotation configured"
 
-# Create deployment script
-log "📜 Creating deployment script..."
+# Create Docker management scripts
+log "📜 Creating Docker management scripts..."
+
+# Deployment script
 cat > /opt/familexyz/deploy.sh << 'EOF'
 #!/bin/bash
 
-# FamilyXYZ Deployment Script
-# Automated deployment with zero-downtime
+# FamilyXYZ Docker Deployment Script
+# Zero-downtime deployment with Docker
 
 set -e
 
 DEPLOY_DIR="/opt/familexyz"
-CURRENT_DIR="$DEPLOY_DIR/current"
-RELEASES_DIR="$DEPLOY_DIR/releases"
-REPO_URL="https://github.com/your-org/familexyz.git"
-BRANCH="main"
-TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-RELEASE_DIR="$RELEASES_DIR/$TIMESTAMP"
+IMAGE_NAME="familexyz/agent:latest"
 
 log() {
     echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1"
 }
 
-log "🚀 Starting deployment..."
+cd "$DEPLOY_DIR"
 
-# Create release directory
-mkdir -p "$RELEASE_DIR"
-cd "$RELEASE_DIR"
+log "🚀 Starting Docker deployment..."
 
-# Clone the repository
-log "📥 Cloning repository..."
-git clone --depth 1 --branch "$BRANCH" "$REPO_URL" .
+# Pull latest image (if using registry)
+# docker pull "$IMAGE_NAME"
 
-# Copy environment configuration
-log "📋 Copying environment configuration..."
-cp "$DEPLOY_DIR/.env" "$RELEASE_DIR/.env"
+# Stop and remove old container
+log "⏹️  Stopping existing container..."
+docker compose down --timeout 30 || true
 
-# Build the application
-log "🔨 Building application..."
-pnpm install --frozen-lockfile
-pnpm build
+# Start new container
+log "▶️  Starting new container..."
+docker compose up -d
 
-# Stop current application
-log "⏹️  Stopping current application..."
-pm2 stop all || true
+# Wait for health check
+log "🏥 Waiting for health check..."
+sleep 30
 
-# Update symlink
-log "🔗 Updating symlink..."
-ln -sfn "$RELEASE_DIR" "$CURRENT_DIR"
-
-# Start application
-log "▶️  Starting application..."
-cd "$CURRENT_DIR"
-pm2 start ecosystem.config.js --env production
-pm2 save
-
-# Cleanup old releases (keep last 5)
-log "🧹 Cleaning up old releases..."
-cd "$RELEASES_DIR"
-ls -1dt */ | tail -n +6 | xargs rm -rf
-
-# Health check
-log "🏥 Performing health check..."
-sleep 10
-if curl -f http://localhost:3000/ > /dev/null 2>&1; then
+if docker compose ps | grep -q "healthy\|Up"; then
     log "✅ Deployment successful!"
 else
-    log "❌ Health check failed! Rolling back..."
-    # Rollback logic here
+    log "❌ Deployment failed! Check logs:"
+    docker compose logs --tail=50
     exit 1
 fi
 
@@ -274,36 +223,36 @@ EOF
 chmod +x /opt/familexyz/deploy.sh
 success "Deployment script created"
 
-# Create monitoring script
-log "📊 Creating monitoring script..."
+# Monitoring script
 cat > /opt/familexyz/monitor.sh << 'EOF'
 #!/bin/bash
 
-# FamilyXYZ Monitoring Script
-# Run this with cron every 5 minutes
+# FamilyXYZ Docker Monitoring Script
 
-SERVICE_URL="http://localhost:3000"
-LOG_FILE="/opt/familexyz/logs/monitor.log"
-ALERT_EMAIL="admin@familexyz.com"
+DEPLOY_DIR="/opt/familexyz"
+LOG_FILE="$DEPLOY_DIR/logs/monitor.log"
 
 log() {
     echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"
 }
 
-# Check API health
-if ! curl -f "$SERVICE_URL" > /dev/null 2>&1; then
-    log "❌ API health check failed"
-    # Restart service
-    pm2 restart all
-    log "🔄 Service restarted"
+cd "$DEPLOY_DIR"
+
+# Check container health
+if ! docker compose ps | grep -q "healthy\|Up"; then
+    log "❌ Container health check failed"
+    docker compose restart
+    log "🔄 Container restarted"
 else
-    log "✅ API health check passed"
+    log "✅ Container health check passed"
 fi
 
 # Check disk space
 DISK_USAGE=$(df / | awk 'NR==2{print $5}' | sed 's/%//')
 if [ "$DISK_USAGE" -gt 80 ]; then
     log "⚠️  Disk usage is ${DISK_USAGE}%"
+    # Clean up old Docker images
+    docker image prune -f
 fi
 
 # Check memory usage
@@ -311,43 +260,31 @@ MEM_USAGE=$(free | awk 'NR==2{printf "%.2f", $3*100/$2 }')
 if (( $(echo "$MEM_USAGE > 80" | bc -l) )); then
     log "⚠️  Memory usage is ${MEM_USAGE}%"
 fi
-
-# Check PM2 status
-if ! pm2 list | grep -q online; then
-    log "❌ Some PM2 processes are not online"
-    pm2 restart all
-fi
 EOF
 
 chmod +x /opt/familexyz/monitor.sh
 success "Monitoring script created"
 
-# Setup cron job for monitoring
-log "⏰ Setting up monitoring cron job..."
-(crontab -l 2>/dev/null; echo "*/5 * * * * /opt/familexyz/monitor.sh") | crontab -
-success "Monitoring cron job configured"
-
-# Create backup script
-log "💾 Creating backup script..."
+# Backup script
 cat > /opt/familexyz/backup.sh << 'EOF'
 #!/bin/bash
 
-# FamilyXYZ Backup Script
-# Daily backup of data and logs
+# FamilyXYZ Docker Backup Script
 
 BACKUP_DIR="/opt/familexyz/backups"
 DATE=$(date +"%Y%m%d")
 BACKUP_FILE="$BACKUP_DIR/familexyz_backup_$DATE.tar.gz"
 
-# Create backup directory if it doesn't exist
 mkdir -p "$BACKUP_DIR"
 
-# Create backup
-tar -czf "$BACKUP_FILE" \
-    /opt/familexyz/data \
-    /opt/familexyz/logs \
-    /opt/familexyz/.env \
-    2>/dev/null || echo "Some files may not exist yet"
+# Backup data volumes and configuration
+docker run --rm \
+    -v familexyz_familexyz-data:/data:ro \
+    -v familexyz_familexyz-logs:/logs:ro \
+    -v /opt/familexyz/.env:/env:ro \
+    -v "$BACKUP_DIR":/backup \
+    alpine:latest \
+    tar -czf "/backup/familexyz_backup_$DATE.tar.gz" /data /logs /env
 
 # Remove backups older than 30 days
 find "$BACKUP_DIR" -name "familexyz_backup_*.tar.gz" -mtime +30 -delete
@@ -358,16 +295,87 @@ EOF
 chmod +x /opt/familexyz/backup.sh
 success "Backup script created"
 
-# Setup daily backup cron job
-log "⏰ Setting up daily backup cron job..."
+# Create additional management scripts
+log "📜 Creating additional management scripts..."
+
+# Status script
+cat > /opt/familexyz/status.sh << 'EOF'
+#!/bin/bash
+echo "🐳 Docker Status:"
+docker compose ps
+echo ""
+echo "📊 Resource Usage:"
+docker stats --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}"
+echo ""
+echo "🏥 Health Check:"
+curl -s http://localhost:3001/health || echo "Health check failed"
+EOF
+
+# Logs script
+cat > /opt/familexyz/logs.sh << 'EOF'
+#!/bin/bash
+echo "📋 Recent logs (last 50 lines):"
+docker compose logs --tail=50 -f
+EOF
+
+# Restart script
+cat > /opt/familexyz/restart.sh << 'EOF'
+#!/bin/bash
+echo "🔄 Restarting FamilyXYZ..."
+docker compose down --timeout 30
+docker compose up -d
+echo "✅ Restart completed"
+EOF
+
+# Update script
+cat > /opt/familexyz/update.sh << 'EOF'
+#!/bin/bash
+echo "🔄 Updating FamilyXYZ..."
+docker compose pull
+docker compose down --timeout 30
+docker compose up -d
+echo "✅ Update completed"
+EOF
+
+# Make all scripts executable
+chmod +x /opt/familexyz/*.sh
+success "Management scripts created"
+
+# Create systemd service for auto-start
+log "🔧 Creating systemd service..."
+cat > /etc/systemd/system/familexyz.service << 'EOF'
+[Unit]
+Description=FamilyXYZ Docker Service
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/opt/familexyz
+ExecStart=/usr/bin/docker compose up -d
+ExecStop=/usr/bin/docker compose down
+TimeoutStartSec=0
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable familexyz.service
+success "Systemd service created and enabled"
+
+# Setup cron jobs
+log "⏰ Setting up cron jobs..."
+(crontab -l 2>/dev/null; echo "*/5 * * * * /opt/familexyz/monitor.sh") | crontab -
 (crontab -l 2>/dev/null; echo "0 2 * * * /opt/familexyz/backup.sh") | crontab -
-success "Daily backup cron job configured"
+success "Cron jobs configured"
 
 # Create nginx reverse proxy configuration
 log "🌐 Setting up nginx reverse proxy..."
 cat > /etc/nginx/sites-available/familexyz << 'EOF'
 # FamilyXYZ Nginx Configuration
-# Reverse proxy for backend API
+# Reverse proxy for Docker backend
 
 server {
     listen 80;
@@ -396,12 +404,11 @@ server {
 
     # Health check
     location /health {
+        proxy_pass http://localhost:3001/health;
         access_log off;
-        return 200 "healthy\n";
-        add_header Content-Type text/plain;
     }
 
-    # Default route for API documentation or status
+    # Default route
     location / {
         proxy_pass http://localhost:3000/;
         proxy_set_header Host $host;
@@ -414,6 +421,7 @@ EOF
 
 # Enable the site
 ln -sf /etc/nginx/sites-available/familexyz /etc/nginx/sites-enabled/
+rm -f /etc/nginx/sites-enabled/default
 nginx -t && systemctl reload nginx
 success "Nginx reverse proxy configured"
 
@@ -428,15 +436,13 @@ echo "   - HETZNER_USERNAME: root"
 echo "   - HETZNER_SSH_KEY: your-private-ssh-key"
 echo "4. Push to GitHub main branch to trigger deployment"
 echo ""
-echo "🔧 Optional: Install PostgreSQL if you prefer it over SQLite:"
-echo "   apt install -y postgresql postgresql-contrib"
-echo "   sudo -u postgres createuser --interactive"
-echo "   sudo -u postgres createdb familexyz"
+echo "🐳 Docker Commands:"
+echo "   - View logs: docker compose logs -f"
+echo "   - Restart: docker compose restart"
+echo "   - Stop: docker compose down"
+echo "   - Status: docker compose ps"
 echo ""
 echo "📊 Server Status:"
-echo "   - Node.js version: $(node --version)"
-echo "   - pnpm version: $(pnpm --version)"
-echo "   - PM2 version: $(pm2 --version)"
-echo "   - Redis status: $(systemctl is-active redis-server)"
+echo "   - Docker version: $(docker --version)"
 echo "   - Available disk space: $(df -h / | awk 'NR==2{print $4}')"
 echo "   - Available memory: $(free -h | awk 'NR==2{print $7}')"

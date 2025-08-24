@@ -1,13 +1,52 @@
 # FamilyXYZ Production Deployment Guide
 
-This guide will help you deploy the FamilyXYZ project with the backend on Hetzner and frontend on Netlify, with automatic GitHub deployments.
+This guide provides two modern deployment approaches for the FamilyXYZ project: Docker-based CI/CD (recommended) and simple Docker Compose setup.
 
 ## Overview
 
-- **Backend**: Deployed on Hetzner server using PM2 and automated GitHub Actions
+- **Backend**: Deployed on Hetzner server using Docker containers
 - **Frontend**: Deployed on Netlify with automatic builds from GitHub
-- **Database**: SQLite or PostgreSQL on Hetzner server
-- **Cache**: Redis on Hetzner server
+- **Database**: SQLite (containerized) or PostgreSQL
+- **Deployment**: GitHub Actions with Docker images (no server-side builds)
+
+## 🔄 Key Improvements
+
+### Before (Old Setup)
+
+- ❌ Server-side builds with `pnpm install` and `pnpm build`
+- ❌ Massive node_modules directories on server
+- ❌ PM2 with direct Node.js execution
+- ❌ Potential disk space and memory issues
+- ❌ Complex dependency management on server
+
+### After (New Setup)
+
+- ✅ **Docker images built in GitHub Actions** (clean environment)
+- ✅ **Server only pulls and runs pre-built images**
+- ✅ **No more server-side builds or node_modules**
+- ✅ **Better resource isolation and management**
+- ✅ **Zero-downtime deployments**
+- ✅ **Automatic health checks and monitoring**
+
+## Deployment Options
+
+### Option A: Docker CI/CD (Recommended)
+
+**Best for production environments**
+
+- ✅ GitHub Actions builds Docker images
+- ✅ Server only pulls and runs pre-built images
+- ✅ No server-side builds or massive node_modules
+- ✅ Better resource management and isolation
+- ✅ Zero-downtime deployments
+
+### Option B: Simple Docker Compose
+
+**Best for quick setup or development**
+
+- ✅ Quick setup with git clone + docker compose
+- ✅ Manual deployment control
+- ✅ Good for development/testing environments
 
 ## Prerequisites
 
@@ -16,76 +55,238 @@ This guide will help you deploy the FamilyXYZ project with the backend on Hetzne
 - Netlify account
 - Domain name (optional but recommended)
 
-## Step 1: Hetzner Server Setup
+## Option A: Docker CI/CD Setup (Recommended)
 
-### 1.1 Initial Server Setup
+### Step 1: Hetzner Server Setup
 
 1. Connect to your Hetzner server:
-   ```bash
-   ssh root@your-server-ip
-   ```
 
-2. Run the setup script:
-   ```bash
-   curl -fsSL https://raw.githubusercontent.com/your-username/familexyz/main/scripts/setup-hetzner.sh | bash
-   ```
+    ```bash
+    ssh root@your-server-ip
+    ```
 
-   Or manually download and run:
-   ```bash
-   wget https://raw.githubusercontent.com/your-username/familexyz/main/scripts/setup-hetzner.sh
-chmod +x setup-hetzner.sh
-./setup-hetzner.sh
-   ```
+2. Run the consolidated Docker setup script:
 
-### 1.2 Configure Environment Variables
+    ```bash
+    curl -fsSL https://raw.githubusercontent.com/thisyearnofear/familexyz/develop/scripts/setup-hetzner-docker.sh | bash
+    ```
+
+    Or manually download and run:
+
+    ```bash
+    wget https://raw.githubusercontent.com/thisyearnofear/familexyz/develop/scripts/setup-hetzner-docker.sh
+    chmod +x setup-hetzner-docker.sh
+    ./setup-hetzner-docker.sh
+    ```
+
+    This single script now includes:
+
+    - Docker and Docker Compose installation
+    - Server security configuration (firewall, fail2ban)
+    - Systemd service for auto-start
+    - Management scripts (status, logs, restart, update, backup)
+    - Monitoring and backup automation
+
+### Step 2: Configure Environment
 
 1. Edit the environment file:
-   ```bash
-   nano /opt/familexyz/.env
-   ```
 
-2. Fill in your API keys and configuration based on the template provided.
+    ```bash
+    nano /opt/familexyz/.env
+    ```
 
-### 1.3 Optional: Setup PostgreSQL (Recommended for Production)
+2. Fill in your API keys and configuration:
+
+    ```bash
+    # Required API Keys
+    OPENAI_API_KEY=your_actual_openai_key
+    ANTHROPIC_API_KEY=your_actual_anthropic_key
+
+    # Optional: Add other API keys as needed
+    GOOGLE_GENERATIVE_AI_API_KEY=your_google_key
+    GROQ_API_KEY=your_groq_key
+    ```
+
+### Step 3: GitHub Repository Setup
+
+The updated GitHub Actions workflow will build Docker images and deploy them automatically.
+
+1. **Add Repository Secrets**
+
+    Go to your GitHub repository → Settings → Secrets and variables → Actions, and add:
+
+    - `HETZNER_HOST`: Your server IP address
+    - `HETZNER_USERNAME`: Your server username (usually `root`)
+    - `HETZNER_SSH_KEY`: Your private SSH key for server access
+    - `HETZNER_PORT`: SSH port (usually `22`)
+
+2. **Generate SSH Key (if needed)**
+
+    ```bash
+    # On your local machine
+    ssh-keygen -t ed25519 -C "github-actions@familexyz"
+
+    # Copy public key to server
+    ssh-copy-id -i ~/.ssh/id_ed25519.pub root@your-server-ip
+
+    # Copy private key content for GitHub secret
+    cat ~/.ssh/id_ed25519
+    ```
+
+### Step 4: Deploy and Test
+
+1. Push your code to trigger deployment:
+
+    ```bash
+    git add .
+    git commit -m "Set up Docker-based deployment"
+    git push origin develop  # or main
+    ```
+
+2. Monitor the deployment in GitHub Actions tab
+
+3. Verify deployment:
+
+    ```bash
+    # Check container status
+    ssh root@your-server-ip "cd /opt/familexyz && docker compose ps"
+
+    # Check health
+    curl http://your-server-ip:3000/health
+    ```
+
+---
+
+## Option B: Simple Docker Compose Setup
+
+For a quicker setup without CI/CD automation:
+
+### Step 1: Server Setup
+
+1. Connect to your server and run the same consolidated Docker setup:
+
+    ```bash
+    ssh root@your-server-ip
+    curl -fsSL https://raw.githubusercontent.com/thisyearnofear/familexyz/develop/scripts/setup-hetzner-docker.sh | bash
+    ```
+
+    **Note**: This is the same comprehensive setup script as Option A, providing all the management tools and automation.
+
+### Step 2: Manual Deployment
+
+1. Clone the repository:
+
+    ```bash
+    cd /opt/familexyz
+    git clone https://github.com/thisyearnofear/familexyz.git current
+    cd current
+    ```
+
+2. Copy environment file:
+
+    ```bash
+    cp /opt/familexyz/.env .env
+    ```
+
+3. Build and start:
+
+    ```bash
+    docker compose build
+    docker compose up -d
+    ```
+
+### Step 3: Management
+
+Use the provided scripts for easy management:
 
 ```bash
-# Install PostgreSQL
-sudo apt install -y postgresql postgresql-contrib
+# Check status
+/opt/familexyz/status.sh
 
-# Create database and user
-sudo -u postgres psql
-CREATE DATABASE familexyz;
-CREATE USER familexyz WITH PASSWORD 'your_secure_password';
-GRANT ALL PRIVILEGES ON DATABASE familexyz TO familexyz;
-\q
+# View logs
+/opt/familexyz/logs.sh
 
-# Update .env file
-echo "DATABASE_URL=postgresql://familexyz:your_secure_password@localhost:5432/familexyz" >> /opt/familexyz/.env
+# Restart service
+/opt/familexyz/restart.sh
+
+# Update deployment
+/opt/familexyz/update.sh
+
+# Test deployment
+/opt/familexyz/test-deployment.sh
 ```
 
-## Step 2: GitHub Repository Setup
+---
 
-### 2.1 Add Repository Secrets
+## Management & Monitoring
 
-Go to your GitHub repository → Settings → Secrets and variables → Actions, and add:
+### Server Management Scripts
 
-- `HETZNER_HOST`: Your server IP address
-- `HETZNER_USERNAME`: Your server username (usually `root`)
-- `HETZNER_SSH_KEY`: Your private SSH key for server access
-- `HETZNER_PORT`: SSH port (usually `22`)
+The consolidated setup script creates several management scripts in `/opt/familexyz/`:
 
-### 2.2 Generate SSH Key (if needed)
+- **`status.sh`** - Check container status and resource usage
+- **`logs.sh`** - View real-time logs
+- **`restart.sh`** - Restart containers gracefully
+- **`update.sh`** - Pull latest images and restart
+- **`backup.sh`** - Backup data and configuration
+- **`monitor.sh`** - System monitoring (runs via cron)
+- **`deploy.sh`** - Manual deployment script
+
+Plus the test script from the repository:
+
+- **`scripts/test-deployment.sh`** - Comprehensive deployment testing
+
+### Docker Commands
 
 ```bash
-# On your local machine
-ssh-keygen -t ed25519 -C "github-actions@familexyz"
+# View container status
+docker compose ps
 
-# Copy public key to server
-ssh-copy-id -i ~/.ssh/id_ed25519.pub root@your-server-ip
+# View logs
+docker compose logs -f
 
-# Copy private key content for GitHub secret
-cat ~/.ssh/id_ed25519
+# Restart containers
+docker compose restart
+
+# Stop containers
+docker compose down
+
+# Update and restart
+docker compose pull && docker compose up -d
 ```
+
+### Resource Benefits
+
+- **Memory**: Containerized with 1GB limit (vs unlimited before)
+- **Disk**: No more massive node_modules directories
+- **CPU**: Controlled resource usage with limits
+- **Monitoring**: Automatic health checks and restart
+
+## File Structure
+
+The deployment setup uses a clean, consolidated structure:
+
+```
+familexyz/
+├── Dockerfile                           # Optimized multi-stage Docker build
+├── docker-compose.yml                   # Production Docker Compose config
+├── .github/workflows/deploy-backend.yml # Docker-based CI/CD pipeline
+├── docs/DEPLOYMENT.md                   # This comprehensive guide
+├── scripts/
+│   ├── setup-hetzner-docker.sh         # Single consolidated setup script
+│   └── test-deployment.sh              # Deployment validation
+└── ecosystem.config.js                 # Legacy PM2 config (deprecated)
+```
+
+**Key Changes Made:**
+
+- ✅ Consolidated duplicate Docker configurations
+- ✅ Removed obsolete PM2-based setup scripts
+- ✅ Enhanced single setup script with all features
+- ✅ Merged deployment documentation
+- ✅ Streamlined file structure following DRY principles
+
+---
 
 ## Step 3: Netlify Frontend Setup
 
@@ -95,9 +296,9 @@ cat ~/.ssh/id_ed25519
 2. Click "New site from Git"
 3. Choose GitHub and select your repository
 4. Configure build settings:
-   - **Base directory**: `client`
-   - **Build command**: `cd .. && pnpm install --no-frozen-lockfile && pnpm build:client`
-   - **Publish directory**: `client/dist`
+    - **Base directory**: `client`
+    - **Build command**: `cd .. && pnpm install --no-frozen-lockfile && pnpm build:client`
+    - **Publish directory**: `client/dist`
 
 ### 3.2 Environment Variables
 
@@ -156,11 +357,12 @@ sudo certbot --nginx -d your-domain.com
 ### 5.1 First Deployment
 
 1. Push your code to the main branch:
-   ```bash
-   git add .
-   git commit -m "Add production deployment configuration"
-   git push origin main
-   ```
+
+    ```bash
+    git add .
+    git commit -m "Add production deployment configuration"
+    git push origin main
+    ```
 
 2. Monitor the GitHub Actions deployment in your repository's Actions tab
 
@@ -169,15 +371,16 @@ sudo certbot --nginx -d your-domain.com
 ### 5.2 Verify Deployment
 
 1. Check backend health:
-   ```bash
-   curl http://your-server-ip:3000/health
-   # or
-   curl https://your-domain.com/health
-   ```
+
+    ```bash
+    curl http://your-server-ip:3000/health
+    # or
+    curl https://your-domain.com/health
+    ```
 
 2. Check frontend:
-   - Visit your Netlify URL or custom domain
-   - Verify it can connect to the backend
+    - Visit your Netlify URL or custom domain
+    - Verify it can connect to the backend
 
 ## Step 6: Monitoring and Maintenance
 

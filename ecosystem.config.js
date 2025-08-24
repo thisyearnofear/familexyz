@@ -1,3 +1,16 @@
+// ⚠️  LEGACY: PM2 Configuration (Deprecated)
+//
+// This PM2 configuration is deprecated in favor of Docker-based deployment.
+// The new deployment uses Docker containers with better resource management,
+// health checks, and zero-downtime deployments.
+//
+// For new deployments, use:
+// - Docker Compose: docker compose up -d
+// - GitHub Actions: Automatic Docker-based CI/CD
+//
+// This file is kept for backward compatibility and local development only.
+// For production, use the Docker setup in scripts/setup-hetzner-docker.sh
+
 module.exports = {
   apps: [
     {

@@ -49,13 +49,19 @@ COPY --from=deps /app/packages /app/packages
 COPY --from=build /app/agent /app/agent
 COPY characters ./characters
 
-# Expose backend port
-EXPOSE 3000
+# Expose backend and health check ports
+EXPOSE 3000 3001
 
 # Default envs (override via compose)
 ENV NODE_ENV=production
+ENV HEALTH_PORT=3001
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=5 CMD curl -fsS http://localhost:3001/health || exit 1
+# Create logs directory
+RUN mkdir -p /app/logs
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -fsS http://localhost:${HEALTH_PORT:-3001}/health || exit 1
 
 # Start the agent (characters are relative to /app/agent)
 WORKDIR /app/agent

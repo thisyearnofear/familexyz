@@ -1,4 +1,4 @@
-name: Deploy Backend to Hetzner
+name: Deploy Backend to Hetzner (Docker)
 
 on:
     push:
@@ -8,32 +8,43 @@ on:
             - "packages/**"
             - "package.json"
             - "pnpm-lock.yaml"
-            - ".env.example"
+            - "Dockerfile"
+            - "docker-compose.yml"
     workflow_dispatch:
 
+env:
+    IMAGE_NAME: familexyz/agent
+    CONTAINER_NAME: familexyz-backend
+
 jobs:
-    deploy:
+    build-and-deploy:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v4
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3
+
+            - name: Build Docker image
+              uses: docker/build-push-action@v5
               with:
-                  node-version: "23"
-                  cache: "npm"
+                  context: .
+                  file: ./Dockerfile
+                  tags: ${{ env.IMAGE_NAME }}:latest,${{ env.IMAGE_NAME }}:${{ github.sha }}
+                  outputs: type=docker,dest=/tmp/familexyz-image.tar
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
 
-            - name: Setup pnpm
-              uses: pnpm/action-setup@v3
+            - name: Upload image to server
+              uses: appleboy/scp-action@v0.1.7
               with:
-                  version: 9.4.0
-
-            - name: Install dependencies
-              run: pnpm install --no-frozen-lockfile
-
-            - name: Build project
-              run: pnpm build
+                  host: ${{ secrets.HETZNER_HOST }}
+                  username: ${{ secrets.HETZNER_USERNAME }}
+                  key: ${{ secrets.HETZNER_SSH_KEY }}
+                  port: ${{ secrets.HETZNER_PORT || 22 }}
+                  source: "/tmp/familexyz-image.tar"
+                  target: "/tmp/"
 
             - name: Deploy to Hetzner Server
               uses: appleboy/ssh-action@v1.0.3
@@ -43,37 +54,67 @@ jobs:
                   key: ${{ secrets.HETZNER_SSH_KEY }}
                   port: ${{ secrets.HETZNER_PORT || 22 }}
                   script: |
+                      set -e
+
+                      # Load the new Docker image
+                      docker load -i /tmp/familexyz-image.tar
+
+                      # Create deployment directory if it doesn't exist
+                      mkdir -p /opt/familexyz
                       cd /opt/familexyz
 
-                      # Backup current deployment
-                      if [ -d "current" ]; then
-                        mv current backup-$(date +%Y%m%d-%H%M%S)
+                      # Download docker-compose.yml if it doesn't exist
+                      if [ ! -f docker-compose.yml ]; then
+                          curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/${{ github.ref_name }}/docker-compose.yml -o docker-compose.yml
                       fi
 
-                      # Clone latest code
-                      git clone --branch ${{ github.ref_name }} https://github.com/${{ github.repository }}.git current
-                      cd current
+                      # Stop existing container gracefully
+                      docker compose down --timeout 30 || true
 
-                      # Install dependencies and build
-                      pnpm install --no-frozen-lockfile
-                      pnpm build
+                      # Remove old images (keep last 2 versions)
+                      docker images ${{ env.IMAGE_NAME }} --format "table {{.Repository}}:{{.Tag}}\t{{.ID}}" | tail -n +2 | head -n -2 | awk '{print $2}' | xargs -r docker rmi || true
 
-                      # Copy environment file
-                      cp /opt/familexyz/.env .env
+                      # Start the new container
+                      docker compose up -d
 
-                      # Copy PM2 ecosystem file
-                      cp ecosystem.config.js /opt/familexyz/
+                      # Clean up the uploaded tar file
+                      rm -f /tmp/familexyz-image.tar
 
-                      # Restart services using ecosystem file
-                      cd /opt/familexyz
-                      pm2 restart ecosystem.config.js || pm2 start ecosystem.config.js
-                      pm2 save
-
-                      # Clean up old backups (keep last 3)
-                      cd /opt/familexyz
-                      ls -t backup-* | tail -n +4 | xargs rm -rf
+                      echo "✅ Deployment completed successfully"
 
             - name: Health Check
               run: |
-                  sleep 30
-                  curl -f http://${{ secrets.HETZNER_HOST }}:3000/health || exit 1
+                  echo "⏳ Waiting for service to start..."
+                  sleep 45
+
+                  echo "🏥 Performing health check..."
+                  for i in {1..5}; do
+                      if curl -f http://${{ secrets.HETZNER_HOST }}:3000/health; then
+                          echo "✅ Health check passed!"
+                          exit 0
+                      fi
+                      echo "⏳ Attempt $i failed, retrying in 10 seconds..."
+                      sleep 10
+                  done
+
+                  echo "❌ Health check failed after 5 attempts"
+                  exit 1
+
+            - name: Cleanup on failure
+              if: failure()
+              uses: appleboy/ssh-action@v1.0.3
+              with:
+                  host: ${{ secrets.HETZNER_HOST }}
+                  username: ${{ secrets.HETZNER_USERNAME }}
+                  key: ${{ secrets.HETZNER_SSH_KEY }}
+                  port: ${{ secrets.HETZNER_PORT || 22 }}
+                  script: |
+                      echo "🔄 Deployment failed, attempting rollback..."
+                      cd /opt/familexyz
+
+                      # Try to restart with the previous image
+                      docker compose down || true
+                      docker compose up -d || true
+
+                      # Clean up failed deployment artifacts
+                      rm -f /tmp/familexyz-image.tar

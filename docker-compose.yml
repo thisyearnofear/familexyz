@@ -2,9 +2,6 @@ name: familexyz
 
 services:
     familexyz-backend:
-        build:
-            context: .
-            dockerfile: Dockerfile
         image: familexyz/agent:latest
         container_name: familexyz-backend
         restart: unless-stopped
@@ -15,9 +12,53 @@ services:
             - HEALTH_PORT=3001
         ports:
             - "3000:3000"
+            - "3001:3001"  # Health check port
         volumes:
             - familexyz-data:/app/data
-        working_dir: /app/agent
-        command: ["pnpm", "start"]
+            - familexyz-logs:/app/logs
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 40s
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "10m"
+                max-file: "3"
+        deploy:
+            resources:
+                limits:
+                    memory: 1G
+                    cpus: '1.0'
+                reservations:
+                    memory: 512M
+                    cpus: '0.5'
+        networks:
+            - familexyz-network
+
+    # Optional: Redis for caching (uncomment if needed)
+    # redis:
+    #     image: redis:7-alpine
+    #     container_name: familexyz-redis
+    #     restart: unless-stopped
+    #     ports:
+    #         - "6379:6379"
+    #     volumes:
+    #         - familexyz-redis-data:/data
+    #     command: redis-server --appendonly yes
+    #     networks:
+    #         - familexyz-network
+
 volumes:
     familexyz-data:
+        driver: local
+    familexyz-logs:
+        driver: local
+    # familexyz-redis-data:
+    #     driver: local
+
+networks:
+    familexyz-network:
+        driver: bridge

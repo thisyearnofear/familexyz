@@ -50,7 +50,7 @@ EXPOSE 3000
 # Default envs (override via compose)
 ENV NODE_ENV=production
 
-HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD curl -fsS http://localhost:3000/health || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=5 CMD curl -fsS http://localhost:3001/health || exit 1
 
 # Start the agent (characters are relative to /app/agent)
 WORKDIR /app/agent

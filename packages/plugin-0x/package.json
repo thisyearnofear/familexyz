@@ -19,9 +19,9 @@
         "dist"
     ],
     "scripts": {
-        "build": "tsup --format esm --dts",
-        "dev": "tsup --format esm --dts --watch",
-        "test": "vitest"
+        "build": "echo 'Skipping build for disabled 0x plugin'",
+        "dev": "echo 'Skipping dev for disabled 0x plugin'",
+        "test": "echo 'Skipping test for disabled 0x plugin'"
     },
     "dependencies": {},
     "devDependencies": {

@@ -7,10 +7,17 @@ RUN corepack enable && corepack prepare pnpm@9.12.3 --activate
 # Build tools for native deps like better-sqlite3 and @discordjs/opus
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 make g++ pkg-config \
-    libopus-dev libsodium-dev \
+    libopus-dev libopus0 opus-tools \
+    libsodium-dev libsodium23 \
     libtool autoconf automake \
     git \
     && rm -rf /var/lib/apt/lists/*
+
+# Set environment variables to force @discordjs/opus to use system opus
+ENV OPUS_INCLUDE_DIR=/usr/include/opus
+ENV OPUS_LIB_DIR=/usr/lib/x86_64-linux-gnu
+ENV npm_config_opus_include_dir=/usr/include/opus
+ENV npm_config_opus_lib_dir=/usr/lib/x86_64-linux-gnu
 
 WORKDIR /app
 
@@ -23,6 +30,8 @@ COPY agent/package.json ./agent/package.json
 COPY packages ./packages
 COPY characters ./characters
 # Install all workspace dependencies and build packages
+# Force @discordjs/opus to use system opus library
+ENV OPUS_INCLUDE_DIR=/usr/include/opus OPUS_LIB_DIR=/usr/lib/x86_64-linux-gnu
 RUN pnpm install --frozen-lockfile
 RUN pnpm build
 

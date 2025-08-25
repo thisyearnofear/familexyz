@@ -3,6 +3,7 @@
 FROM node:22-slim AS base
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 RUN corepack enable && corepack prepare pnpm@9.12.3 --activate
 # Build tools for native deps like better-sqlite3 and @discordjs/opus
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -42,6 +43,7 @@ COPY agent ./agent
 FROM node:22-slim AS runtime
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 RUN corepack enable && corepack prepare pnpm@9.12.3 --activate
 # Install curl for HEALTHCHECK
 RUN apt-get update && apt-get install -y --no-install-recommends \

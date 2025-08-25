@@ -23,7 +23,7 @@ WORKDIR /app
 
 # --- deps: install only prod deps for the agent via filter to avoid monorepo bloat
 FROM base AS deps
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml turbo.json ./
 COPY agent/package.json ./agent/package.json
 # Copy only the packages needed to resolve filtered dependencies
 # Add more package.json files if pnpm needs them for workspace resolution

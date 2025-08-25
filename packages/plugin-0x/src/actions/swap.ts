@@ -23,17 +23,14 @@ export const swap: Action = {
     suppressInitialMessage: true,
     description: "Execute a token swap using 0x protocol",
     validate: async (runtime: IAgentRuntime) => {
-        return (
-            !!runtime.getSetting("ZERO_EX_API_KEY") &&
-            !!runtime.getSetting("WALLET_PRIVATE_KEY")
-        );
+        return false; // Disabled - 0x SDK dependency removed for Docker compatibility
     },
     handler: async (
         runtime: IAgentRuntime,
         message: Memory,
         state: State,
         options: Record<string, unknown>,
-        callback: HandlerCallback
+        callback: HandlerCallback,
     ) => {
         const latestQuote = await retrieveLatestQuote(runtime, message);
         if (!latestQuote) {
@@ -162,7 +159,7 @@ export const swap: Action = {
 
 export const retrieveLatestQuote = async (
     runtime: IAgentRuntime,
-    message: Memory
+    message: Memory,
 ): Promise<Quote | null> => {
     const memoryManager = new MemoryManager({
         runtime,

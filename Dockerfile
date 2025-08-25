@@ -30,8 +30,7 @@ COPY agent/package.json ./agent/package.json
 COPY packages ./packages
 COPY characters ./characters
 # Install all workspace dependencies and build packages
-# Skip optional dependencies like @discordjs/opus that cause build issues
-RUN pnpm install --frozen-lockfile --ignore-optional
+RUN pnpm install --frozen-lockfile
 RUN pnpm build
 
 # --- build: (optional) if we ever switch to a compiled build; currently ts-node runs

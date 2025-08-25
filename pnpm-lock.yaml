@@ -152,9 +152,6 @@ importers:
       '@elizaos/client-direct':
         specifier: workspace:*
         version: link:../packages/clients/direct
-      '@elizaos/client-discord':
-        specifier: workspace:*
-        version: link:../packages/clients/discord
       '@elizaos/client-farcaster':
         specifier: workspace:*
         version: link:../packages/clients/farcaster

@@ -21,6 +21,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { createRequire } from "module";
 import yargs from "yargs";
+import Database from "better-sqlite3";
 
 // NEW: Central config and plugin loader
 import { config, ModelProviderName } from "@elizaos/config";

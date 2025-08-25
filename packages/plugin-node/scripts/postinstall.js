@@ -5,6 +5,12 @@ import { execSync } from "child_process";
 const platform = os.platform();
 const rel = os.release();
 
+// Skip Playwright installation in Docker environment
+if (process.env.DOCKER_BUILD || fs.existsSync('/.dockerenv')) {
+    console.log("Skipping playwright installation: Docker environment detected");
+    process.exit(0);
+}
+
 if (platform !== "linux") {
     console.log("Skipping playwright installation: non-Linux platform detected:", platform);
     process.exit(0);

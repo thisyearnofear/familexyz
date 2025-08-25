@@ -31,6 +31,8 @@ COPY agent/package.json ./agent/package.json
 COPY packages ./packages
 COPY characters ./characters
 # Install all workspace dependencies and build packages
+# Set environment variable to skip Playwright browser downloads in Docker
+ENV DOCKER_BUILD=true
 RUN pnpm install --frozen-lockfile
 RUN pnpm build
 

@@ -21,7 +21,7 @@ COPY packages ./packages
 COPY characters ./characters
 # Install all workspace dependencies and build packages
 RUN pnpm install --frozen-lockfile
-RUN pnpm -r build
+RUN pnpm build
 
 # --- build: (optional) if we ever switch to a compiled build; currently ts-node runs
 FROM deps AS build

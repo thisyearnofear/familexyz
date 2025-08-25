@@ -4,10 +4,9 @@ FROM node:22-slim AS base
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 RUN corepack enable && corepack prepare pnpm@9.12.3 --activate
-# Build tools for native deps like better-sqlite3 and @discordjs/opus
+# Build tools for native deps like better-sqlite3
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 make g++ pkg-config \
-    libopus-dev libsodium-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

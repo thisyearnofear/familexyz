@@ -116,7 +116,7 @@ jobs:
 
                   echo "🏥 Performing health check..."
                   for i in {1..5}; do
-                      if curl -f http://${{ secrets.HETZNER_HOST }}:3000/health; then
+                      if curl -f http://${{ secrets.HETZNER_HOST }}:3001/health; then
                           echo "✅ Health check passed!"
                           exit 0
                       fi

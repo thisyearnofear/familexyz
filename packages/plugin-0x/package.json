@@ -23,9 +23,7 @@
         "dev": "tsup --format esm --dts --watch",
         "test": "vitest"
     },
-    "dependencies": {
-        "@0x/swap-ts-sdk": "2.1.1"
-    },
+    "dependencies": {},
     "devDependencies": {
         "tsup": "^8.0.1"
     },

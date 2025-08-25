@@ -14,14 +14,13 @@ import {
     stringToUuid,
     validateCharacterConfig,
 } from "@elizaos/core";
-// Lazy-load better-sqlite3 inside initializeDatabase to avoid hard dependency at module load
-import fs from "fs";
-import net from "net";
-import path from "path";
+// Essential imports for file path handling and modules
 import { fileURLToPath } from "url";
 import { createRequire } from "module";
-import yargs from "yargs";
-import Database from "better-sqlite3";
+import path from "path";
+import fs from "fs";
+import net from "net";
+import { healthCheck, readinessCheck, livenessCheck } from "./health.js";
 
 // NEW: Central config and plugin loader
 import { config, ModelProviderName } from "@elizaos/config";
@@ -29,7 +28,6 @@ import { getEnabledPlugins } from "./pluginLoader";
 
 // NEW: Platform integrations
 import "./integrations/telegram.js";
-import { healthCheck, readinessCheck } from "./health.js";
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory

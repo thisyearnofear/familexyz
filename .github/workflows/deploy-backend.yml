@@ -104,6 +104,14 @@ jobs:
                       echo "📊 Container status:"
                       docker compose ps
 
+                      # Check container logs for any startup issues
+                      echo "📋 Container logs (last 20 lines):"
+                      docker compose logs --tail=20 familexyz-backend || true
+
+                      # Check if the health endpoint is responding internally
+                      echo "🔍 Testing health endpoint internally..."
+                      docker compose exec -T familexyz-backend curl -f http://localhost:3001/ || echo "Internal health check failed"
+
                       # Clean up the uploaded tar file
                       rm -f /tmp/familexyz-image.tar
 
@@ -116,7 +124,7 @@ jobs:
 
                   echo "🏥 Performing health check..."
                   for i in {1..5}; do
-                      if curl -f http://${{ secrets.HETZNER_HOST }}:3001/health; then
+                      if curl -f http://${{ secrets.HETZNER_HOST }}:3001/; then
                           echo "✅ Health check passed!"
                           exit 0
                       fi

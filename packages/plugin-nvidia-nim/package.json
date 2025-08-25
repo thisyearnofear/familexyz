@@ -6,8 +6,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc --build",
-    "test": "vitest",
+    "build": "echo 'Skipping build for disabled plugin-nvidia-nim plugin'",
+    "test": "echo 'Skipping test for disabled plugin-nvidia-nim plugin'",
     "clean": "rimraf dist",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write src"

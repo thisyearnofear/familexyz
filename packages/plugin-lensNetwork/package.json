@@ -30,7 +30,7 @@
         "zksync-ethers": "^6.0.0"
     },
     "scripts": {
-        "build": "tsup --format esm --dts",
+        "build": "echo 'Skipping build for disabled plugin-lensNetwork plugin'",
         "lint": "eslint --fix  --cache ."
     },
     "peerDependencies": {

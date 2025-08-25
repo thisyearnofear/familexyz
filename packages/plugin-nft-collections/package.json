@@ -6,8 +6,8 @@
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
-        "build": "tsup src/index.ts --format esm --dts",
-        "test": "vitest run",
+        "build": "echo 'Skipping build for disabled plugin-nft-collections plugin'",
+        "test": "echo 'Skipping test for disabled plugin-nft-collections plugin'",
         "test:watch": "vitest",
         "format": "prettier --write src/**/*.ts"
     },

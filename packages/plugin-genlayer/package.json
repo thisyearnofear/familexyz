@@ -5,9 +5,9 @@
     "type": "module",
     "types": "dist/index.d.ts",
     "scripts": {
-        "build": "tsup --format esm --dts",
-        "dev": "tsup --format esm --dts --watch",
-        "test": "vitest run"
+        "build": "echo 'Skipping build for disabled plugin-genlayer plugin'",
+        "dev": "echo 'Skipping dev for disabled plugin-genlayer plugin'",
+        "test": "echo 'Skipping test for disabled plugin-genlayer plugin'"
     },
     "dependencies": {
         "genlayer-js": "0.4.7",

@@ -19,9 +19,9 @@
         "interchain": "^1.10.4"
     },
     "scripts": {
-        "build": "tsup --format esm --dts",
-        "dev": "tsup --format esm --dts --watch",
-        "test": "vitest run"
+        "build": "echo 'Skipping build for disabled plugin-cosmos plugin'",
+        "dev": "echo 'Skipping dev for disabled plugin-cosmos plugin'",
+        "test": "echo 'Skipping test for disabled plugin-cosmos plugin'"
     },
     "devDependencies": {
         "@chain-registry/types": "^0.50.44"

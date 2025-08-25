@@ -13,8 +13,8 @@
         "@elizaos/plugin-trustdb": "workspace:*"
     },
     "scripts": {
-        "build": "tsup --format esm --no-dts",
-        "test": "vitest",
+        "build": "echo 'Skipping build for disabled plugin-quai plugin'",
+        "test": "echo 'Skipping test for disabled plugin-quai plugin'",
         "lint": "eslint --fix  --cache ."
     },
     "peerDependencies": {

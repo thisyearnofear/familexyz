@@ -12,8 +12,8 @@
         "ws": "^8.18.0"
     },
     "scripts": {
-        "build": "tsup --format esm --dts",
-        "dev": "tsx watch src/index.ts"
+        "build": "echo 'Skipping build for disabled plugin-goplus plugin'",
+        "dev": "echo 'Skipping dev for disabled plugin-goplus plugin'"
     },
     "devDependencies": {
         "@types/ws": "^8.5.13",

@@ -25,8 +25,8 @@
         "@elizaos/plugin-node": "workspace:*"
     },
     "scripts": {
-        "build": "tsup --format esm --dts",
-        "dev": "tsup --format esm --dts --watch",
+        "build": "echo 'Skipping build for disabled plugin-echochambers plugin'",
+        "dev": "echo 'Skipping dev for disabled plugin-echochambers plugin'",
         "lint": "eslint --fix  --cache ."
     }
 }

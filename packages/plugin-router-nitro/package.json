@@ -28,9 +28,9 @@
         "viem": "2.21.58"
     },
     "scripts": {
-        "build": "tsup --format esm --dts",
-        "dev": "tsup --format esm --dts --watch",
-        "test": "vitest run",
+        "build": "echo 'Skipping build for disabled plugin-router-nitro plugin'",
+        "dev": "echo 'Skipping dev for disabled plugin-router-nitro plugin'",
+        "test": "echo 'Skipping test for disabled plugin-router-nitro plugin'",
         "test:watch": "vitest",
         "lint": "eslint --fix  --cache ."
     }

@@ -12,7 +12,7 @@
         "@types/node": "^20.0.0"
     },
     "scripts": {
-        "build": "tsup --format esm --no-dts",
-        "dev": "tsup --format esm --dts --watch"
+        "build": "echo 'Skipping build for disabled sample plugin'",
+        "dev": "echo 'Skipping dev for disabled sample plugin'"
     }
 }

@@ -29,27 +29,20 @@ jobs:
                   echo "🐳 Building Docker image..."
                   docker build -t ${{ env.IMAGE_NAME }}:latest -t ${{ env.IMAGE_NAME }}:${{ github.sha }} .
 
-                  echo "📦 Saving Docker image to tar file..."
-                  docker save ${{ env.IMAGE_NAME }}:latest -o familexyz-image.tar
+                  echo "📦 Pushing Docker image to GitHub Container Registry..."
+                  echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-                  echo "🔧 Setting file permissions..."
-                  chmod 644 familexyz-image.tar
+                  # Tag for GitHub Container Registry
+                  docker tag ${{ env.IMAGE_NAME }}:latest ghcr.io/${{ github.repository_owner }}/familexyz:latest
+                  docker tag ${{ env.IMAGE_NAME }}:${{ github.sha }} ghcr.io/${{ github.repository_owner }}/familexyz:${{ github.sha }}
 
-                  echo "✅ Image saved. File details:"
-                  ls -lh familexyz-image.tar
+                  # Push to registry
+                  docker push ghcr.io/${{ github.repository_owner }}/familexyz:latest
+                  docker push ghcr.io/${{ github.repository_owner }}/familexyz:${{ github.sha }}
 
-                  echo "📁 Current directory contents:"
-                  ls -la
+                  echo "✅ Image pushed to registry successfully"
 
-            - name: Upload image to server
-              uses: appleboy/scp-action@v0.1.7
-              with:
-                  host: ${{ secrets.HETZNER_HOST }}
-                  username: ${{ secrets.HETZNER_USERNAME }}
-                  key: ${{ secrets.HETZNER_SSH_KEY }}
-                  port: ${{ secrets.HETZNER_PORT }}
-                  source: "familexyz-image.tar"
-                  target: "/tmp/"
+            # No need to upload tar file - we'll pull from registry
 
             - name: Deploy to Hetzner Server
               uses: appleboy/ssh-action@v1.0.3
@@ -63,17 +56,14 @@ jobs:
 
                       echo "🚀 Starting deployment process..."
 
-                      # Load the new Docker image
-                      echo "📦 Loading Docker image..."
-                      if [ -f /tmp/familexyz-image.tar ]; then
-                          docker load -i /tmp/familexyz-image.tar
-                          echo "✅ Docker image loaded successfully"
-                      else
-                          echo "❌ Docker image tar file not found at /tmp/familexyz-image.tar!"
-                          echo "Available files in /tmp:"
-                          ls -la /tmp/
-                          exit 1
-                      fi
+                      # Pull the new Docker image from registry
+                      echo "📦 Pulling Docker image from registry..."
+                      docker pull ghcr.io/${{ github.repository_owner }}/familexyz:latest
+
+                      # Tag the image with local name for docker-compose
+                      docker tag ghcr.io/${{ github.repository_owner }}/familexyz:latest familexyz/agent:latest
+
+                      echo "✅ Docker image pulled and tagged successfully"
 
                       # Create deployment directory if it doesn't exist
                       mkdir -p /opt/familexyz

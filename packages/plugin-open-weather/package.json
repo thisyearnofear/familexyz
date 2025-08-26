@@ -24,8 +24,8 @@
         "zod": "^3.22.4"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-open-weather plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-open-weather plugin'"
+        "build": "echo 'Skipping build for disabled plugin-open-weather'",
+        "dev": "echo 'Skipping dev for disabled plugin-open-weather'"
     },
     "peerDependencies": {
         "whatwg-url": "7.1.0"

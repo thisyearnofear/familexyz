@@ -32,10 +32,10 @@
         "vitest": "2.1.5"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-starknet plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-starknet plugin'",
-        "test": "echo 'Skipping test for disabled plugin-starknet plugin'",
-        "test:watch": "vitest"
+        "build": "echo 'Skipping build for disabled plugin-starknet'",
+        "dev": "echo 'Skipping dev for disabled plugin-starknet'",
+        "test": "echo 'Skipping test for disabled plugin-starknet'",
+        "test:watch": "echo 'Skipping test:watch for disabled plugin-starknet'"
     },
     "peerDependencies": {
         "whatwg-url": "7.1.0"

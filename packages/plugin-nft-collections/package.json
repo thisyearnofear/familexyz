@@ -6,9 +6,9 @@
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-nft-collections plugin'",
-        "test": "echo 'Skipping test for disabled plugin-nft-collections plugin'",
-        "test:watch": "vitest",
+        "build": "echo 'Skipping build for disabled plugin-nft-collections'",
+        "test": "echo 'Skipping test for disabled plugin-nft-collections'",
+        "test:watch": "echo 'Skipping test:watch for disabled plugin-nft-collections'",
         "format": "prettier --write src/**/*.ts"
     },
     "dependencies": {

@@ -5,8 +5,8 @@
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-spheron plugin'",
-        "test": "echo 'Skipping test for disabled plugin-spheron plugin'"
+        "build": "echo 'Skipping build for disabled plugin-spheron'",
+        "test": "echo 'Skipping test for disabled plugin-spheron'"
     },
     "dependencies": {
         "@elizaos/core": "workspace:*",

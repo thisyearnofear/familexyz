@@ -23,8 +23,8 @@
         "tsup": "8.3.5"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-video-generation plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-video-generation plugin'"
+        "build": "echo 'Skipping build for disabled plugin-video-generation'",
+        "dev": "echo 'Skipping dev for disabled plugin-video-generation'"
     },
     "peerDependencies": {
         "whatwg-url": "7.1.0"

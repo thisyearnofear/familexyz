@@ -9,9 +9,9 @@
         "tsup": "8.3.5"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-gitcoin-passport plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-gitcoin-passport plugin'",
-        "test": "echo 'Skipping test for disabled plugin-gitcoin-passport plugin'"
+        "build": "echo 'Skipping build for disabled plugin-gitcoin-passport'",
+        "dev": "echo 'Skipping dev for disabled plugin-gitcoin-passport'",
+        "test": "echo 'Skipping test for disabled plugin-gitcoin-passport'"
     },
     "peerDependencies": {
         "whatwg-url": "7.1.0"

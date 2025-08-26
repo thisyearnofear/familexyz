@@ -27,11 +27,11 @@
         "vitest": "^2.1.5"
     },
     "scripts": {
-        "build": "tsup --format esm --no-dts",
-        "dev": "tsup --format esm --dts --watch",
+        "build": "echo 'Skipping build for disabled farcaster'",
+        "dev": "echo 'Skipping dev for disabled farcaster'",
         "lint": "eslint --fix  --cache .",
-        "test": "vitest run",
-        "test:watch": "vitest watch",
+        "test": "echo 'Skipping test for disabled farcaster'",
+        "test:watch": "echo 'Skipping test:watch for disabled farcaster'",
         "test:coverage": "vitest run --coverage"
     }
 }

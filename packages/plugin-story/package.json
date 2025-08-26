@@ -25,9 +25,9 @@
         "@pinata/sdk": "^2.1.0"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-story plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-story plugin'",
-        "test": "echo 'Skipping test for disabled plugin-story plugin'",
+        "build": "echo 'Skipping build for disabled plugin-story'",
+        "dev": "echo 'Skipping dev for disabled plugin-story'",
+        "test": "echo 'Skipping test for disabled plugin-story'",
         "lint": "eslint --fix  --cache ."
     },
     "peerDependencies": {

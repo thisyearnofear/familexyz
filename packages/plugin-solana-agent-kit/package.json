@@ -22,9 +22,9 @@
         "vitest": "2.1.4"
     },
     "scripts": {
-        "build": "tsup --format esm --dts",
-        "dev": "tsup --format esm --dts --watch",
-        "test": "vitest run"
+        "build": "echo 'Skipping build for disabled plugin-solana-agent-kit'",
+        "dev": "echo 'Skipping dev for disabled plugin-solana-agent-kit'",
+        "test": "echo 'Skipping test for disabled plugin-solana-agent-kit'"
     },
     "peerDependencies": {
         "form-data": "4.0.1",

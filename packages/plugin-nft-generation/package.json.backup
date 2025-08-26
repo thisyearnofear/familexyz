@@ -38,8 +38,8 @@
         "viem": "^2.21.60"
     },
     "scripts": {
-        "build": "tsup --format esm --dts",
-        "dev": "tsup --format esm --dts --watch"
+        "build": "echo 'Skipping build for disabled plugin-nft-generation plugin'",
+        "dev": "echo 'Skipping dev for disabled plugin-nft-generation plugin'"
     },
     "peerDependencies": {
         "whatwg-url": "7.1.0"

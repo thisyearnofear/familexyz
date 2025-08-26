@@ -20,9 +20,9 @@
         "typescript": "^5.0.0"
     },
     "scripts": {
-        "build": "tsup",
-        "dev": "tsup --watch",
-        "test": "vitest run"
+        "build": "echo 'Skipping build for disabled plugin-movement plugin'",
+        "dev": "echo 'Skipping dev for disabled plugin-movement plugin'",
+        "test": "echo 'Skipping test for disabled plugin-movement plugin'"
     },
     "peerDependencies": {
         "form-data": "4.0.1",

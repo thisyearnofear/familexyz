@@ -19,9 +19,9 @@
         "dist"
     ],
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-initia plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-initia plugin'",
-        "test": "echo 'Skipping test for disabled plugin-initia plugin'"
+        "build": "echo 'Skipping build for disabled plugin-initia'",
+        "dev": "echo 'Skipping dev for disabled plugin-initia'",
+        "test": "echo 'Skipping test for disabled plugin-initia'"
     },
     "author": "boosik",
     "license": "ISC",

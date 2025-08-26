@@ -9,8 +9,8 @@
         "tsup": "8.3.5"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-dexscreener plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-dexscreener plugin'"
+        "build": "echo 'Skipping build for disabled plugin-dexscreener'",
+        "dev": "echo 'Skipping dev for disabled plugin-dexscreener'"
     },
     "peerDependencies": {
         "whatwg-url": "7.1.0"

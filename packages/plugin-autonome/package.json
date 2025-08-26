@@ -14,9 +14,9 @@
         "axios": "^1.7.9"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-autonome plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-autonome plugin'",
-        "test": "echo 'Skipping test for disabled plugin-autonome plugin'"
+        "build": "echo 'Skipping build for disabled plugin-autonome'",
+        "dev": "echo 'Skipping dev for disabled plugin-autonome'",
+        "test": "echo 'Skipping test for disabled plugin-autonome'"
     },
     "peerDependencies": {
         "form-data": "4.0.1",

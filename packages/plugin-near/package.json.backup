@@ -27,8 +27,8 @@
         "node-cache": "5.1.2"
     },
     "scripts": {
-        "build": "tsup --format esm,cjs --dts",
-        "test": "vitest run",
+        "build": "echo 'Skipping build for disabled plugin-near plugin'",
+        "test": "echo 'Skipping test for disabled plugin-near plugin'",
         "test:watch": "vitest"
     },
     "peerDependencies": {

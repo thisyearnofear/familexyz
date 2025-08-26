@@ -6,10 +6,10 @@
     "types": "dist/index.d.ts",
     "type": "module",
     "scripts": {
-      "build": "echo 'Skipping build for disabled plugin-injective plugin'",
-      "dev": "echo 'Skipping dev for disabled plugin-injective plugin'",
-      "test": "echo 'Skipping test for disabled plugin-injective plugin'",
-      "test:watch": "jest --watch",
+      "build": "echo 'Skipping build for disabled plugin-injective'",
+      "dev": "echo 'Skipping dev for disabled plugin-injective'",
+      "test": "echo 'Skipping test for disabled plugin-injective'",
+      "test:watch": "echo 'Skipping test:watch for disabled plugin-injective'",
       "format": "prettier --write \"src/**/*.ts\"",
       "test:coverage": "jest --coverage"
     },

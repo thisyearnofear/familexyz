@@ -26,8 +26,8 @@
         "@dfinity/principal": "2.1.3"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-icp plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-icp plugin'",
+        "build": "echo 'Skipping build for disabled plugin-icp'",
+        "dev": "echo 'Skipping dev for disabled plugin-icp'",
         "lint": "eslint --fix  --cache ."
     },
     "devDependencies": {

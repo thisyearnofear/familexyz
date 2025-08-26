@@ -13,7 +13,7 @@
         "tsup": "8.3.5"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-letzai plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-letzai plugin'"
+        "build": "echo 'Skipping build for disabled plugin-letzai'",
+        "dev": "echo 'Skipping dev for disabled plugin-letzai'"
     }
 }

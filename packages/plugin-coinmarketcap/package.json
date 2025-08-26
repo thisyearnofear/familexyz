@@ -15,8 +15,8 @@
         "tsup": "^8.3.5"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-coinmarketcap plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-coinmarketcap plugin'",
+        "build": "echo 'Skipping build for disabled plugin-coinmarketcap'",
+        "dev": "echo 'Skipping dev for disabled plugin-coinmarketcap'",
         "lint": "eslint --fix  --cache ."
     }
 }

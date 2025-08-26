@@ -10,8 +10,8 @@
         "tsup": "8.3.5"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-thirdweb plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-thirdweb plugin'"
+        "build": "echo 'Skipping build for disabled plugin-thirdweb'",
+        "dev": "echo 'Skipping dev for disabled plugin-thirdweb'"
     },
     "peerDependencies": {
         "whatwg-url": "7.1.0"

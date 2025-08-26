@@ -29,9 +29,9 @@
         "vitest": "2.1.4"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-aptos plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-aptos plugin'",
-        "test": "echo 'Skipping test for disabled plugin-aptos plugin'"
+        "build": "echo 'Skipping build for disabled plugin-aptos'",
+        "dev": "echo 'Skipping dev for disabled plugin-aptos'",
+        "test": "echo 'Skipping test for disabled plugin-aptos'"
     },
     "peerDependencies": {
         "form-data": "4.0.1",

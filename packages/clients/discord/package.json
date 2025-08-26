@@ -29,8 +29,8 @@
         "vitest": "1.2.1"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled Discord client'",
-        "dev": "echo 'Skipping dev for disabled Discord client'",
-        "test": "echo 'Skipping test for disabled Discord client'"
+        "build": "echo 'Skipping build for disabled discord'",
+        "dev": "echo 'Skipping dev for disabled discord'",
+        "test": "echo 'Skipping test for disabled discord'"
     }
 }

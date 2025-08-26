@@ -20,9 +20,9 @@
         "typescript": "^5.0.0"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-movement plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-movement plugin'",
-        "test": "echo 'Skipping test for disabled plugin-movement plugin'"
+        "build": "echo 'Skipping build for disabled plugin-movement'",
+        "dev": "echo 'Skipping dev for disabled plugin-movement'",
+        "test": "echo 'Skipping test for disabled plugin-movement'"
     },
     "peerDependencies": {
         "form-data": "4.0.1",

@@ -24,8 +24,8 @@
         "tsup": "8.3.5"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-dkg plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-dkg plugin'",
+        "build": "echo 'Skipping build for disabled plugin-dkg'",
+        "dev": "echo 'Skipping dev for disabled plugin-dkg'",
         "lint": "eslint --fix  --cache ."
     },
     "peerDependencies": {

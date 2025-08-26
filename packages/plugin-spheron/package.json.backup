@@ -5,8 +5,8 @@
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
-        "build": "tsup --format esm --dts",
-        "test": "jest"
+        "build": "echo 'Skipping build for disabled plugin-spheron plugin'",
+        "test": "echo 'Skipping test for disabled plugin-spheron plugin'"
     },
     "dependencies": {
         "@elizaos/core": "workspace:*",

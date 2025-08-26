@@ -6,8 +6,8 @@
     "module": "dist/index.js",
     "types": "./dist/index.d.ts",
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-email plugin'",
-        "test": "echo 'Skipping test for disabled plugin-email plugin'",
+        "build": "echo 'Skipping build for disabled plugin-email'",
+        "test": "echo 'Skipping test for disabled plugin-email'",
         "lint": "eslint --fix --cache ."
     },
     "dependencies": {

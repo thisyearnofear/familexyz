@@ -31,9 +31,9 @@
         "vitest": "2.1.5"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-multiversx plugin'",
-        "test": "echo 'Skipping test for disabled plugin-multiversx plugin'",
-        "test:watch": "vitest"
+        "build": "echo 'Skipping build for disabled plugin-multiversx'",
+        "test": "echo 'Skipping test for disabled plugin-multiversx'",
+        "test:watch": "echo 'Skipping test:watch for disabled plugin-multiversx'"
     },
     "peerDependencies": {
         "whatwg-url": "7.1.0"

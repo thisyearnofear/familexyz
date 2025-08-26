@@ -29,7 +29,7 @@
         "vitest": "^1.0.0"
     },
     "scripts": {
-        "build": "tsup src/index.ts --format esm --dts --tsconfig ./tsconfig.json",
-        "dev": "tsup src/index.ts --format esm --dts --watch --tsconfig ./tsconfig.json"
+        "build": "echo 'Skipping build for disabled plugin-openai plugin'",
+        "dev": "echo 'Skipping dev for disabled plugin-openai plugin'"
     }
 }

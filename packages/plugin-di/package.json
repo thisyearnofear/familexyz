@@ -32,9 +32,9 @@
         "vitest": "2.1.4"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-di plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-di plugin'",
+        "build": "echo 'Skipping build for disabled plugin-di'",
+        "dev": "echo 'Skipping dev for disabled plugin-di'",
         "lint": "eslint --fix  --cache .",
-        "test": "echo 'Skipping test for disabled plugin-di plugin'"
+        "test": "echo 'Skipping test for disabled plugin-di'"
     }
 }

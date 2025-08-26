@@ -13,9 +13,9 @@
         "zod": "^3.22.4"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-giphy plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-giphy plugin'",
-        "test": "echo 'Skipping test for disabled plugin-giphy plugin'",
+        "build": "echo 'Skipping build for disabled plugin-giphy'",
+        "dev": "echo 'Skipping dev for disabled plugin-giphy'",
+        "test": "echo 'Skipping test for disabled plugin-giphy'",
         "lint": "eslint --fix  --cache ."
     }
 }

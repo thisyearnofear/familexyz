@@ -27,9 +27,9 @@
         "node-cache": "5.1.2"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-near plugin'",
-        "test": "echo 'Skipping test for disabled plugin-near plugin'",
-        "test:watch": "vitest"
+        "build": "echo 'Skipping build for disabled plugin-near'",
+        "test": "echo 'Skipping test for disabled plugin-near'",
+        "test:watch": "echo 'Skipping test:watch for disabled plugin-near'"
     },
     "peerDependencies": {
         "whatwg-url": "7.1.0",

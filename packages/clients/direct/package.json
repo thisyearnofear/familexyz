@@ -36,8 +36,8 @@
         "tsup": "8.3.5"
     },
     "scripts": {
-        "build": "tsup --format esm --no-dts",
-        "dev": "tsup --format esm --dts --watch",
+        "build": "echo 'Skipping build for disabled direct'",
+        "dev": "echo 'Skipping dev for disabled direct'",
         "start": "node dist/index.js"
     },
     "peerDependencies": {

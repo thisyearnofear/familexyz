@@ -32,8 +32,8 @@
         "@elizaos/core": "workspace:*"
     },
     "scripts": {
-        "build": "tsup --format esm --no-dts",
-        "dev": "tsup --format esm --dts --watch",
+        "build": "echo 'Skipping build for disabled simsai'",
+        "dev": "echo 'Skipping dev for disabled simsai'",
         "lint": "eslint --fix"
     }
 }

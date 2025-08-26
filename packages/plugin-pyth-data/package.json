@@ -6,9 +6,9 @@
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-pyth-data plugin'",
-        "test": "echo 'Skipping test for disabled plugin-pyth-data plugin'",
-        "clean": "rimraf dist",
+        "build": "echo 'Skipping build for disabled plugin-pyth-data'",
+        "test": "echo 'Skipping test for disabled plugin-pyth-data'",
+        "clean": "echo 'Skipping clean for disabled plugin-pyth-data'",
         "build:schemas": "openapi-zod-client ./schema.json --output src/types/zodSchemas.ts",
         "pull:schema": "curl -o schema.json -z schema.json https://hermes.pyth.network/docs/openapi.json",
         "prebuild": "pnpm run pull:schema && pnpm run build:schemas"

@@ -5,9 +5,9 @@
     "type": "module",
     "types": "dist/index.d.ts",
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-genlayer plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-genlayer plugin'",
-        "test": "echo 'Skipping test for disabled plugin-genlayer plugin'"
+        "build": "echo 'Skipping build for disabled plugin-genlayer'",
+        "dev": "echo 'Skipping dev for disabled plugin-genlayer'",
+        "test": "echo 'Skipping test for disabled plugin-genlayer'"
     },
     "dependencies": {
         "genlayer-js": "0.4.7",

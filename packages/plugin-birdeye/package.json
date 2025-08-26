@@ -19,9 +19,9 @@
         "vitest": "2.1.4"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-birdeye plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-birdeye plugin'",
-        "test": "echo 'Skipping test for disabled plugin-birdeye plugin'"
+        "build": "echo 'Skipping build for disabled plugin-birdeye'",
+        "dev": "echo 'Skipping dev for disabled plugin-birdeye'",
+        "test": "echo 'Skipping test for disabled plugin-birdeye'"
     },
     "peerDependencies": {
         "form-data": "4.0.1",

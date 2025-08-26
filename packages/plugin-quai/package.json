@@ -13,8 +13,8 @@
         "@elizaos/plugin-trustdb": "workspace:*"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-quai plugin'",
-        "test": "echo 'Skipping test for disabled plugin-quai plugin'",
+        "build": "echo 'Skipping build for disabled plugin-quai'",
+        "test": "echo 'Skipping test for disabled plugin-quai'",
         "lint": "eslint --fix  --cache ."
     },
     "peerDependencies": {

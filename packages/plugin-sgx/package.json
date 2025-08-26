@@ -12,7 +12,7 @@
         "tsup": "8.3.5"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-sgx plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-sgx plugin'"
+        "build": "echo 'Skipping build for disabled plugin-sgx'",
+        "dev": "echo 'Skipping dev for disabled plugin-sgx'"
     }
 }

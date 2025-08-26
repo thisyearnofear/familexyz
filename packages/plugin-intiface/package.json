@@ -25,8 +25,8 @@
         "tsup": "8.3.5"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-intiface plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-intiface plugin'",
+        "build": "echo 'Skipping build for disabled plugin-intiface'",
+        "dev": "echo 'Skipping dev for disabled plugin-intiface'",
         "test-via-bun": "bun test/simulate.ts",
         "lint": "eslint --fix  --cache ."
     },

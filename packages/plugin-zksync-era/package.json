@@ -26,7 +26,7 @@
         "viem": "2.22.2"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-zksync-era plugin'",
+        "build": "echo 'Skipping build for disabled plugin-zksync-era'",
         "lint": "eslint --fix  --cache ."
     },
     "peerDependencies": {

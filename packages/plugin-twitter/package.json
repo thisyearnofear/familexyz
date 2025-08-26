@@ -27,10 +27,10 @@
         "vitest": "^1.0.0"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-twitter plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-twitter plugin'",
-        "test": "echo 'Skipping test for disabled plugin-twitter plugin'",
-        "test:watch": "vitest",
+        "build": "echo 'Skipping build for disabled plugin-twitter'",
+        "dev": "echo 'Skipping dev for disabled plugin-twitter'",
+        "test": "echo 'Skipping test for disabled plugin-twitter'",
+        "test:watch": "echo 'Skipping test:watch for disabled plugin-twitter'",
         "lint": "eslint --fix  --cache ."
     }
 }

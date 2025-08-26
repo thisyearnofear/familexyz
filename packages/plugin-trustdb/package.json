@@ -28,10 +28,10 @@
         "vitest": "2.1.5"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-trustdb plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-trustdb plugin'",
-        "test": "echo 'Skipping test for disabled plugin-trustdb plugin'",
-        "test:watch": "vitest"
+        "build": "echo 'Skipping build for disabled plugin-trustdb'",
+        "dev": "echo 'Skipping dev for disabled plugin-trustdb'",
+        "test": "echo 'Skipping test for disabled plugin-trustdb'",
+        "test:watch": "echo 'Skipping test:watch for disabled plugin-trustdb'"
     },
     "devDependencies": {
         "@types/dompurify": "3.2.0"

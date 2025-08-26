@@ -24,8 +24,8 @@
         "zod": "^3.22.4"
     },
     "scripts": {
-        "build": "tsup --format esm --dts",
-        "dev": "tsup --format esm --dts --watch"
+        "build": "echo 'Skipping build for disabled plugin-open-weather plugin'",
+        "dev": "echo 'Skipping dev for disabled plugin-open-weather plugin'"
     },
     "peerDependencies": {
         "whatwg-url": "7.1.0"

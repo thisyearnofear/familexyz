@@ -18,9 +18,9 @@
         "ws": "^8.18.0"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-bnb plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-bnb plugin'",
-        "test": "echo 'Skipping test for disabled plugin-bnb plugin'",
+        "build": "echo 'Skipping build for disabled plugin-bnb'",
+        "dev": "echo 'Skipping dev for disabled plugin-bnb'",
+        "test": "echo 'Skipping test for disabled plugin-bnb'",
         "lint": "eslint --fix  --cache ."
     },
     "peerDependencies": {

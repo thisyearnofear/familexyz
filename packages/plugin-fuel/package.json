@@ -27,9 +27,9 @@
         "vitest": "2.1.4"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-fuel plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-fuel plugin'",
-        "test": "echo 'Skipping test for disabled plugin-fuel plugin'"
+        "build": "echo 'Skipping build for disabled plugin-fuel'",
+        "dev": "echo 'Skipping dev for disabled plugin-fuel'",
+        "test": "echo 'Skipping test for disabled plugin-fuel'"
     },
     "peerDependencies": {
         "form-data": "4.0.1",

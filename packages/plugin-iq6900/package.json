@@ -15,7 +15,7 @@
         "@types/node": "^20.0.0"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-iq6900 plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-iq6900 plugin'"
+        "build": "echo 'Skipping build for disabled plugin-iq6900'",
+        "dev": "echo 'Skipping dev for disabled plugin-iq6900'"
     }
 }

@@ -30,11 +30,11 @@
         "vitest": "^1.2.1"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-rabbi-trader plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-rabbi-trader plugin'",
+        "build": "echo 'Skipping build for disabled plugin-rabbi-trader'",
+        "dev": "echo 'Skipping dev for disabled plugin-rabbi-trader'",
         "lint": "eslint --fix  --cache .",
-        "test": "echo 'Skipping test for disabled plugin-rabbi-trader plugin'",
-        "test:watch": "vitest watch",
+        "test": "echo 'Skipping test for disabled plugin-rabbi-trader'",
+        "test:watch": "echo 'Skipping test:watch for disabled plugin-rabbi-trader'",
         "test:coverage": "vitest run --coverage"
     },
     "peerDependencies": {

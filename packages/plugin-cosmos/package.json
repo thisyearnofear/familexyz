@@ -19,9 +19,9 @@
         "interchain": "^1.10.4"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-cosmos plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-cosmos plugin'",
-        "test": "echo 'Skipping test for disabled plugin-cosmos plugin'"
+        "build": "echo 'Skipping build for disabled plugin-cosmos'",
+        "dev": "echo 'Skipping dev for disabled plugin-cosmos'",
+        "test": "echo 'Skipping test for disabled plugin-cosmos'"
     },
     "devDependencies": {
         "@chain-registry/types": "^0.50.44"

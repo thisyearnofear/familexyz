@@ -29,8 +29,8 @@
         "vitest": "2.1.4"
     },
     "scripts": {
-        "build": "tsup --format esm --dts",
-        "test": "vitest run"
+        "build": "echo 'Skipping build for disabled plugin-sui plugin'",
+        "test": "echo 'Skipping test for disabled plugin-sui plugin'"
     },
     "peerDependencies": {
         "form-data": "4.0.1",

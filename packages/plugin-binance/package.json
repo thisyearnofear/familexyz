@@ -30,9 +30,9 @@
         "vitest": "^3.0.2"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-binance plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-binance plugin'",
-        "test": "echo 'Skipping test for disabled plugin-binance plugin'",
-        "test:watch": "vitest"
+        "build": "echo 'Skipping build for disabled plugin-binance'",
+        "dev": "echo 'Skipping dev for disabled plugin-binance'",
+        "test": "echo 'Skipping test for disabled plugin-binance'",
+        "test:watch": "echo 'Skipping test:watch for disabled plugin-binance'"
     }
 }

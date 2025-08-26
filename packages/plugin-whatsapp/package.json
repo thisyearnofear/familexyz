@@ -20,9 +20,9 @@
         "dist"
     ],
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-whatsapp plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-whatsapp plugin'",
-        "test": "echo 'Skipping test for disabled plugin-whatsapp plugin'",
+        "build": "echo 'Skipping build for disabled plugin-whatsapp'",
+        "dev": "echo 'Skipping dev for disabled plugin-whatsapp'",
+        "test": "echo 'Skipping test for disabled plugin-whatsapp'",
         "coverage": "vitest run --coverage"
     },
     "dependencies": {

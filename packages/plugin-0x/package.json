@@ -19,9 +19,9 @@
         "dist"
     ],
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-0x plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-0x plugin'",
-        "test": "echo 'Skipping test for disabled plugin-0x plugin'"
+        "build": "echo 'Skipping build for disabled plugin-0x'",
+        "dev": "echo 'Skipping dev for disabled plugin-0x'",
+        "test": "echo 'Skipping test for disabled plugin-0x'"
     },
     "dependencies": {},
     "devDependencies": {

@@ -27,8 +27,8 @@
         "tsup": "8.3.5"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-lightning plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-lightning plugin'",
+        "build": "echo 'Skipping build for disabled plugin-lightning'",
+        "dev": "echo 'Skipping dev for disabled plugin-lightning'",
         "lint": "eslint --fix  --cache ."
     },
     "peerDependencies": {

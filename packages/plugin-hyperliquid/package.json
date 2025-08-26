@@ -16,7 +16,7 @@
         "tsup": "8.3.5"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-hyperliquid plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-hyperliquid plugin'"
+        "build": "echo 'Skipping build for disabled plugin-hyperliquid'",
+        "dev": "echo 'Skipping dev for disabled plugin-hyperliquid'"
     }
 }

@@ -17,10 +17,10 @@
         "vitest": "^1.0.0"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-agentkit plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-agentkit plugin'",
-        "test": "echo 'Skipping test for disabled plugin-agentkit plugin'",
-        "test:watch": "vitest watch",
+        "build": "echo 'Skipping build for disabled plugin-agentkit'",
+        "dev": "echo 'Skipping dev for disabled plugin-agentkit'",
+        "test": "echo 'Skipping test for disabled plugin-agentkit'",
+        "test:watch": "echo 'Skipping test:watch for disabled plugin-agentkit'",
         "test:coverage": "vitest run --coverage"
     }
 }

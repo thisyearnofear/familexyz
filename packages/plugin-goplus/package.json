@@ -12,8 +12,8 @@
         "ws": "^8.18.0"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-goplus plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-goplus plugin'"
+        "build": "echo 'Skipping build for disabled plugin-goplus'",
+        "dev": "echo 'Skipping dev for disabled plugin-goplus'"
     },
     "devDependencies": {
         "@types/ws": "^8.5.13",

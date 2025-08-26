@@ -25,8 +25,8 @@
         "whatwg-url": "7.1.0"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-tts plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-tts plugin'"
+        "build": "echo 'Skipping build for disabled plugin-tts'",
+        "dev": "echo 'Skipping dev for disabled plugin-tts'"
     },
     "peerDependencies": {
         "whatwg-url": "7.1.0"

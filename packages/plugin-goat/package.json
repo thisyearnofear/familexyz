@@ -29,8 +29,8 @@
         "tsup": "8.3.5"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-goat plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-goat plugin'",
+        "build": "echo 'Skipping build for disabled plugin-goat'",
+        "dev": "echo 'Skipping dev for disabled plugin-goat'",
         "lint": "eslint --fix  --cache ."
     },
     "peerDependencies": {

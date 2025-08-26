@@ -6,8 +6,8 @@
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
-        "build": "tsc -p tsconfig.json",
-        "dev": "tsc -p tsconfig.json -w",
+        "build": "echo 'Skipping build for disabled plugin-gooddollar plugin'",
+        "dev": "echo 'Skipping dev for disabled plugin-gooddollar plugin'",
         "lint": "eslint . --ext .ts,.tsx --fix",
         "type-check": "tsc --noEmit"
     },

@@ -20,11 +20,11 @@
         "dist"
     ],
     "scripts": {
-        "build": "echo 'Skipping build for disabled Slack client'",
-        "test": "echo 'Skipping test for disabled Slack client'",
-        "test:watch": "echo 'Skipping test:watch for disabled Slack client'",
-        "clean": "echo 'Skipping clean for disabled Slack client'",
-        "dev": "echo 'Skipping dev for disabled Slack client'",
+        "build": "echo 'Skipping build for disabled slack'",
+        "test": "echo 'Skipping test for disabled slack'",
+        "test:watch": "echo 'Skipping test:watch for disabled slack'",
+        "clean": "echo 'Skipping clean for disabled slack'",
+        "dev": "echo 'Skipping dev for disabled slack'",
         "example": "echo 'Skipping example for disabled Slack client'",
         "example:attachment": "echo 'Skipping example:attachment for disabled Slack client'",
         "example:summarize": "echo 'Skipping example:summarize for disabled Slack client'",

@@ -15,8 +15,8 @@
         "@types/node": "^20.0.0"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-irys plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-irys plugin'",
-        "test": "echo 'Skipping test for disabled plugin-irys plugin'"
+        "build": "echo 'Skipping build for disabled plugin-irys'",
+        "dev": "echo 'Skipping dev for disabled plugin-irys'",
+        "test": "echo 'Skipping test for disabled plugin-irys'"
     }
 }

@@ -13,9 +13,9 @@
         "zod": "^3.22.4"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-stargaze plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-stargaze plugin'",
-        "test": "echo 'Skipping test for disabled plugin-stargaze plugin'",
+        "build": "echo 'Skipping build for disabled plugin-stargaze'",
+        "dev": "echo 'Skipping dev for disabled plugin-stargaze'",
+        "test": "echo 'Skipping test for disabled plugin-stargaze'",
         "lint": "eslint --fix  --cache ."
     }
 }

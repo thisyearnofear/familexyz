@@ -10,9 +10,9 @@
         "axios": "^1.7.9"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-depin plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-depin plugin'",
-        "test": "echo 'Skipping test for disabled plugin-depin plugin'"
+        "build": "echo 'Skipping build for disabled plugin-depin'",
+        "dev": "echo 'Skipping dev for disabled plugin-depin'",
+        "test": "echo 'Skipping test for disabled plugin-depin'"
     },
     "peerDependencies": {
         "whatwg-url": "7.1.0"

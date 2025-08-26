@@ -29,7 +29,7 @@
         "vitest": "^1.0.0"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-openai plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-openai plugin'"
+        "build": "echo 'Skipping build for disabled plugin-openai'",
+        "dev": "echo 'Skipping dev for disabled plugin-openai'"
     }
 }

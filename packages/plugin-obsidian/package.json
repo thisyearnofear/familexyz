@@ -11,10 +11,10 @@
         "tsup": "8.3.5"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-obsidian plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-obsidian plugin'",
-        "test": "echo 'Skipping test for disabled plugin-obsidian plugin'",
-        "test:watch": "vitest"
+        "build": "echo 'Skipping build for disabled plugin-obsidian'",
+        "dev": "echo 'Skipping dev for disabled plugin-obsidian'",
+        "test": "echo 'Skipping test for disabled plugin-obsidian'",
+        "test:watch": "echo 'Skipping test:watch for disabled plugin-obsidian'"
     },
     "peerDependencies": {
         "whatwg-url": "7.1.0"

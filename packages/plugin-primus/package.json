@@ -25,9 +25,9 @@
         "tsup": "8.3.5"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-primus plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-primus plugin'",
-        "test": "echo 'Skipping test for disabled plugin-primus plugin'",
+        "build": "echo 'Skipping build for disabled plugin-primus'",
+        "dev": "echo 'Skipping dev for disabled plugin-primus'",
+        "test": "echo 'Skipping test for disabled plugin-primus'",
         "lint": "eslint --fix  --cache ."
     }
 }

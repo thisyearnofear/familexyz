@@ -23,8 +23,8 @@
         "tsup": "8.3.5"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled bootstrap plugin'",
-        "dev": "echo 'Skipping dev for disabled bootstrap plugin'"
+        "build": "echo 'Skipping build for disabled plugin-bootstrap'",
+        "dev": "echo 'Skipping dev for disabled plugin-bootstrap'"
     },
     "peerDependencies": {
         "whatwg-url": "7.1.0"

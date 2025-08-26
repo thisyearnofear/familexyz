@@ -26,9 +26,9 @@
         "tsup": "8.3.5"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-b2 plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-b2 plugin'",
-        "test": "echo 'Skipping test for disabled plugin-b2 plugin'"
+        "build": "echo 'Skipping build for disabled plugin-b2'",
+        "dev": "echo 'Skipping dev for disabled plugin-b2'",
+        "test": "echo 'Skipping test for disabled plugin-b2'"
     },
     "peerDependencies": {
         "whatwg-url": "7.1.0"

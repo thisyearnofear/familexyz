@@ -24,8 +24,8 @@
     },
     "scripts": {
         "lint": "eslint --fix  --cache .",
-        "build": "echo 'Skipping build for disabled plugin-abstract plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-abstract plugin'"
+        "build": "echo 'Skipping build for disabled plugin-abstract'",
+        "dev": "echo 'Skipping dev for disabled plugin-abstract'"
     },
     "peerDependencies": {
         "whatwg-url": "7.1.0"

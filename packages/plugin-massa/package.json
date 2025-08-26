@@ -10,7 +10,7 @@
         "tsup": "8.3.5"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-massa plugin'"
+        "build": "echo 'Skipping build for disabled plugin-massa'"
     },
     "peerDependencies": {
         "whatwg-url": "7.1.0"

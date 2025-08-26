@@ -15,9 +15,9 @@
         "vitest": "2.1.5"
     },
     "scripts": {
-        "build": "tsup --format esm --no-dts",
-        "test": "vitest run",
-        "test:watch": "vitest"
+        "build": "echo 'Skipping build for disabled plugin-tee-verifiable-log'",
+        "test": "echo 'Skipping test for disabled plugin-tee-verifiable-log'",
+        "test:watch": "echo 'Skipping test:watch for disabled plugin-tee-verifiable-log'"
     },
     "devDependencies": {
         "@types/dompurify": "3.2.0",

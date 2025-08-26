@@ -38,8 +38,8 @@
         "viem": "^2.21.60"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-nft-generation plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-nft-generation plugin'"
+        "build": "echo 'Skipping build for disabled plugin-nft-generation'",
+        "dev": "echo 'Skipping dev for disabled plugin-nft-generation'"
     },
     "peerDependencies": {
         "whatwg-url": "7.1.0"

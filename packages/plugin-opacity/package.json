@@ -6,9 +6,9 @@
     "type": "module",
     "types": "dist/index.d.ts",
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-opacity plugin'",
+        "build": "echo 'Skipping build for disabled plugin-opacity'",
         "watch": "tsc --watch",
-        "dev": "echo 'Skipping dev for disabled plugin-opacity plugin'"
+        "dev": "echo 'Skipping dev for disabled plugin-opacity'"
     },
     "dependencies": {
         "@elizaos/core": "workspace:*",

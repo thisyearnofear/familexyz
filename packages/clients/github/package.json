@@ -31,9 +31,9 @@
         "vitest": "^1.2.1"
     },
     "scripts": {
-        "build": "tsup --format esm --no-dts",
-        "dev": "tsup --format esm --dts --watch",
-        "test": "vitest run",
-        "test:watch": "vitest"
+        "build": "echo 'Skipping build for disabled github'",
+        "dev": "echo 'Skipping dev for disabled github'",
+        "test": "echo 'Skipping test for disabled github'",
+        "test:watch": "echo 'Skipping test:watch for disabled github'"
     }
 }

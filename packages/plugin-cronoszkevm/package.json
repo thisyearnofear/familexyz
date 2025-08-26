@@ -26,7 +26,7 @@
         "viem": "2.22.2"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-cronoszkevm plugin'",
+        "build": "echo 'Skipping build for disabled plugin-cronoszkevm'",
         "lint": "eslint --fix  --cache ."
     },
     "peerDependencies": {

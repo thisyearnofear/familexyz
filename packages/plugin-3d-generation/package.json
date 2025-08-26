@@ -24,8 +24,8 @@
         "whatwg-url": "7.1.0"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-3d-generation plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-3d-generation plugin'"
+        "build": "echo 'Skipping build for disabled plugin-3d-generation'",
+        "dev": "echo 'Skipping dev for disabled plugin-3d-generation'"
     },
     "peerDependencies": {
         "whatwg-url": "7.1.0"

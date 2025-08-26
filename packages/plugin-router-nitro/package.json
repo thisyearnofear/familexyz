@@ -28,10 +28,10 @@
         "viem": "2.21.58"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-router-nitro plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-router-nitro plugin'",
-        "test": "echo 'Skipping test for disabled plugin-router-nitro plugin'",
-        "test:watch": "vitest",
+        "build": "echo 'Skipping build for disabled plugin-router-nitro'",
+        "dev": "echo 'Skipping dev for disabled plugin-router-nitro'",
+        "test": "echo 'Skipping test for disabled plugin-router-nitro'",
+        "test:watch": "echo 'Skipping test:watch for disabled plugin-router-nitro'",
         "lint": "eslint --fix  --cache ."
     }
 }

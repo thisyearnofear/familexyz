@@ -25,8 +25,8 @@
         "js-tiktoken": "1.0.15"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-web-search plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-web-search plugin'",
+        "build": "echo 'Skipping build for disabled plugin-web-search'",
+        "dev": "echo 'Skipping dev for disabled plugin-web-search'",
         "lint": "eslint --fix  --cache ."
     },
     "peerDependencies": {

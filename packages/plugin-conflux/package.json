@@ -24,8 +24,8 @@
         "@types/bs58": "^5.0.0"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-conflux plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-conflux plugin'",
+        "build": "echo 'Skipping build for disabled plugin-conflux'",
+        "dev": "echo 'Skipping dev for disabled plugin-conflux'",
         "lint": "eslint --fix  --cache ."
     }
 }

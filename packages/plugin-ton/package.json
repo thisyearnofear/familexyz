@@ -27,9 +27,9 @@
         "tsup": "8.3.5"
     },
     "scripts": {
-        "build": "echo 'Skipping build for disabled plugin-ton plugin'",
-        "dev": "echo 'Skipping dev for disabled plugin-ton plugin'",
-        "test": "echo 'Skipping test for disabled plugin-ton plugin'",
+        "build": "echo 'Skipping build for disabled plugin-ton'",
+        "dev": "echo 'Skipping dev for disabled plugin-ton'",
+        "test": "echo 'Skipping test for disabled plugin-ton'",
         "lint": "eslint --fix  --cache ."
     },
     "peerDependencies": {

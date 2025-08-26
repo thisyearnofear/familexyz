@@ -1,17 +1,17 @@
 {
-  "name": "@elizaos/family-nlp-utils",
-  "version": "0.0.1",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "private": true,
-  "scripts": {
-    "build": "tsup 'src/**/*.ts' --format esm,cjs --clean"
-  },
-  "dependencies": {
-    "@elizaos/hedera-core": "workspace:*"
-  },
-  "devDependencies": {
-    "tsup": "^8.3.5",
-    "typescript": "^5.6.3"
-  }
+    "name": "@elizaos/family-nlp-utils",
+    "version": "0.0.1",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "private": true,
+    "scripts": {
+        "build": "echo 'Skipping build for disabled family-nlp-utils package'"
+    },
+    "dependencies": {
+        "@elizaos/hedera-core": "workspace:*"
+    },
+    "devDependencies": {
+        "tsup": "^8.3.5",
+        "typescript": "^5.6.3"
+    }
 }

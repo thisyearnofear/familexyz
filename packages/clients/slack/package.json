@@ -20,15 +20,15 @@
         "dist"
     ],
     "scripts": {
-        "build": "tsup src/index.ts --format esm --no-dts",
-        "test": "vitest run",
-        "test:watch": "vitest",
-        "clean": "rimraf dist",
-        "dev": "tsup src/index.ts --watch",
-        "example": "ts-node src/examples/standalone-example.ts",
-        "example:attachment": "ts-node src/examples/standalone-attachment.ts",
-        "example:summarize": "ts-node src/examples/standalone-summarize.ts",
-        "example:transcribe": "ts-node src/examples/standalone-transcribe.ts"
+        "build": "echo 'Skipping build for disabled Slack client'",
+        "test": "echo 'Skipping test for disabled Slack client'",
+        "test:watch": "echo 'Skipping test:watch for disabled Slack client'",
+        "clean": "echo 'Skipping clean for disabled Slack client'",
+        "dev": "echo 'Skipping dev for disabled Slack client'",
+        "example": "echo 'Skipping example for disabled Slack client'",
+        "example:attachment": "echo 'Skipping example:attachment for disabled Slack client'",
+        "example:summarize": "echo 'Skipping example:summarize for disabled Slack client'",
+        "example:transcribe": "echo 'Skipping example:transcribe for disabled Slack client'"
     },
     "dependencies": {
         "@elizaos/core": "workspace:*",

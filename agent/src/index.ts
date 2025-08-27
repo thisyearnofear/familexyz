@@ -27,7 +27,7 @@ import { config, ModelProviderName } from "@elizaos/config";
 import { getEnabledPlugins } from "./pluginLoader";
 
 // NEW: Platform integrations
-import "./integrations/telegram.js";
+import "./integrations/telegram";
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory

@@ -102,27 +102,7 @@ export function createApiRouter(
 ) {
     const router = express.Router();
 
-    // Configure CORS with proper origins
-    const corsOrigins = process.env.CORS_ORIGINS
-        ? process.env.CORS_ORIGINS.split(",").map((origin) => origin.trim())
-        : [
-              "http://localhost:3000",
-              "http://localhost:5173",
-              "https://familexyz.netlify.app",
-          ];
-
-    router.use(
-        cors({
-            origin: corsOrigins,
-            credentials: true,
-            methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-            allowedHeaders: [
-                "Content-Type",
-                "Authorization",
-                "X-Requested-With",
-            ],
-        }),
-    );
+    
     router.use(bodyParser.json());
     router.use(bodyParser.urlencoded({ extended: true }));
     router.use(

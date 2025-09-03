@@ -127,6 +127,7 @@ export class DirectClient {
                   "http://localhost:3000",
                   "http://localhost:5173",
                   "https://familexyz.netlify.app",
+                  "https://famile.xyz",
               ];
 
         this.app.use(

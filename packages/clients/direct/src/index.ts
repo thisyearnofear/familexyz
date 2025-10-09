@@ -120,7 +120,7 @@ export class DirectClient {
         elizaLogger.log("DirectClient constructor");
         this.app = express();
 
-        // Configure CORS with proper origins
+        // Configure CORS with proper origins and validation
         const corsOrigins = process.env.CORS_ORIGINS
             ? process.env.CORS_ORIGINS.split(",").map((origin) => origin.trim())
             : [
@@ -130,18 +130,61 @@ export class DirectClient {
                   "https://famile.xyz",
               ];
 
-        this.app.use(
-            cors({
-                origin: corsOrigins,
-                credentials: true,
-                methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-                allowedHeaders: [
-                    "Content-Type",
-                    "Authorization",
-                    "X-Requested-With",
-                ],
-            })
-        );
+        // Validate CORS origins when credentials are enabled (credentials + wildcard is not allowed by CORS spec)
+        if (process.env.NODE_ENV !== "development" && corsOrigins.includes("*")) {
+            elizaLogger.warn("Warning: Wildcard origin (*) used with credentials. This violates CORS specification.");
+            // Filter out wildcard when credentials are enabled
+            const filteredOrigins = corsOrigins.filter(origin => origin !== "*");
+            elizaLogger.info(`CORS origins filtered to: ${filteredOrigins.join(", ")}`);
+            
+            this.app.use(
+                cors({
+                    origin: (origin, callback) => {
+                        // Allow requests with no origin (like curl requests or mobile apps)
+                        if (!origin) return callback(null, true);
+                        
+                        // Check if origin is in allowed list
+                        if (filteredOrigins.indexOf(origin) !== -1) {
+                            callback(null, true);
+                        } else {
+                            elizaLogger.warn(`CORS: Origin ${origin} not allowed`);
+                            callback(new Error("Not allowed by CORS"));
+                        }
+                    },
+                    credentials: true,
+                    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+                    allowedHeaders: [
+                        "Content-Type",
+                        "Authorization", 
+                        "X-Requested-With",
+                        "X-Forwarded-For",
+                        "X-Real-IP"
+                    ],
+                    exposedHeaders: [
+                        "Access-Control-Allow-Origin"
+                    ]
+                })
+            );
+        } else {
+            // Use static origin list when no wildcard is present
+            this.app.use(
+                cors({
+                    origin: corsOrigins,
+                    credentials: true,
+                    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+                    allowedHeaders: [
+                        "Content-Type",
+                        "Authorization",
+                        "X-Requested-With",
+                        "X-Forwarded-For", 
+                        "X-Real-IP"
+                    ],
+                    exposedHeaders: [
+                        "Access-Control-Allow-Origin"
+                    ]
+                })
+            );
+        }
 
         this.agents = new Map();
 

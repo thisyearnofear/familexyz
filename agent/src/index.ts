@@ -27,7 +27,8 @@ import { config, ModelProviderName } from "@elizaos/config";
 import { getEnabledPlugins } from "./pluginLoader";
 
 // NEW: Platform integrations
-import "./integrations/telegram.js";
+// Telegram integration is loaded dynamically via DirectClient patching
+// See implementation in the family stats endpoint patch below
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory

@@ -22,10 +22,10 @@ import {
     settings,
     type IAgentRuntime,
 } from "@elizaos/core";
-import { createApiRouter } from "./api.ts";
+import { createApiRouter } from "./api.js";
 import * as fs from "fs";
 import * as path from "path";
-import { createVerifiableLogApiRouter } from "./verifiable-log-api.ts";
+import { createVerifiableLogApiRouter } from "./verifiable-log-api.js";
 import OpenAI from "openai";
 
 const storage = multer.diskStorage({
@@ -136,13 +136,13 @@ export class DirectClient {
             // Filter out wildcard when credentials are enabled
             const filteredOrigins = corsOrigins.filter(origin => origin !== "*");
             elizaLogger.info(`CORS origins filtered to: ${filteredOrigins.join(", ")}`);
-            
+
             this.app.use(
                 cors({
                     origin: (origin, callback) => {
                         // Allow requests with no origin (like curl requests or mobile apps)
                         if (!origin) return callback(null, true);
-                        
+
                         // Check if origin is in allowed list
                         if (filteredOrigins.indexOf(origin) !== -1) {
                             callback(null, true);
@@ -155,7 +155,7 @@ export class DirectClient {
                     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
                     allowedHeaders: [
                         "Content-Type",
-                        "Authorization", 
+                        "Authorization",
                         "X-Requested-With",
                         "X-Forwarded-For",
                         "X-Real-IP"
@@ -176,7 +176,7 @@ export class DirectClient {
                         "Content-Type",
                         "Authorization",
                         "X-Requested-With",
-                        "X-Forwarded-For", 
+                        "X-Forwarded-For",
                         "X-Real-IP"
                     ],
                     exposedHeaders: [
@@ -225,15 +225,16 @@ export class DirectClient {
                     return;
                 }
 
+                // Enhanced agent lookup (DRY principle - reuse logic)
                 let runtime = this.agents.get(agentId);
-                const apiKey = runtime.getSetting("OPENAI_API_KEY");
-
-                // if runtime is null, look for runtime with the same name
                 if (!runtime) {
+                    const normalizedAgentId = agentId.toLowerCase().replace(/-/g, '');
                     runtime = Array.from(this.agents.values()).find(
-                        (a) =>
-                            a.character.name.toLowerCase() ===
-                            agentId.toLowerCase()
+                        (a) => {
+                            const normalizedName = a.character.name.toLowerCase().replace(/\s+/g, '');
+                            return normalizedName === normalizedAgentId ||
+                                   a.character.name.toLowerCase() === agentId.toLowerCase();
+                        }
                     );
                 }
 
@@ -241,6 +242,8 @@ export class DirectClient {
                     res.status(404).send("Agent not found");
                     return;
                 }
+
+                const apiKey = runtime.getSetting("OPENAI_API_KEY");
 
                 const openai = new OpenAI({
                     apiKey,
@@ -265,18 +268,43 @@ export class DirectClient {
                 );
                 const userId = stringToUuid(req.body.userId ?? "user");
 
+                // Enhanced agent lookup with multiple strategies
                 let runtime = this.agents.get(agentId);
 
-                // if runtime is null, look for runtime with the same name
+                // Strategy 1: Direct UUID lookup (most common case)
                 if (!runtime) {
                     runtime = Array.from(this.agents.values()).find(
-                        (a) =>
-                            a.character.name.toLowerCase() ===
-                            agentId.toLowerCase()
+                        (a) => a.agentId === agentId
+                    );
+                }
+
+                // Strategy 2: Name-based lookup with normalization
+                if (!runtime) {
+                    const normalizedAgentId = agentId.toLowerCase().replace(/-/g, '');
+                    runtime = Array.from(this.agents.values()).find(
+                        (a) => {
+                            const normalizedName = a.character.name.toLowerCase().replace(/\s+/g, '');
+                            return normalizedName === normalizedAgentId ||
+                                   a.character.name.toLowerCase() === agentId.toLowerCase();
+                        }
+                    );
+                }
+
+                // Strategy 3: Fallback to partial name matching
+                if (!runtime) {
+                    runtime = Array.from(this.agents.values()).find(
+                        (a) => a.character.name.toLowerCase().includes(agentId.toLowerCase()) ||
+                               agentId.toLowerCase().includes(a.character.name.toLowerCase())
                     );
                 }
 
                 if (!runtime) {
+                    elizaLogger.warn(`Agent not found for ID: ${agentId}. Available agents:`,
+                        Array.from(this.agents.values()).map(a => ({
+                            id: a.agentId,
+                            name: a.character.name
+                        }))
+                    );
                     res.status(404).send("Agent not found");
                     return;
                 }
@@ -423,12 +451,15 @@ export class DirectClient {
                 // get runtime
                 const agentId = req.params.agentIdOrName;
                 let runtime = this.agents.get(agentId);
-                // if runtime is null, look for runtime with the same name
+                // Enhanced agent lookup (DRY principle - reuse logic)
                 if (!runtime) {
+                    const normalizedAgentId = agentId.toLowerCase().replace(/-/g, '');
                     runtime = Array.from(this.agents.values()).find(
-                        (a) =>
-                            a.character.name.toLowerCase() ===
-                            agentId.toLowerCase()
+                        (a) => {
+                            const normalizedName = a.character.name.toLowerCase().replace(/\s+/g, '');
+                            return normalizedName === normalizedAgentId ||
+                                   a.character.name.toLowerCase() === agentId.toLowerCase();
+                        }
                     );
                 }
                 if (!runtime) {
@@ -667,7 +698,18 @@ export class DirectClient {
             "/:agentId/image",
             async (req: express.Request, res: express.Response) => {
                 const agentId = req.params.agentId;
-                const agent = this.agents.get(agentId);
+                let agent = this.agents.get(agentId);
+                // Enhanced agent lookup (DRY principle - reuse logic)
+                if (!agent) {
+                    const normalizedAgentId = agentId.toLowerCase().replace(/-/g, '');
+                    agent = Array.from(this.agents.values()).find(
+                        (a) => {
+                            const normalizedName = a.character.name.toLowerCase().replace(/\s+/g, '');
+                            return normalizedName === normalizedAgentId ||
+                                   a.character.name.toLowerCase() === agentId.toLowerCase();
+                        }
+                    );
+                }
                 if (!agent) {
                     res.status(404).send("Agent not found");
                     return;
@@ -809,13 +851,16 @@ export class DirectClient {
                 return;
             }
 
+            // Enhanced agent lookup (DRY principle - reuse logic)
             let runtime = this.agents.get(agentId);
-
-            // if runtime is null, look for runtime with the same name
             if (!runtime) {
+                const normalizedAgentId = agentId.toLowerCase().replace(/-/g, '');
                 runtime = Array.from(this.agents.values()).find(
-                    (a) =>
-                        a.character.name.toLowerCase() === agentId.toLowerCase()
+                    (a) => {
+                        const normalizedName = a.character.name.toLowerCase().replace(/\s+/g, '');
+                        return normalizedName === normalizedAgentId ||
+                               a.character.name.toLowerCase() === agentId.toLowerCase();
+                    }
                 );
             }
 
@@ -972,10 +1017,29 @@ export class DirectClient {
         });
 
         this.app.post("/:agentId/tts", async (req, res) => {
+            const agentId = req.params.agentId;
             const text = req.body.text;
 
             if (!text) {
                 res.status(400).send("No text provided");
+                return;
+            }
+
+            // Enhanced agent lookup (DRY principle - reuse logic)
+            let runtime = this.agents.get(agentId);
+            if (!runtime) {
+                const normalizedAgentId = agentId.toLowerCase().replace(/-/g, '');
+                runtime = Array.from(this.agents.values()).find(
+                    (a) => {
+                        const normalizedName = a.character.name.toLowerCase().replace(/\s+/g, '');
+                        return normalizedName === normalizedAgentId ||
+                               a.character.name.toLowerCase() === agentId.toLowerCase();
+                    }
+                );
+            }
+
+            if (!runtime) {
+                res.status(404).send("Agent not found");
                 return;
             }
 
@@ -1050,6 +1114,7 @@ export class DirectClient {
         // register any plugin endpoints?
         // but once and only once
         this.agents.set(runtime.agentId, runtime);
+        elizaLogger.info(`Registered agent: ${runtime.character.name} (${runtime.agentId})`);
     }
 
     public unregisterAgent(runtime: AgentRuntime) {

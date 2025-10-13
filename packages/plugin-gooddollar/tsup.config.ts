@@ -9,6 +9,7 @@ export default defineConfig({
   platform: "node",
   target: "node18",
   bundle: false,
+  dts: true,
   external: [
     "dotenv",
     "fs",
@@ -21,4 +22,8 @@ export default defineConfig({
     "chokidar",
     "@elizaos/core",
   ],
+  esbuildOptions(options) {
+    // Ignore .node files completely
+    options.ignoreAnnotations = true;
+  }
 });

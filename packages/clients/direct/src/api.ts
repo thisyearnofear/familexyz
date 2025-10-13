@@ -1,5 +1,4 @@
 import express from "express";
-import bodyParser from "body-parser";
 import cors from "cors";
 import path from "path";
 import fs from "fs";
@@ -15,7 +14,7 @@ import {
 } from "@elizaos/core";
 
 import type { TeeLogQuery, TeeLogService } from "@elizaos/plugin-tee-log";
-import type { DirectClient } from ".";
+import type { DirectClient } from "./index.js";
 import { validateUuid } from "@elizaos/core";
 import {
     GoodDollarService,
@@ -30,6 +29,47 @@ interface ApiResponse<T = any> {
     error?: string;
     message?: string;
     timestamp?: string;
+}
+
+// Typed response shapes for dashboard endpoints
+interface WalletResponse {
+    success: boolean;
+    wallet: {
+        address: string;
+        network: string;
+        balance: string;
+        superTokenBalance?: string;
+        canClaimUBI: boolean;
+    };
+}
+
+interface FamilyResponse {
+    success: boolean;
+    family: {
+        verifiedCount: number;
+        totalMembers: number;
+        verificationProgress: number;
+    };
+}
+
+interface StreamsResponse {
+    success: boolean;
+    streaming: {
+        enabled: boolean;
+        activeStreams: Array<{ [key: string]: any }>;
+        estimatedDaily?: string;
+    };
+}
+
+interface ActivityResponse {
+    success: boolean;
+    activity: {
+        recent: Array<{ [key: string]: any }>;
+        stats: {
+            totalActivities: number;
+            totalRewards: string;
+        };
+    };
 }
 
 interface UUIDParams {
@@ -102,14 +142,42 @@ export function createApiRouter(
 ) {
     const router = express.Router();
 
-    
-    router.use(bodyParser.json());
-    router.use(bodyParser.urlencoded({ extended: true }));
+    // Enable CORS and JSON parsing once on the router
+    router.use(cors());
     router.use(
         express.json({
             limit: getEnvVariable("EXPRESS_MAX_PAYLOAD") || "100kb",
         }),
     );
+
+    // Unified agent lookup helper: accepts UUID or name-like identifiers
+    const findAgentRuntime = (idOrName: string): AgentRuntime | undefined => {
+        // Direct match by agentId first
+        let runtime = agents.get(idOrName);
+        if (runtime) return runtime;
+
+        // Normalize identifier to support names without spaces/dashes
+        const normalizedId = idOrName.toLowerCase().replace(/[-\s]/g, "");
+        runtime = Array.from(agents.values()).find((a) => {
+            const normalizedName = a.character.name
+                .toLowerCase()
+                .replace(/\s+/g, "");
+            return (
+                normalizedName === normalizedId ||
+                a.character.name.toLowerCase() === idOrName.toLowerCase()
+            );
+        });
+        return runtime;
+    };
+
+    // Helper to sanitize character response without mutating runtime state
+    const sanitizeCharacterResponse = (character: Character): Character => {
+        const sanitized = { ...character };
+        if (sanitized.settings?.secrets) {
+            delete sanitized.settings.secrets;
+        }
+        return sanitized;
+    };
 
     // API status endpoint
     router.get("/", (req, res) => {
@@ -166,66 +234,49 @@ export function createApiRouter(
             );
         } catch (error) {
             sendErrorResponse(res, 500, "Failed to read storage directory", {
-                directory: uploadDir,
+                directory: path.join(process.cwd(), "data", "characters"),
                 originalError: error.message,
             });
         }
     });
 
     router.get("/agents/:agentId", (req, res) => {
-        const { agentId } = validateUUIDParams(req.params, res) ?? {
-            agentId: null,
-        };
-        if (!agentId) return;
-
-        const agent = agents.get(agentId);
+        const agentId = req.params.agentId;
+        const agent = findAgentRuntime(agentId);
 
         if (!agent) {
             sendErrorResponse(res, 404, "Agent not found", { agentId });
             return;
         }
 
-        const character = agent?.character;
-        if (character?.settings?.secrets) {
-            delete character.settings.secrets;
-        }
-
         res.json({
             id: agent.agentId,
-            character: agent.character,
+            character: sanitizeCharacterResponse(agent.character),
         });
     });
 
     router.delete("/agents/:agentId", async (req, res) => {
-        const { agentId } = validateUUIDParams(req.params, res) ?? {
-            agentId: null,
-        };
-        if (!agentId) return;
-
-        const agent: AgentRuntime = agents.get(agentId);
+        const agentId = req.params.agentId;
+        const agent = findAgentRuntime(agentId);
 
         if (agent) {
             agent.stop();
             directClient.unregisterAgent(agent);
             res.status(204).json({ success: true });
         } else {
-            res.status(404).json({ error: "Agent not found" });
+            sendErrorResponse(res, 404, "Agent not found", { agentId });
         }
     });
 
     router.post("/agents/:agentId/set", async (req, res) => {
-        const { agentId } = validateUUIDParams(req.params, res) ?? {
-            agentId: null,
-        };
-        if (!agentId) return;
-
-        let agent: AgentRuntime = agents.get(agentId);
+        const agentId = req.params.agentId;
+        const existingAgent = findAgentRuntime(agentId);
 
         // update character
-        if (agent) {
+        if (existingAgent) {
             // stop agent
-            agent.stop();
-            directClient.unregisterAgent(agent);
+            existingAgent.stop();
+            directClient.unregisterAgent(existingAgent);
             // if it has a different name, the agentId will change
         }
 
@@ -238,8 +289,7 @@ export function createApiRouter(
             validateCharacterConfig(character);
         } catch (e) {
             elizaLogger.error(`Error parsing character: ${e}`);
-            res.status(400).json({
-                success: false,
+            sendErrorResponse(res, 400, "Invalid character configuration", {
                 message: e.message,
             });
             return;
@@ -247,77 +297,64 @@ export function createApiRouter(
 
         // start it up (and register it)
         try {
-            agent = await directClient.startAgent(character);
+            const agent = await directClient.startAgent(character);
             elizaLogger.log(`${character.name} started`);
+
+            if (process.env.USE_CHARACTER_STORAGE === "true") {
+                try {
+                    const filename = `${agent.agentId}.json`;
+                    const uploadDir = path.join(
+                        process.cwd(),
+                        "data",
+                        "characters",
+                    );
+                    const filepath = path.join(uploadDir, filename);
+                    await fs.promises.mkdir(uploadDir, { recursive: true });
+                    await fs.promises.writeFile(
+                        filepath,
+                        JSON.stringify(
+                            { ...characterJson, id: agent.agentId },
+                            null,
+                            2,
+                        ),
+                    );
+                    elizaLogger.info(
+                        `Character stored successfully at ${filepath}`,
+                    );
+                } catch (error) {
+                    elizaLogger.error(
+                        `Failed to store character: ${error.message}`,
+                    );
+                }
+            }
+
+            sendSuccessResponse(res, {
+                id: agent.agentId,
+                character: sanitizeCharacterResponse(character),
+            }, `${character.name} agent updated successfully`);
         } catch (e) {
             elizaLogger.error(`Error starting agent: ${e}`);
-            res.status(500).json({
-                success: false,
+            sendErrorResponse(res, 500, "Failed to start agent", {
                 message: e.message,
             });
-            return;
         }
-
-        if (process.env.USE_CHARACTER_STORAGE === "true") {
-            try {
-                const filename = `${agent.agentId}.json`;
-                const uploadDir = path.join(
-                    process.cwd(),
-                    "data",
-                    "characters",
-                );
-                const filepath = path.join(uploadDir, filename);
-                await fs.promises.mkdir(uploadDir, { recursive: true });
-                await fs.promises.writeFile(
-                    filepath,
-                    JSON.stringify(
-                        { ...characterJson, id: agent.agentId },
-                        null,
-                        2,
-                    ),
-                );
-                elizaLogger.info(
-                    `Character stored successfully at ${filepath}`,
-                );
-            } catch (error) {
-                elizaLogger.error(
-                    `Failed to store character: ${error.message}`,
-                );
-            }
-        }
-
-        res.json({
-            id: character.id,
-            character: character,
-        });
     });
 
     // Discord channels endpoint removed - Discord functionality not needed
 
     router.get("/agents/:agentId/:roomId/memories", async (req, res) => {
-        const { agentId, roomId } = validateUUIDParams(req.params, res) ?? {
-            agentId: null,
-            roomId: null,
-        };
-        if (!agentId || !roomId) return;
-
-        let runtime = agents.get(agentId);
-
-        // if runtime is null, look for runtime with the same name
-        if (!runtime) {
-            runtime = Array.from(agents.values()).find(
-                (a) => a.character.name.toLowerCase() === agentId.toLowerCase(),
-            );
-        }
+        const agentId = req.params.agentId;
+        const roomId = req.params.roomId;
+        const runtime = findAgentRuntime(agentId);
 
         if (!runtime) {
-            res.status(404).send("Agent not found");
+            sendErrorResponse(res, 404, "Agent not found", { agentId });
             return;
         }
 
         try {
             const memories = await runtime.messageManager.getMemories({
-                roomId,
+                roomId: roomId as UUID,
             });
             const response = {
                 agentId,
@@ -391,9 +428,10 @@ export function createApiRouter(
     router.get("/tee/agents/:agentId", async (req, res) => {
         try {
             const agentId = req.params.agentId;
-            const agentRuntime = agents.get(agentId);
+            const agentRuntime = findAgentRuntime(agentId);
+
             if (!agentRuntime) {
-                res.status(404).json({ error: "Agent not found" });
+                sendErrorResponse(res, 404, "Agent not found", { agentId });
                 return;
             }
 
@@ -473,26 +511,35 @@ export function createApiRouter(
             } else {
                 throw new Error("No character path or JSON provided");
             }
-            await directClient.startAgent(character);
+
+            // Check if agent already exists
+            const existingAgent = findAgentRuntime(character.name);
+            if (existingAgent) {
+                sendErrorResponse(res, 409, `Agent with name "${character.name}" already exists`, {
+                    agentId: existingAgent.agentId,
+                });
+                return;
+            }
+
+            const agent = await directClient.startAgent(character);
             elizaLogger.log(`${character.name} started`);
 
-            res.json({
-                id: character.id,
-                character: character,
-            });
+            sendSuccessResponse(res, {
+                id: agent.agentId,
+                character: sanitizeCharacterResponse(character),
+            }, `${character.name} agent started successfully`);
         } catch (e) {
             elizaLogger.error(`Error parsing character: ${e}`);
-            res.status(400).json({
-                error: e.message,
+            sendErrorResponse(res, 400, "Failed to start agent", {
+                message: e.message,
             });
-            return;
         }
     });
 
     router.post("/agents/:agentId/stop", async (req, res) => {
         const agentId = req.params.agentId;
         console.log("agentId", agentId);
-        const agent: AgentRuntime = agents.get(agentId);
+        const agent = findAgentRuntime(agentId);
 
         // update character
         if (agent) {
@@ -500,9 +547,9 @@ export function createApiRouter(
             agent.stop();
             directClient.unregisterAgent(agent);
             // if it has a different name, the agentId will change
-            res.json({ success: true });
+            sendSuccessResponse(res, { success: true }, "Agent stopped successfully");
         } else {
-            res.status(404).json({ error: "Agent not found" });
+            sendErrorResponse(res, 404, "Agent not found", { agentId });
         }
     });
 
@@ -512,26 +559,17 @@ export function createApiRouter(
 
     // Dashboard wallet overview
     router.get("/agents/:agentId/gooddollar/wallet", async (req, res) => {
-        const { agentId } = validateUUIDParams(req.params, res) ?? {
-            agentId: null,
-        };
-        if (!agentId) return;
-
-        let runtime = agents.get(agentId);
-        if (!runtime) {
-            runtime = Array.from(agents.values()).find(
-                (a) => a.character.name.toLowerCase() === agentId.toLowerCase(),
-            );
-        }
+        const agentId = req.params.agentId;
+        const runtime = findAgentRuntime(agentId);
 
         if (!runtime) {
-            res.status(404).json({ error: "Agent not found" });
+            sendErrorResponse(res, 404, "Agent not found", { agentId });
             return;
         }
 
         try {
             const gdService =
-                runtime.getService<GoodDollarService>(GoodDollarService);
+                runtime.getService<GoodDollarService>(ServiceType.GOODDOLLAR);
             if (!gdService) {
                 res.status(503).json({
                     error: "GoodDollar service not available",
@@ -598,26 +636,17 @@ export function createApiRouter(
 
     // Dashboard family verification overview
     router.get("/agents/:agentId/gooddollar/family", async (req, res) => {
-        const { agentId } = validateUUIDParams(req.params, res) ?? {
-            agentId: null,
-        };
-        if (!agentId) return;
-
-        let runtime = agents.get(agentId);
-        if (!runtime) {
-            runtime = Array.from(agents.values()).find(
-                (a) => a.character.name.toLowerCase() === agentId.toLowerCase(),
-            );
-        }
+        const agentId = req.params.agentId;
+        const runtime = findAgentRuntime(agentId);
 
         if (!runtime) {
-            res.status(404).json({ error: "Agent not found" });
+            sendErrorResponse(res, 404, "Agent not found", { agentId });
             return;
         }
 
         try {
             const identityService =
-                runtime.getService<IdentityService>(IdentityService);
+                runtime.getService<IdentityService>(ServiceType.IDENTITY);
             if (!identityService) {
                 res.json({
                     success: true,
@@ -702,26 +731,17 @@ export function createApiRouter(
 
     // Dashboard streaming overview
     router.get("/agents/:agentId/gooddollar/streams", async (req, res) => {
-        const { agentId } = validateUUIDParams(req.params, res) ?? {
-            agentId: null,
-        };
-        if (!agentId) return;
-
-        let runtime = agents.get(agentId);
-        if (!runtime) {
-            runtime = Array.from(agents.values()).find(
-                (a) => a.character.name.toLowerCase() === agentId.toLowerCase(),
-            );
-        }
+        const agentId = req.params.agentId;
+        const runtime = findAgentRuntime(agentId);
 
         if (!runtime) {
-            res.status(404).json({ error: "Agent not found" });
+            sendErrorResponse(res, 404, "Agent not found", { agentId });
             return;
         }
 
         try {
             const streamingService =
-                runtime.getService<StreamingService>(StreamingService);
+                runtime.getService<StreamingService>(ServiceType.STREAMING);
             if (!streamingService) {
                 res.json({
                     success: true,
@@ -834,20 +854,11 @@ export function createApiRouter(
 
     // Dashboard family activity feed
     router.get("/agents/:agentId/gooddollar/activity", async (req, res) => {
-        const { agentId } = validateUUIDParams(req.params, res) ?? {
-            agentId: null,
-        };
-        if (!agentId) return;
-
-        let runtime = agents.get(agentId);
-        if (!runtime) {
-            runtime = Array.from(agents.values()).find(
-                (a) => a.character.name.toLowerCase() === agentId.toLowerCase(),
-            );
-        }
+        const agentId = req.params.agentId;
+        const runtime = findAgentRuntime(agentId);
 
         if (!runtime) {
-            res.status(404).json({ error: "Agent not found" });
+            sendErrorResponse(res, 404, "Agent not found", { agentId });
             return;
         }
 
@@ -956,20 +967,11 @@ export function createApiRouter(
 
     // Dashboard comprehensive family overview
     router.get("/agents/:agentId/gooddollar/dashboard", async (req, res) => {
-        const { agentId } = validateUUIDParams(req.params, res) ?? {
-            agentId: null,
-        };
-        if (!agentId) return;
-
-        let runtime = agents.get(agentId);
-        if (!runtime) {
-            runtime = Array.from(agents.values()).find(
-                (a) => a.character.name.toLowerCase() === agentId.toLowerCase(),
-            );
-        }
+        const agentId = req.params.agentId;
+        const runtime = findAgentRuntime(agentId);
 
         if (!runtime) {
-            res.status(404).json({ error: "Agent not found" });
+            sendErrorResponse(res, 404, "Agent not found", { agentId });
             return;
         }
 
@@ -1004,10 +1006,10 @@ export function createApiRouter(
             ]);
 
             const [wallet, family, streams, activity] = await Promise.all([
-                walletResponse.json(),
-                familyResponse.json(),
-                streamsResponse.json(),
-                activityResponse.json(),
+                walletResponse.json() as Promise<WalletResponse>,
+                familyResponse.json() as Promise<FamilyResponse>,
+                streamsResponse.json() as Promise<StreamsResponse>,
+                activityResponse.json() as Promise<ActivityResponse>,
             ]);
 
             // Calculate family health score based on various metrics
@@ -1044,7 +1046,7 @@ export function createApiRouter(
                             ? wallet.wallet.balance
                             : "0",
                         activeStreams: streams.success
-                            ? streams.streaming.totalActiveStreams || 0
+                            ? streams.streaming.activeStreams.length || 0
                             : 0,
                         verifiedMembers: family.success
                             ? family.family.verifiedCount

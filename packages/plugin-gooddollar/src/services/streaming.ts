@@ -176,7 +176,7 @@ class MockSuperfluidService {
 }
 
 export class StreamingService extends Service {
-  static serviceType: ServiceType = ServiceType.TEXT_GENERATION;
+  static serviceType: ServiceType = ServiceType.STREAMING;
   
   private config: GDollarConfig;
   private superfluidConfig: SuperfluidConfig;

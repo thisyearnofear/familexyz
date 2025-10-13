@@ -99,7 +99,7 @@ class MockFaceTecService {
 }
 
 export class IdentityService extends Service {
-  static serviceType: ServiceType = ServiceType.OTHER;
+  static serviceType: ServiceType = ServiceType.IDENTITY;
   
   private config: GDollarConfig;
   private identityConfig: GoodDollarIdentitySDKConfig;

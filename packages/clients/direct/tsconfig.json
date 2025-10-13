@@ -1,8 +1,31 @@
 {
-    "extends": "../../core/tsconfig.json",
-    "compilerOptions": {
-        "outDir": "dist",
-        "rootDir": "src"
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2020"],
+    "allowJs": false,
+    "rootDir": ".",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@elizaos/core": ["../../core/dist/index.d.ts"],
+      "@elizaos/plugin-gooddollar": ["../../plugin-gooddollar/dist/index.d.ts"],
+      "@elizaos/plugin-tee-log": ["../../plugin-tee-log/dist/index.d.ts"],
+      "@elizaos/*": ["../../*/dist/index.d.ts"]
     },
-    "include": ["src/**/*.ts"]
+    "types": ["node"]
+  },
+  "include": ["src/**/*"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "../../**/dist/**/*.js",
+    "**/*.test.ts",
+    "**/*.spec.ts"
+  ]
 }

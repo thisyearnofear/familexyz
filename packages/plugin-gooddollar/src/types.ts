@@ -21,6 +21,7 @@ export interface GDollarConfig {
   enableUBIClaim: boolean;
   /** Enable Superfluid streaming */
   enableStreaming: boolean;
+  walletAddress?: string;
 }
 
 export interface GDollarWallet {

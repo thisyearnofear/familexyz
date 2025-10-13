@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +11,10 @@ import { FamilyLogo } from "./FamilyLogo";
 import { apiClient } from "@/lib/api";
 import { telegramIntegration } from "@/services/telegramIntegration";
 import type { FamilyStats } from "@/types/family";
+import { AgentGrid } from "@/components/ui/agent-card";
+import { AgentCardSkeleton, FamilyStatsSkeleton } from "@/components/ui/skeletons";
+import { InsightsEmptyState } from "@/components/ui/empty-states";
+import { GlowEffect, AnimatedCounter, InteractiveTooltip, PulseAnimation } from "@/components/ui/interactive";
 
 import {
     MessageCircle,
@@ -109,20 +114,40 @@ export const ModularDashboard: React.FC<ModularDashboardProps> = ({
     const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
     const [, setIsLoading] = useState(false);
 
-    const { data: familyStats } = useQuery<FamilyStats>({
+    const { data: familyStats, isLoading: isFamilyStatsLoading } = useQuery<FamilyStats>({
         queryKey: ["familyStats"],
         queryFn: apiClient.getFamilyStats,
     });
 
-    const { data: agentsData } = useQuery({
+    const { data: agentsData, isLoading: isAgentsLoading } = useQuery({
         queryKey: ["agents"],
-        queryFn: () => apiClient.getAgents(),
+        queryFn: async () => {
+            try {
+                const response = await apiClient.getAgents();
+                // Handle different response structures
+                if (response && response.data && response.data.agents) {
+                    return response.data;
+                } else if (Array.isArray(response)) {
+                    // If it's an array of agents directly
+                    return { agents: response, total: response.length };
+                } else if (response && Array.isArray(response.agents)) {
+                    // If agents are directly in response
+                    return response;
+                } else {
+                    // Fallback to empty structure
+                    return { agents: [], total: 0 };
+                }
+            } catch (error) {
+                console.error("Failed to load agents:", error);
+                return { agents: [], total: 0 };
+            }
+        },
         refetchInterval: 5_000,
     });
 
     // Create dynamic agent quick access from server data with enhanced information
     const agentQuickAccess =
-        agentsData?.data?.agents?.map((agent: any) => ({
+        agentsData?.agents?.map((agent: any) => ({
             id: agent.id,
             name: agentMetadata[agent.name]?.shortName || agent.name,
             icon: agentMetadata[agent.name]?.icon || "🤖",
@@ -220,66 +245,71 @@ export const ModularDashboard: React.FC<ModularDashboardProps> = ({
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
-            {/* Simplified Header */}
-            <div className="bg-white border-b border-gray-200 px-4 py-3">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                        <FamilyLogo size="md" />
+            {/* Vibrant Header with Gradient */}
+            <div className="bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 text-white px-3 sm:px-4 py-3 sm:py-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+                    <div className="flex items-center space-x-2 sm:space-x-3">
+                        <FamilyLogo size="sm" className="w-10 h-10" />
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900">
+                            <h1 className="text-xl sm:text-2xl font-bold text-white drop-shadow-lg">
                                 Family Dashboard
                             </h1>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-xs sm:text-sm text-white/90 drop-shadow">
                                 Strengthen your family bonds with AI guidance
                             </p>
                         </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleUserManagement}
-                            className="flex items-center space-x-1"
-                        >
-                            <Users className="w-4 h-4" />
-                            <span>Users</span>
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleSettings}
-                            className="flex items-center space-x-1"
-                        >
-                            <Settings className="w-4 h-4" />
-                            <span>Settings</span>
-                        </Button>
+                    <div className="flex items-center space-x-2 self-start sm:self-auto">
+                        <GlowEffect active={true}>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleUserManagement}
+                                className="flex items-center space-x-1 text-xs sm:text-sm px-3 py-2 bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white/20"
+                            >
+                                <Users className="w-4 h-4" />
+                                <span className="hidden xs:inline">Users</span>
+                            </Button>
+                        </GlowEffect>
+                        <GlowEffect active={true}>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleSettings}
+                                className="flex items-center space-x-1 text-xs sm:text-sm px-3 py-2 bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white/20"
+                            >
+                                <Settings className="w-4 h-4" />
+                                <span className="hidden xs:inline">Settings</span>
+                            </Button>
+                        </GlowEffect>
                         <Badge
-                            variant="outline"
-                            className="bg-green-50 text-green-700 border-green-200"
+                            className="bg-green-500 text-white border-green-500 text-xs shadow-lg"
                         >
-                            <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                            All Agents Online
+                            <div className="w-3 h-3 bg-white rounded-full mr-2 animate-pulse"></div>
+                            <span className="hidden xs:inline">All Agents Online</span>
+                            <span className="xs:hidden">Online</span>
                         </Badge>
                     </div>
                 </div>
             </div>
 
-            {/* Navigation Tabs */}
-            <div className="bg-white border-b border-gray-100 px-4">
-                <div className="flex space-x-1">
+            {/* Interactive Navigation Tabs */}
+            <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-100 px-4">
+                <div className="flex overflow-x-auto pb-2 -mx-4 px-4">
                     {navigationTabs.map((tab) => {
                         const Icon = tab.icon;
+                        const isActive = activeView === tab.id;
                         return (
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveView(tab.id as any)}
-                                className={`flex items-center space-x-2 px-4 py-3 text-sm font-medium rounded-t-lg transition-colors ${
-                                    activeView === tab.id
-                                        ? "bg-blue-50 text-blue-700 border-b-2 border-blue-500"
-                                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                                className={`flex items-center space-x-2 px-4 py-3 text-sm font-semibold rounded-lg transition-all duration-200 flex-shrink-0 transform hover:scale-105 ${
+                                    isActive
+                                        ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg"
+                                        : "text-gray-700 hover:bg-white/50 hover:text-purple-700"
                                 }`}
                             >
-                                <Icon className="w-4 h-4" />
+                                <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-purple-600'}`} />
                                 <span>{tab.label}</span>
                             </button>
                         );
@@ -288,7 +318,7 @@ export const ModularDashboard: React.FC<ModularDashboardProps> = ({
             </div>
 
             {/* Main Content Area */}
-            <div className="p-4 space-y-6">
+            <div className="p-3 sm:p-4 space-y-4 sm:space-y-6">
                 {activeView === "overview" && (
                     <div className="space-y-6">
                         {/* Quick Agent Access - Always Visible */}
@@ -303,7 +333,7 @@ export const ModularDashboard: React.FC<ModularDashboardProps> = ({
                                         variant="secondary"
                                         className="text-xs"
                                     >
-                                        {agentQuickAccess.length} Specialized Agents
+                                        {isAgentsLoading ? "Loading..." : `${agentQuickAccess.length} Specialized Agents`}
                                     </Badge>
                                 </div>
                                 <p className="text-sm text-gray-600 mt-2">
@@ -311,39 +341,69 @@ export const ModularDashboard: React.FC<ModularDashboardProps> = ({
                                 </p>
                             </CardHeader>
                             <CardContent>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                                    {agentQuickAccess.map((agent) => (
-                                        <div 
-                                            key={agent.id}
-                                            className={`rounded-xl bg-gradient-to-br ${agent.color} text-white shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1`}
-                                            onClick={() => handleAgentSelect(agent.id)}
-                                        >
-                                            <div className="p-4">
-                                                <div className="flex items-center justify-between">
-                                                    <div className="text-2xl">
-                                                        {agent.icon}
+                                {isAgentsLoading ? (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                                        {[...Array(5)].map((_, index) => (
+                                            <AgentCardSkeleton key={index} />
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="space-y-6">
+                                        <PulseAnimation>
+                                            <AgentGrid
+                                                agents={agentQuickAccess.map(agent => ({
+                                                    id: agent.id,
+                                                    name: agent.name,
+                                                    description: agent.description,
+                                                    purpose: agent.purpose,
+                                                    benefits: agent.benefits,
+                                                    onClick: () => handleAgentSelect(agent.id),
+                                                }))}
+                                                onAgentSelect={handleAgentSelect}
+                                                selectedAgentId={selectedAgent}
+                                            />
+                                        </PulseAnimation>
+                                        
+                                        {/* Highlighted family metrics */}
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                            <InteractiveTooltip content="Total family interactions">
+                                                <div className="bg-gradient-to-br from-purple-100 to-pink-100 p-4 rounded-xl border border-purple-200 text-center hover:shadow-lg transition-shadow">
+                                                    <div className="text-2xl font-bold text-purple-600">
+                                                        <AnimatedCounter value={familyStats?.total || 0} />
                                                     </div>
-                                                    <div className="bg-white bg-opacity-20 rounded-full px-2 py-1 text-xs font-semibold">
-                                                        Click to Chat
-                                                    </div>
+                                                    <div className="text-xs text-purple-700 font-medium">Interactions</div>
                                                 </div>
-                                                <div className="mt-3">
-                                                    <div className="text-sm font-bold">
-                                                        {agent.name} Agent
+                                            </InteractiveTooltip>
+                                            
+                                            <InteractiveTooltip content="Positive family moments">
+                                                <div className="bg-gradient-to-br from-green-100 to-emerald-100 p-4 rounded-xl border border-green-200 text-center hover:shadow-lg transition-shadow">
+                                                    <div className="text-2xl font-bold text-green-600">
+                                                        <AnimatedCounter value={familyStats?.positive || 0} />
                                                     </div>
-                                                    <div className="text-xs opacity-90 mt-1">
-                                                        {agent.description}
+                                                    <div className="text-xs text-green-700 font-medium">Positive</div>
+                                                </div>
+                                            </InteractiveTooltip>
+                                            
+                                            <InteractiveTooltip content="Connection strength">
+                                                <div className="bg-gradient-to-br from-blue-100 to-indigo-100 p-4 rounded-xl border border-blue-200 text-center hover:shadow-lg transition-shadow">
+                                                    <div className="text-2xl font-bold text-blue-600">
+                                                        <AnimatedCounter value={familyStats?.healthScore || 0} suffix="%" />
                                                     </div>
+                                                    <div className="text-xs text-blue-700 font-medium">Health Score</div>
                                                 </div>
-                                            </div>
-                                            <div className="bg-black bg-opacity-10 rounded-b-xl p-3">
-                                                <div className="text-xs font-medium truncate">
-                                                    {agent.purpose}
+                                            </InteractiveTooltip>
+                                            
+                                            <InteractiveTooltip content="Active agents">
+                                                <div className="bg-gradient-to-br from-orange-100 to-amber-100 p-4 rounded-xl border border-orange-200 text-center hover:shadow-lg transition-shadow">
+                                                    <div className="text-2xl font-bold text-orange-600">
+                                                        <AnimatedCounter value={agentQuickAccess.length} />
+                                                    </div>
+                                                    <div className="text-xs text-orange-700 font-medium">Active Agents</div>
                                                 </div>
-                                            </div>
+                                            </InteractiveTooltip>
                                         </div>
-                                    ))}
-                                </div>
+                                    </div>
+                                )}
                                 
                                 {/* Agent Benefits Summary */}
                                 <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
@@ -377,7 +437,7 @@ export const ModularDashboard: React.FC<ModularDashboardProps> = ({
                                             variant="outline"
                                             className="bg-green-50 text-green-700"
                                         >
-                                            {familyStats?.healthScore || 0}%
+                                            {isFamilyStatsLoading ? "..." : `${familyStats?.healthScore || 0}%`}
                                         </Badge>
                                         {expandedSections.has(
                                             "health-score",
@@ -396,132 +456,155 @@ export const ModularDashboard: React.FC<ModularDashboardProps> = ({
                             </CardHeader>
                             {expandedSections.has("health-score") && (
                                 <CardContent>
-                                    <div className="space-y-6">
-                                        {/* Overall Score Progress */}
-                                        <div className="space-y-2">
-                                            <div className="flex justify-between text-sm">
-                                                <span className="font-medium">Overall Strength</span>
-                                                <span className="font-bold text-green-600">{familyStats?.healthScore || 0}%</span>
-                                            </div>
-                                            <Progress
-                                                value={familyStats?.healthScore || 0}
-                                                className="h-3"
-                                            />
-                                            <div className="text-xs text-gray-500">
-                                                {familyStats?.healthScore >= 80 
-                                                    ? "🎉 Excellent! Your family bonds are strong." 
-                                                    : familyStats?.healthScore >= 60 
-                                                    ? "👍 Good progress! Keep strengthening connections." 
-                                                    : "💪 Opportunity to grow your family bonds."}
-                                            </div>
-                                        </div>
-
-                                        {/* Dimension Scores with Agent Mapping */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                            <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
-                                                <div className="flex items-center space-x-2">
-                                                    <div className="text-lg">💑</div>
-                                                    <div>
-                                                        <div className="font-semibold text-blue-700 text-sm">Intimacy</div>
-                                                        <div className="text-xs text-blue-600">{familyStats?.intimacy?.affection || 0}%</div>
-                                                    </div>
-                                                </div>
-                                                <div className="mt-2 text-xs text-gray-600">
-                                                    Emotional closeness and trust between family members
-                                                </div>
-                                                <div className="mt-1">
-                                                    <Progress value={familyStats?.intimacy?.affection || 0} className="h-1.5" />
-                                                </div>
-                                            </div>
-
-                                            <div className="p-3 bg-green-50 rounded-lg border border-green-100">
-                                                <div className="flex items-center space-x-2">
-                                                    <div className="text-lg">🧘</div>
-                                                    <div>
-                                                        <div className="font-semibold text-green-700 text-sm">Presence</div>
-                                                        <div className="text-xs text-green-600">{familyStats?.presence?.attention || 0}%</div>
-                                                    </div>
-                                                </div>
-                                                <div className="mt-2 text-xs text-gray-600">
-                                                    Quality time and mindful attention together
-                                                </div>
-                                                <div className="mt-1">
-                                                    <Progress value={familyStats?.presence?.attention || 0} className="h-1.5" />
-                                                </div>
-                                            </div>
-
-                                            <div className="p-3 bg-purple-50 rounded-lg border border-purple-100">
-                                                <div className="flex items-center space-x-2">
-                                                    <div className="text-lg">👵👦</div>
-                                                    <div>
-                                                        <div className="font-semibold text-purple-700 text-sm">Bridge</div>
-                                                        <div className="text-xs text-purple-600">{familyStats?.generational?.bridge || 0}%</div>
-                                                    </div>
-                                                </div>
-                                                <div className="mt-2 text-xs text-gray-600">
-                                                    Connection across different generations
-                                                </div>
-                                                <div className="mt-1">
-                                                    <Progress value={familyStats?.generational?.bridge || 0} className="h-1.5" />
-                                                </div>
-                                            </div>
-
-                                            <div className="p-3 bg-orange-50 rounded-lg border border-orange-100">
-                                                <div className="flex items-center space-x-2">
-                                                    <div className="text-lg">🚀</div>
-                                                    <div>
-                                                        <div className="font-semibold text-orange-700 text-sm">Growth</div>
-                                                        <div className="text-xs text-orange-600">{familyStats?.growth?.growth || 0}%</div>
-                                                    </div>
-                                                </div>
-                                                <div className="mt-2 text-xs text-gray-600">
-                                                    Personal and collective family development
-                                                </div>
-                                                <div className="mt-1">
-                                                    <Progress value={familyStats?.growth?.growth || 0} className="h-1.5" />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Agent Connection Mapping */}
-                                        <div className="p-3 bg-indigo-50 rounded-lg border border-indigo-100">
-                                            <div className="flex items-center space-x-2 mb-2">
-                                                <div className="text-indigo-600">
-                                                    <Zap className="w-4 h-4" />
-                                                </div>
-                                                <div className="font-medium text-indigo-700 text-sm">
-                                                    How Agents Strengthen Each Dimension
-                                                </div>
-                                            </div>
-                                            <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-xs">
-                                                <div className="text-center p-2 bg-white bg-opacity-50 rounded">
-                                                    <div className="text-blue-600">💑</div>
-                                                    <div className="font-medium">Intimacy</div>
-                                                    <div className="text-gray-600">Wisdom</div>
-                                                </div>
-                                                <div className="text-center p-2 bg-white bg-opacity-50 rounded">
-                                                    <div className="text-pink-600">💕</div>
-                                                    <div className="font-medium">Love</div>
-                                                    <div className="text-gray-600">Intimacy</div>
-                                                </div>
-                                                <div className="text-center p-2 bg-white bg-opacity-50 rounded">
-                                                    <div className="text-purple-600">👵👦</div>
-                                                    <div className="font-medium">Bridge</div>
-                                                    <div className="text-gray-600">Bridge</div>
-                                                </div>
-                                                <div className="text-center p-2 bg-white bg-opacity-50 rounded">
-                                                    <div className="text-green-600">🧘</div>
-                                                    <div className="font-medium">Presence</div>
-                                                    <div className="text-gray-600">Presence</div>
-                                                </div>
-                                                <div className="text-center p-2 bg-white bg-opacity-50 rounded">
-                                                    <div className="text-orange-600">🚀</div>
-                                                    <div className="font-medium">Growth</div>
-                                                    <div className="text-gray-600">Growth</div>
-                                                </div>
-                                            </div>
-                                        </div>
+                                    {isFamilyStatsLoading ? (
+                                        <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-6 rounded-xl border-2 border-purple-200 shadow-lg">
+                            <div className="animate-pulse space-y-6">
+                                <div className="flex justify-between items-center mb-6">
+                                    <div className="space-y-2">
+                                        <div className="h-6 bg-purple-200 rounded w-48"></div>
+                                        <div className="h-4 bg-purple-200 rounded w-64"></div>
                                     </div>
+                                    <div className="h-8 bg-purple-200 rounded w-20"></div>
+                                </div>
+                                
+                                <div className="space-y-4">
+                                    <div className="flex justify-between">
+                                        <div className="h-4 bg-purple-200 rounded w-32"></div>
+                                        <div className="h-4 bg-purple-200 rounded w-12"></div>
+                                    </div>
+                                    <div className="h-3 bg-purple-200 rounded-full w-full"></div>
+                                    
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                                        {[...Array(4)].map((_, i) => (
+                                            <div key={i} className="p-4 bg-white rounded-lg border border-purple-100">
+                                                <div className="h-6 bg-purple-200 rounded w-8 mb-2 mx-auto"></div>
+                                                <div className="h-4 bg-purple-200 rounded w-16 mb-2"></div>
+                                                <div className="h-2 bg-purple-100 rounded-full w-full"></div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                                    ) : (
+                                        <div className="space-y-6">
+                                            {/* Overall Score Progress with Enhanced Contrast */}
+                                            <div className="space-y-3">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="font-bold text-lg text-gray-800">Overall Strength</span>
+                                                    <span className="font-bold text-2xl bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                                                        {familyStats?.healthScore || 0}%
+                                                    </span>
+                                                </div>
+                                                <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
+                                                    <motion.div 
+                                                        initial={{ width: 0 }}
+                                                        animate={{ width: `${familyStats?.healthScore || 0}%` }}
+                                                        transition={{ duration: 1, ease: "easeOut" }}
+                                                        className={`
+                                                            h-full bg-gradient-to-r ${
+                                                                (familyStats?.healthScore || 0) >= 80 
+                                                                    ? "from-green-500 to-emerald-600" 
+                                                                    : (familyStats?.healthScore || 0) >= 60 
+                                                                        ? "from-blue-500 to-cyan-600" 
+                                                                        : "from-orange-500 to-red-500"
+                                                            } rounded-full relative overflow-hidden
+                                                        `}
+                                                    >
+                                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-pulse"></div>
+                                                    </motion.div>
+                                                </div>
+                                                <div className={`text-sm font-medium ${
+                                                    (familyStats?.healthScore || 0) >= 80 
+                                                        ? "text-green-700" 
+                                                        : (familyStats?.healthScore || 0) >= 60 
+                                                            ? "text-blue-700" 
+                                                            : "text-orange-700"
+                                                }`}>
+                                                    {familyStats?.healthScore >= 80 
+                                                        ? "🎉 Excellent! Your family bonds are strong." 
+                                                        : familyStats?.healthScore >= 60 
+                                                        ? "👍 Good progress! Keep strengthening connections." 
+                                                        : "💪 Opportunity to grow your family bonds."}
+                                                </div>
+                                            </div>
+
+                                            {/* Dimension Scores with Agent Mapping - Enhanced */}
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                {[
+                                                    { key: 'intimacy', label: 'Intimacy', emoji: '💑', value: familyStats?.intimacy?.affection || 0, color: 'from-pink-500 to-rose-500', bg: 'bg-gradient-to-br from-pink-50 to-rose-50', text: 'text-pink-700' },
+                                                    { key: 'presence', label: 'Presence', emoji: '🧘', value: familyStats?.presence?.attention || 0, color: 'from-emerald-500 to-green-600', bg: 'bg-gradient-to-br from-emerald-50 to-green-50', text: 'text-emerald-700' },
+                                                    { key: 'generational', label: 'Bridge', emoji: '👵👦', value: familyStats?.generational?.bridge || 0, color: 'from-blue-500 to-indigo-600', bg: 'bg-gradient-to-br from-blue-50 to-indigo-50', text: 'text-blue-700' },
+                                                    { key: 'growth', label: 'Growth', emoji: '🚀', value: familyStats?.growth?.growth || 0, color: 'from-orange-500 to-amber-600', bg: 'bg-gradient-to-br from-orange-50 to-amber-50', text: 'text-orange-700' }
+                                                ].map((dimension, index) => (
+                                                    <motion.div
+                                                        key={dimension.key}
+                                                        initial={{ opacity: 0, y: 20 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        transition={{ delay: index * 0.1 }}
+                                                        className={`${dimension.bg} p-5 rounded-xl border-2 ${dimension.color.replace('from-', 'border-')} shadow-lg hover:shadow-xl transition-shadow duration-300`}
+                                                    >
+                                                        <div className="flex items-center justify-between mb-3">
+                                                            <div className="text-2xl">{dimension.emoji}</div>
+                                                            <div className={`text-2xl font-bold bg-gradient-to-r ${dimension.color} bg-clip-text text-transparent`}>
+                                                                {dimension.value}%
+                                                            </div>
+                                                        </div>
+                                                        <div className="font-bold text-lg text-gray-800 mb-2">
+                                                            {dimension.label}
+                                                        </div>
+                                                        <div className="text-sm text-gray-700 mb-3">
+                                                            {dimension.key === 'intimacy' && 'Emotional closeness and trust between family members'}
+                                                            {dimension.key === 'presence' && 'Quality time and mindful attention together'}
+                                                            {dimension.key === 'generational' && 'Connection across different generations'}
+                                                            {dimension.key === 'growth' && 'Personal and collective family development'}
+                                                        </div>
+                                                        <div className="h-3 bg-white/50 rounded-full overflow-hidden">
+                                                            <motion.div 
+                                                                initial={{ width: 0 }}
+                                                                animate={{ width: `${dimension.value}%` }}
+                                                                transition={{ duration: 1, ease: "easeOut" }}
+                                                                className={`h-full bg-gradient-to-r ${dimension.color} rounded-full`}
+                                                            />
+                                                        </div>
+                                                    </motion.div>
+                                                ))}
+                                            </div>
+
+                                            {/* Agent Connection Mapping - Enhanced */}
+                                            <div className="p-5 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200">
+                                                <div className="flex items-center space-x-3 mb-4">
+                                                    <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg">
+                                                        <Zap className="w-5 h-5 text-white" />
+                                                    </div>
+                                                    <div className="font-bold text-lg text-gray-800">
+                                                        How Agents Strengthen Each Dimension
+                                                    </div>
+                                                </div>
+                                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                                                    {[
+                                                        { emoji: '💑', label: 'Intimacy', agent: 'Wisdom', color: 'text-pink-500' },
+                                                        { emoji: '💕', label: 'Love', agent: 'Intimacy', color: 'text-rose-500' },
+                                                        { emoji: '👵👦', label: 'Bridge', agent: 'Bridge', color: 'text-blue-500' },
+                                                        { emoji: '🧘', label: 'Presence', agent: 'Presence', color: 'text-emerald-500' },
+                                                        { emoji: '🚀', label: 'Growth', agent: 'Growth', color: 'text-orange-500' }
+                                                    ].map((mapping, index) => (
+                                                        <motion.div
+                                                            key={index}
+                                                            initial={{ opacity: 0, scale: 0.9 }}
+                                                            animate={{ opacity: 1, scale: 1 }}
+                                                            transition={{ delay: index * 0.1 }}
+                                                            className="text-center p-3 bg-white rounded-lg border border-purple-200 shadow-sm hover:shadow-md transition-shadow"
+                                                        >
+                                                            <div className={`text-2xl mb-1 ${mapping.color}`}>{mapping.emoji}</div>
+                                                            <div className="font-semibold text-sm text-gray-800">{mapping.label}</div>
+                                                            <div className="text-xs text-purple-600">{mapping.agent}</div>
+                                                        </motion.div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </CardContent>
                             )}
                         </Card>
@@ -678,24 +761,9 @@ export const ModularDashboard: React.FC<ModularDashboardProps> = ({
 
                 {activeView === "insights" && (
                     <div className="space-y-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center space-x-2">
-                                    <TrendingUp className="w-5 h-5 text-green-600" />
-                                    <span>Family Insights</span>
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-center py-8 text-gray-500">
-                                    <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                                    <p>Detailed insights coming soon...</p>
-                                    <p className="text-sm mt-2">
-                                        We're analyzing your family's
-                                        interaction patterns
-                                    </p>
-                                </div>
-                            </CardContent>
-                        </Card>
+                        <InsightsEmptyState 
+                            onGetStarted={() => setActiveView("chat")}
+                        />
                     </div>
                 )}
 

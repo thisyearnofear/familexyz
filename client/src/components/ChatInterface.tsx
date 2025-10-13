@@ -65,14 +65,20 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         const loadAgents = async () => {
             try {
                 const response = await apiClient.getAgents();
-                const loadedAgents: Agent[] = response.data.agents.map(
+                // Handle different response structures
+                let agentsData = response;
+                if (response.data && response.data.agents) {
+                    agentsData = response.data;
+                }
+                
+                const loadedAgents: Agent[] = (agentsData.agents || []).map(
                     (agent: any) => ({
-                        id: agent.id,
-                        name: agent.name,
+                        id: agent.id || agent.agentId,
+                        name: agent.name || agent.id || agent.agentId,
                         description:
-                            agentConfigs[agent.name]?.description ||
+                            agentConfigs[agent.name || agent.id]?.description ||
                             "Family Agent",
-                        color: agentConfigs[agent.name]?.color || "bg-gray-500",
+                        color: agentConfigs[agent.name || agent.id]?.color || "bg-gray-500",
                     }),
                 );
                 setAgents(loadedAgents);
@@ -173,7 +179,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     };
 
     return (
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 h-[600px] flex flex-col">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 h-[600px] md:h-[500px] lg:h-[600px] flex flex-col">
             {/* Header */}
             <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-pink-50 rounded-t-xl">
                 <div className="flex items-center justify-between">
@@ -227,24 +233,36 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {messages.length === 0 && (
-                    <div className="text-center text-gray-500 mt-8">
-                        <Bot className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                        <p className="text-lg font-medium">
-                            Welcome to Family Agent Chat!
-                        </p>
-                        <p className="text-sm mt-1">
-                            Select an agent above and start a conversation to
-                            strengthen your family bonds.
-                        </p>
-                        <div className="mt-4 p-3 bg-blue-50 rounded-lg text-left">
-                            <p className="text-sm text-blue-800 font-medium">
-                                Try asking:
+                    <div className="flex flex-col items-center justify-center flex-1 p-8">
+                        <div className="text-center max-w-md">
+                            <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <MessageCircle className="w-8 h-8 text-white" />
+                            </div>
+                            <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                                Welcome to Family Agent Chat!
+                            </h3>
+                            <p className="text-gray-600 mb-6">
+                                Select an agent above and start a conversation to strengthen your family bonds.
                             </p>
-                            <ul className="text-xs text-blue-700 mt-1 space-y-1">
-                                <li>• "How can you help my family?"</li>
-                                <li>• "What do you do?"</li>
-                                <li>• "Give me some family advice"</li>
-                            </ul>
+                            <div className="bg-blue-50 rounded-lg p-4 text-left border border-blue-100">
+                                <p className="text-sm text-blue-800 font-medium mb-2">
+                                    Try asking:
+                                </p>
+                                <ul className="text-xs text-blue-700 space-y-1">
+                                    <li className="flex items-start">
+                                        <span className="mr-2">•</span>
+                                        <span>"How can you help my family?"</span>
+                                    </li>
+                                    <li className="flex items-start">
+                                        <span className="mr-2">•</span>
+                                        <span>"What do you do?"</span>
+                                    </li>
+                                    <li className="flex items-start">
+                                        <span className="mr-2">•</span>
+                                        <span>"Give me some family advice"</span>
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -255,7 +273,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                         className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
                     >
                         <div
-                            className={`max-w-[70%] rounded-lg px-4 py-2 ${
+                            className={`max-w-[85%] sm:max-w-[70%] rounded-lg px-3 py-2 sm:px-4 sm:py-2 ${
                                 message.sender === "user"
                                     ? "bg-purple-600 text-white"
                                     : "bg-gray-100 text-gray-800"
@@ -313,24 +331,25 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             </div>
 
             {/* Input */}
-            <div className="p-4 border-t border-gray-200 bg-gray-50 rounded-b-xl">
-                <div className="flex space-x-2">
+            <div className="p-3 sm:p-4 border-t border-gray-200 bg-gray-50 rounded-b-xl">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-2">
                     <textarea
                         value={inputMessage}
                         onChange={(e) => setInputMessage(e.target.value)}
                         onKeyPress={handleKeyPress}
                         placeholder={`Ask ${selectedAgent?.name || "your agent"} about family relationships...`}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent min-h-[60px] sm:min-h-[46px]"
                         rows={2}
                         disabled={isLoading}
                     />
                     <button
                         onClick={sendMessage}
                         disabled={!inputMessage.trim() || isLoading}
-                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center sm:justify-start space-x-2"
                     >
                         <Send className="w-4 h-4" />
                         <span className="hidden sm:inline">Send</span>
+                        <span className="sm:hidden">→</span>
                     </button>
                 </div>
             </div>

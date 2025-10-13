@@ -81,7 +81,7 @@ export const AnimatedCounter: React.FC<{
     }, 16);
 
     return () => clearInterval(timer);
-  }, [value, duration, increment]);
+  }, [value, duration]);
 
   return (
     <motion.span

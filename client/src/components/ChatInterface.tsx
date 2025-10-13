@@ -70,7 +70,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 if (response.data && response.data.agents) {
                     agentsData = response.data;
                 }
-                
+
                 const loadedAgents: Agent[] = (agentsData.agents || []).map(
                     (agent: any) => ({
                         id: agent.id || agent.agentId,
@@ -81,15 +81,31 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                         color: agentConfigs[agent.name || agent.id]?.color || "bg-gray-500",
                     }),
                 );
-                setAgents(loadedAgents);
-                if (loadedAgents.length > 0) {
+
+                // Map agent IDs to match server expectations
+                const agentIdMapping: Record<string, string> = {
+                    "Wisdom": "wisdom-agent",
+                    "Intimacy": "intimacy-agent",
+                    "GenerationalBridge": "growth-agent", // Note: server has growth-agent, not generationalbridge-agent
+                    "Presence": "presence-agent", // This agent is missing from server
+                    "Growth": "growth-agent",
+                };
+
+                // Update loaded agents with correct IDs
+                const correctedAgents = loadedAgents.map(agent => ({
+                    ...agent,
+                    id: agentIdMapping[agent.name] || agent.id
+                }));
+
+                setAgents(correctedAgents);
+                if (correctedAgents.length > 0) {
                     // Pre-select agent if initialAgentId is provided
                     const targetAgent = initialAgentId
-                        ? loadedAgents.find(
+                        ? correctedAgents.find(
                               (agent) => agent.id === initialAgentId,
                           )
                         : null;
-                    setSelectedAgent(targetAgent || loadedAgents[0]);
+                    setSelectedAgent(targetAgent || correctedAgents[0]);
                 }
             } catch (error) {
                 console.error("Failed to load agents:", error);
@@ -143,14 +159,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
             // Agent-specific error responses
             const errorResponses = {
-                wisdom: "I'm here to help with family wisdom and emotional guidance, though I'm having trouble connecting right now. Please share what's on your mind about your family relationships, and I'll do my best to provide thoughtful guidance.",
-                intimacy:
+                "wisdom-agent": "I'm here to help with family wisdom and emotional guidance, though I'm having trouble connecting right now. Please share what's on your mind about your family relationships, and I'll do my best to provide thoughtful guidance.",
+                "intimacy-agent":
                     "I'm your relationship coaching agent, ready to help strengthen family bonds. While I'm getting reconnected, feel free to tell me about your family's relationship goals or any challenges you're facing.",
-                generationalbridge:
-                    "I specialize in connecting different generations in families. Even though I'm having connection issues, I'd love to hear about the different generations in your family and how I can help bridge any communication gaps.",
+                "growth-agent":
+                    "I'm all about family growth and shared achievements! Despite the technical hiccup, I'm excited to hear about your family's goals and how we can work together to achieve them.",
                 presence:
                     "I focus on mindful family wellness and digital balance. While I'm reconnecting, consider this a mindful moment - what would help your family be more present together?",
-                growth: "I'm all about family growth and shared achievements! Despite the technical hiccup, I'm excited to hear about your family's goals and how we can work together to achieve them.",
             };
 
             const errorMessage: Message = {

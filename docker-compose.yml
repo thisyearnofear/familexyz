@@ -12,8 +12,8 @@ services:
             - HEALTH_PORT=3001
             - CHARACTER_PATHS=../characters/wisdom.character.json,../characters/intimacy.character.json,../characters/generationalBridge.character.json,../characters/presence.character.json,../characters/growth.character.json
         ports:
-            - "3000:3000"
-            - "3001:3001" # Health check port
+            - "3004:3000"
+            - "3005:3001" # Health check port
         volumes:
             - familexyz-data:/app/data
             - familexyz-logs:/app/logs

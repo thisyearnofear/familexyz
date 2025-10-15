@@ -11,6 +11,7 @@ services:
             - NODE_ENV=production
             - HEALTH_PORT=3001
             - CHARACTER_PATHS=/app/characters/wisdom.character.json,/app/characters/intimacy.character.json,/app/characters/generationalBridge.character.json,/app/characters/presence.character.json,/app/characters/growth.character.json
+            - MODEL_PROVIDER=venice
         ports:
             - "3004:3000"
             - "3005:3001" # Health check port

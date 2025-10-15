@@ -22,19 +22,37 @@ ENV npm_config_opus_lib_dir=/usr/lib/x86_64-linux-gnu
 
 WORKDIR /app
 
-# --- deps: install only prod deps for the agent via filter to avoid monorepo bloat
+# --- deps: install only essential deps for family agents
 FROM base AS deps
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml turbo.json ./
 COPY agent/package.json ./agent/package.json
-# Copy only the packages needed to resolve filtered dependencies
-# Add more package.json files if pnpm needs them for workspace resolution
-COPY packages ./packages
+# Copy only essential packages for family agents
+COPY packages/core ./packages/core
+COPY packages/config ./packages/config
+COPY packages/family ./packages/family
+COPY packages/plugin-gooddollar ./packages/plugin-gooddollar
+COPY packages/clients/direct ./packages/clients/direct
+COPY packages/clients/telegram ./packages/clients/telegram
+COPY packages/adapters/sqlite ./packages/adapters/sqlite
+COPY packages/blockchain/hedera-core ./packages/blockchain/hedera-core
 COPY characters ./characters
-# Install all workspace dependencies and build packages
-# Set environment variable to skip Playwright browser downloads in Docker
+# Install only essential workspace dependencies
 ENV DOCKER_BUILD=true
-RUN pnpm install --frozen-lockfile
-RUN pnpm build
+RUN pnpm install --frozen-lockfile --ignore-scripts
+# Build only the family plugins and essential dependencies
+RUN pnpm build --filter=@elizaos/core \
+    --filter=@elizaos/config \
+    --filter=@elizaos/family-nlp-utils \
+    --filter=@elizaos/family-plugin-intimacy \
+    --filter=@elizaos/family-plugin-wisdom \
+    --filter=@elizaos/family-plugin-presence \
+    --filter=@elizaos/family-plugin-growth \
+    --filter=@elizaos/family-plugin-generational-bridge \
+    --filter=@elizaos/plugin-gooddollar \
+    --filter=@elizaos/client-direct \
+    --filter=@elizaos/client-telegram \
+    --filter=@elizaos/adapter-sqlite \
+    --filter=@elizaos/hedera-core
 
 # --- build: (optional) if we ever switch to a compiled build; currently ts-node runs
 FROM deps AS build
@@ -57,10 +75,17 @@ WORKDIR /app
 # Persist database/data inside container path; recommend mounting a volume
 VOLUME ["/app/data"]
 
-# Copy node_modules and sources from build
+# Copy only essential built packages and sources
 COPY --from=deps /app/node_modules /app/node_modules
 COPY --from=deps /app/agent/node_modules /app/agent/node_modules
-COPY --from=deps /app/packages /app/packages
+COPY --from=deps /app/packages/core /app/packages/core
+COPY --from=deps /app/packages/config /app/packages/config
+COPY --from=deps /app/packages/family /app/packages/family
+COPY --from=deps /app/packages/plugin-gooddollar /app/packages/plugin-gooddollar
+COPY --from=deps /app/packages/clients/direct /app/packages/clients/direct
+COPY --from=deps /app/packages/clients/telegram /app/packages/clients/telegram
+COPY --from=deps /app/packages/adapters/sqlite /app/packages/adapters/sqlite
+COPY --from=deps /app/packages/blockchain/hedera-core /app/packages/blockchain/hedera-core
 COPY --from=build /app/agent /app/agent
 COPY characters ./characters
 

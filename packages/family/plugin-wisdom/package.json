@@ -11,7 +11,10 @@
   },
   "private": true,
   "scripts": {
-    "build": "echo 'Skipping build for disabled family package'"
+    "build": "tsup --format esm --dts",
+    "dev": "tsup --format esm --watch",
+    "lint": "eslint . --ext .ts,.tsx --fix",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@elizaos/core": "workspace:*",

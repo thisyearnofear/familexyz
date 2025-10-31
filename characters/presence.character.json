@@ -3,6 +3,7 @@
     "clients": [],
 
     "modelProvider": "venice",
+    "model": "llama-3.2-3b",
     "settings": {
         "secrets": {},
         "voice": {

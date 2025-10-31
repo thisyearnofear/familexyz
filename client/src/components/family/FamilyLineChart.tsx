@@ -1,7 +1,28 @@
 import { Line } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createLineChartData, lineChartOptions } from "@/lib/chartConfig";
 import type { FamilyHistory } from "@/types/family";
+
+// Register Chart.js components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 interface FamilyLineChartProps {
   history: FamilyHistory | undefined;
@@ -43,7 +64,11 @@ export const FamilyLineChart = ({ history, isLoading }: FamilyLineChartProps) =>
         <CardTitle>Health Trend</CardTitle>
       </CardHeader>
       <CardContent className="h-64">
-        <Line data={chartData} options={lineChartOptions} />
+        <Line
+          key="family-line-chart"
+          data={chartData}
+          options={lineChartOptions}
+        />
       </CardContent>
     </Card>
   );

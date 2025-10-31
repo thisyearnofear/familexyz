@@ -3,6 +3,7 @@
     "clients": [],
 
     "modelProvider": "venice",
+    "model": "qwen-2.5-coder-32b",
     "settings": {
         "secrets": {},
         "voice": {

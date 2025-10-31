@@ -33,18 +33,18 @@ const MetricCard = ({
   };
 
   return (
-    <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
+    <Card className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-white border-gray-200">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
           {title}
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className={`text-3xl font-bold ${getValueColor()} mb-1`}>
+      <CardContent className="pt-0">
+        <div className={`text-2xl font-bold ${getValueColor()} mb-2`}>
           {value}
         </div>
         {subtitle && (
-          <p className="text-xs text-muted-foreground">{subtitle}</p>
+          <p className="text-sm text-gray-600 leading-relaxed">{subtitle}</p>
         )}
       </CardContent>
     </Card>
@@ -61,12 +61,12 @@ export const FamilyMetricsCards = ({
     return (
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Card key={i} className="animate-pulse">
+          <Card key={i} className="bg-gradient-to-br from-gray-50 to-gray-100">
             <CardHeader className="pb-2">
-              <div className="h-4 bg-gradient-to-r from-gray-200 to-gray-300 rounded" />
+              <div className="h-4 bg-gray-200 rounded animate-pulse" style={{ animationDelay: `${i * 0.1}s` }} />
             </CardHeader>
             <CardContent>
-              <div className="h-8 bg-gradient-to-r from-gray-200 to-gray-300 rounded" />
+              <div className="h-8 bg-gray-200 rounded animate-pulse" style={{ animationDelay: `${i * 0.1}s` }} />
             </CardContent>
           </Card>
         ))}
@@ -75,7 +75,7 @@ export const FamilyMetricsCards = ({
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <MetricCard
         title="💝 Family Connection"
         value={`${metrics.healthScore}%`}
@@ -91,18 +91,18 @@ export const FamilyMetricsCards = ({
       <MetricCard
         title="💬 Conversations"
         value={metrics.total}
-        subtitle="Meaningful exchanges"
+        subtitle="Meaningful exchanges this week"
       />
       <MetricCard
         title="✨ Positive Moments"
         value={metrics.positive}
-        subtitle="Joyful interactions"
+        subtitle="Joyful interactions shared"
         variant="positive"
       />
       <MetricCard
         title="🌱 Growth Areas"
         value={metrics.negative}
-        subtitle="Opportunities to flourish"
+        subtitle="Opportunities to flourish together"
         variant="negative"
       />
     </div>

@@ -86,8 +86,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 const agentIdMapping: Record<string, string> = {
                     "Wisdom": "wisdom-agent",
                     "Intimacy": "intimacy-agent",
-                    "GenerationalBridge": "growth-agent", // Note: server has growth-agent, not generationalbridge-agent
-                    "Presence": "presence-agent", // This agent is missing from server
+                    "GenerationalBridge": "generationalbridge-agent",
+                    "Presence": "presence-agent",
                     "Growth": "growth-agent",
                 };
 

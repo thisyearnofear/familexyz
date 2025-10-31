@@ -9,9 +9,7 @@ import { FamilyLogo } from "@/components/FamilyLogo";
 import { ChatInterface } from "@/components/ChatInterface";
 import { FamilyMetricsCards } from "@/components/family/FamilyMetricsCards";
 import { FamilyRadarChart } from "@/components/family/FamilyRadarChart";
-import { FamilyLineChart } from "@/components/family/FamilyLineChart";
 import { FamilyConnectionRings } from "@/components/family/FamilyConnectionRings";
-import { visualEffects, familyTheme } from "@/lib/visual-effects";
 import {
   TrendingUp,
   Heart,
@@ -113,7 +111,7 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
         refetchInterval: 10000, // Auto-refresh every 10 seconds
     });
 
-    const { data: familyHistory, isLoading: isFamilyHistoryLoading } = useQuery({
+    const { data: familyHistory } = useQuery({
         queryKey: ["familyHistory"],
         queryFn: () => apiClient.getFamilyHistory(),
         refetchInterval: 30000, // Refetch every 30 seconds
@@ -217,10 +215,23 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
     ];
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+        <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-indigo-100 relative overflow-hidden">
+            {/* Animated background elements */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
+                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse" style={{ animationDelay: '2s' }}></div>
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-300 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-pulse" style={{ animationDelay: '4s' }}></div>
+            </div>
             {/* Enhanced Header with Celebration */}
-            <div className="bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 text-white px-6 py-6">
-                <div className="max-w-7xl mx-auto">
+            <div className="relative bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 text-white px-6 py-8 overflow-hidden">
+                {/* Header background effects */}
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-600/90 via-pink-600/90 to-indigo-600/90"></div>
+                <div className="absolute inset-0 opacity-20">
+                    <div className="w-full h-full" style={{
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+                    }}></div>
+                </div>
+                <div className="max-w-7xl mx-auto relative z-10">
                     <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
                         <div className="flex items-center space-x-4">
                             <FamilyLogo size="lg" className="w-12 h-12" />
@@ -259,7 +270,7 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
             </div>
 
             {/* Navigation Tabs */}
-            <div className="bg-white border-b border-gray-200 sticky top-0 z-40">
+            <div className="bg-white/95 backdrop-blur-sm border-b border-purple-200/50 sticky top-0 z-40 shadow-sm">
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="flex overflow-x-auto py-4 -mx-6 px-6">
                         {tabs.map((tab) => {
@@ -269,13 +280,13 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id as any)}
-                                    className={`flex items-center space-x-2 px-6 py-3 text-sm font-medium rounded-lg transition-all duration-200 flex-shrink-0 ${
+                                    className={`flex items-center space-x-2 px-6 py-3 text-sm font-medium rounded-xl transition-all duration-300 flex-shrink-0 relative overflow-hidden ${
                                         isActive
-                                            ? "bg-purple-100 text-purple-700 shadow-sm"
-                                            : "text-gray-600 hover:bg-gray-50 hover:text-purple-600"
+                                            ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg transform scale-105"
+                                            : "text-gray-600 hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 hover:text-purple-600 hover:shadow-md"
                                     }`}
                                 >
-                                    <Icon className={`w-4 h-4 ${isActive ? 'text-purple-600' : 'text-gray-400'}`} />
+                                    <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-gray-400'}`} />
                                     <span>{tab.label}</span>
                                 </button>
                             );
@@ -285,7 +296,7 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
             </div>
 
             {/* Main Content */}
-            <div className="max-w-7xl mx-auto px-6 py-6">
+            <div className="max-w-7xl mx-auto px-6 py-8 relative z-10">
                 {/* Celebration Animation */}
                 <AnimatePresence>
                     {showCelebration && (
@@ -322,18 +333,17 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                             transition={{ duration: 0.3 }}
                             className="space-y-6"
                         >
-                            {/* Quick Stats Overview */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                <FamilyMetricsCards stats={familyStats} isLoading={isFamilyStatsLoading} />
-                            </div>
+                            {/* Family Metrics Overview */}
+                            <FamilyMetricsCards stats={familyStats} isLoading={isFamilyStatsLoading} />
 
-                            {/* Family Connection Visualization */}
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {/* Family Overview - Enhanced */}
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                {/* Connection Visualization */}
                                 <Card variant="premium" className="border-0">
                                     <CardHeader>
                                         <CardTitle className="flex items-center space-x-2">
                                             <Zap className="w-5 h-5 text-purple-600" />
-                                            <span>Family Connection Network</span>
+                                            <span>Family Network</span>
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent className="flex justify-center">
@@ -341,6 +351,22 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                                             healthScore={familyStats?.healthScore}
                                             activeAgents={agentQuickAccess.map((a: any) => a.name)}
                                         />
+                                    </CardContent>
+                                </Card>
+
+                                {/* Family Health Radar - Agent-Linked */}
+                                <Card variant="gleam" className="border-0">
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center space-x-2">
+                                            <Target className="w-5 h-5 text-indigo-600" />
+                                            <span>Family Dynamics</span>
+                                        </CardTitle>
+                                        <p className="text-xs text-gray-600 mt-1">
+                                            Real-time insights from your AI agents
+                                        </p>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <FamilyRadarChart stats={familyStats} isLoading={isFamilyStatsLoading} />
                                     </CardContent>
                                 </Card>
 
@@ -388,14 +414,30 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                                 </Card>
                             </div>
 
-                            {/* Family Health Radar Chart */}
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                <FamilyRadarChart stats={familyStats} isLoading={isFamilyStatsLoading} />
-                                <FamilyLineChart history={familyHistory} isLoading={isFamilyHistoryLoading} />
-                            </div>
+                            {/* AI Privacy Notice */}
+                            <Card variant="gleam" className="border-purple-200">
+                                <CardContent className="p-4">
+                                    <div className="flex items-center space-x-3">
+                                        <div className="flex-shrink-0">
+                                            <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                                                <span className="text-white text-sm font-bold">V</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex-1">
+                                            <div className="flex items-center space-x-2">
+                                                <h3 className="text-sm font-semibold text-gray-800">Powered by Venice AI</h3>
+                                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                            </div>
+                                            <p className="text-xs text-gray-600 mt-1">
+                                                Privacy-first AI • No data storage • Encrypted conversations • Decentralized processing
+                                            </p>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
 
                             {/* GoodDollar Wallet & UBI Claim */}
-                            <Card>
+                            <Card variant="electric" glowColor="#F59E0B">
                                 <CardHeader>
                                     <CardTitle className="flex items-center space-x-2">
                                         <Star className="w-5 h-5 text-amber-500" />
@@ -460,7 +502,7 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ delay: index * 0.1 }}
                                             >
-                                                <Card variant={activity.variant} className="p-4 h-full">
+                                                <Card variant="default" className="p-4 h-full bg-white border-2 border-gray-200 hover:border-purple-300 transition-colors">
                                                     <div className="text-center">
                                                         <motion.div
                                                             className="text-3xl mb-3"
@@ -469,11 +511,11 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                                                         >
                                                             {activity.emoji}
                                                         </motion.div>
-                                                        <div className="font-semibold mb-2">{activity.title}</div>
-                                                        <p className="text-sm opacity-80 mb-3">{activity.desc}</p>
+                                                        <div className="font-semibold mb-2 text-gray-800">{activity.title}</div>
+                                                        <p className="text-sm text-gray-600 mb-3">{activity.desc}</p>
                                                         <Button
                                                             size="sm"
-                                                            variant={activity.variant}
+                                                            variant="premium"
                                                             className="w-full"
                                                         >
                                                             Start Activity
@@ -498,7 +540,7 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                             transition={{ duration: 0.3 }}
                             className="space-y-6"
                         >
-                            <Card>
+                            <Card variant="premium">
                                 <CardHeader>
                                     <CardTitle className="flex items-center space-x-2">
                                         <Target className="w-5 h-5 text-indigo-600" />
@@ -536,7 +578,7 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                             className="space-y-6"
                         >
                             {agentQuickAccess.map((agent: any) => (
-                                <Card key={agent.id} className="hover:shadow-lg transition-shadow">
+                                <Card key={agent.id} variant="gleam" className="hover:shadow-lg transition-shadow">
                                     <CardHeader className="pb-3">
                                         <CardTitle className="flex items-center space-x-3">
                                             <div className={`text-2xl p-2 rounded-lg bg-gradient-to-r ${agent.color}`}>
@@ -590,7 +632,7 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                             transition={{ duration: 0.3 }}
                             className="space-y-6"
                         >
-                            <Card>
+                            <Card variant="premium">
                                 <CardHeader>
                                     <CardTitle className="flex items-center space-x-2">
                                         <Heart className="w-5 h-5 text-red-500" />
@@ -645,7 +687,7 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                             transition={{ duration: 0.3 }}
                             className="space-y-6"
                         >
-                            <Card>
+                            <Card variant="electric" glowColor="#10B981">
                                 <CardHeader>
                                     <CardTitle className="flex items-center space-x-2">
                                         <TrendingUp className="w-5 h-5 text-green-600" />

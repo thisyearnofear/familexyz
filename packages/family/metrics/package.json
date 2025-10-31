@@ -1,32 +1,24 @@
 {
-  "name": "@elizaos/family-plugin-wisdom",
+  "name": "@elizaos/family-metrics",
   "version": "0.0.1",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
     }
   },
   "private": true,
-  "files": [
-    "dist"
-  ],
   "scripts": {
-    "build": "tsup src/index.ts --format esm,cjs",
-    "dev": "tsup src/index.ts --format esm,cjs --watch",
+    "build": "tsup --format esm",
+    "dev": "tsup --format esm --watch",
     "lint": "eslint . --ext .ts,.tsx --fix",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@elizaos/core": "workspace:*",
-    "@elizaos/family-nlp-utils": "workspace:*",
-    "@elizaos/family-metrics": "workspace:*",
-    "@elizaos/hedera-core": "workspace:*",
-    "node-cache": "^5.1.2"
+    "@elizaos/family-nlp-utils": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.3.5",

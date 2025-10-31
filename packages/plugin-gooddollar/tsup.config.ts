@@ -20,10 +20,29 @@ export default defineConfig({
     "duckdb",
     "fsevents",
     "chokidar",
+    "@gooddollar/goodlogin-sdk",
     "@elizaos/core",
   ],
   esbuildOptions(options) {
-    // Ignore .node files completely
+    // Ensure esbuild doesn't try to bundle fsevents or native .node files
     options.ignoreAnnotations = true;
+    options.loader = {
+      ...(options.loader || {}),
+      ".node": "file",
+    };
+    options.plugins = [
+      ...(options.plugins || []),
+      {
+        name: "externalize-fsevents",
+        setup(build) {
+          build.onResolve({ filter: /^fsevents(\/.*)?$/ }, (args) => {
+            return { path: args.path, external: true };
+          });
+          build.onResolve({ filter: /\.node$/ }, (args) => {
+            return { path: args.path, external: true };
+          });
+        },
+      },
+    ];
   }
 });

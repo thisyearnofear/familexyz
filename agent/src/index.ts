@@ -20,11 +20,14 @@ import { createRequire } from "module";
 import path from "path";
 import fs from "fs";
 import net from "net";
-import { healthCheck, readinessCheck, livenessCheck } from "./health.js";
+import yargs from "yargs";
+import { hideBin } from "yargs/helpers";
+import { healthCheck, readinessCheck } from "./health.js";
+import { GoodDollarService } from "./integrations/gooddollar.js";
 
 // NEW: Central config and plugin loader
 import { config, ModelProviderName } from "@elizaos/config";
-import { getEnabledPlugins } from "./pluginLoader";
+import { getEnabledPlugins } from "./pluginLoader.js";
 
 // NEW: Platform integrations
 // Telegram integration is loaded dynamically via DirectClient patching
@@ -51,7 +54,7 @@ export function parseArguments(): {
     characters?: string;
 } {
     try {
-        return yargs(process.argv.slice(2))
+        return yargs(hideBin(process.argv))
             .option("character", {
                 type: "string",
                 description: "Path to the character JSON file",
@@ -711,6 +714,54 @@ DirectClient.prototype.start = function (...args: any[]) {
     this.app.get("/health", healthCheck);
     this.app.get("/ready", readinessCheck);
 
+    // --- GoodDollar P0 endpoints ---
+    const gd = new GoodDollarService();
+    // Balance endpoint (privacy-aware)
+    this.app.get("/gooddollar/wallet/:address", async (req, res) => {
+        try {
+            if (!gd.enabled) return res.status(503).json({ error: "GoodDollar disabled" });
+            const { address } = req.params as { address: string };
+            if (!address || typeof address !== "string") {
+                return res.status(400).json({ error: "Address required" });
+            }
+            const result = await gd.getBalance(address);
+            return res.json(result);
+        } catch (err: any) {
+            console.error("GoodDollar wallet error:", err);
+            return res.status(500).json({ error: "Failed to fetch wallet balance" });
+        }
+    });
+
+    // Claim status endpoint
+    this.app.get("/gooddollar/status/:address", async (req, res) => {
+        try {
+            if (!gd.enabled) return res.status(503).json({ error: "GoodDollar disabled" });
+            const { address } = req.params as { address: string };
+            if (!address || typeof address !== "string") {
+                return res.status(400).json({ error: "Address required" });
+            }
+            const result = await gd.getClaimStatus(address);
+            return res.json(result);
+        } catch (err: any) {
+            console.error("GoodDollar status error:", err);
+            return res.status(500).json({ error: "Failed to fetch claim status" });
+        }
+    });
+
+    // Claim endpoint (stubbed)
+    this.app.post("/gooddollar/claim", async (req, res) => {
+        try {
+            if (!gd.enabled) return res.status(503).json({ error: "GoodDollar disabled" });
+            const address = (req.body?.address as string) || "";
+            if (!address) return res.status(400).json({ error: "Address required" });
+            const result = await gd.claim(address);
+            return res.status(result.success ? 200 : 400).json(result);
+        } catch (err: any) {
+            console.error("GoodDollar claim error:", err);
+            return res.status(500).json({ error: "Failed to process claim" });
+        }
+    });
+
     // Add family stats endpoint
     this.app.get("/family/stats", (req, res) => {
         let total = 0,
@@ -802,7 +853,9 @@ DirectClient.prototype.start = function (...args: any[]) {
                 });
             }
 
-            const db = new Database(dbPath);
+            const reqr = createRequire(import.meta.url);
+            const BetterSqlite3 = reqr("better-sqlite3");
+            const db = new BetterSqlite3(dbPath);
 
             // Query the actual database structure with correct column name
             const stmt = db.prepare(`

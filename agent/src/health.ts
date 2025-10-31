@@ -1,6 +1,6 @@
-import { Request, Response } from "express";
+// Use minimal types to avoid requiring Express type definitions
 
-export const healthCheck = (req: Request, res: Response) => {
+export const healthCheck = (req: any, res: any) => {
     const healthData = {
         status: "healthy",
         timestamp: new Date().toISOString(),
@@ -27,7 +27,7 @@ export const healthCheck = (req: Request, res: Response) => {
     res.status(200).json(healthData);
 };
 
-export const readinessCheck = (req?: Request, res?: Response) => {
+export const readinessCheck = (req?: any, res?: any) => {
     // Add any readiness checks here (database connectivity, etc.)
     const isReady = true; // Replace with actual readiness logic
 

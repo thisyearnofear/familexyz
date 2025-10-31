@@ -110,5 +110,12 @@ export const apiClient = {
   },
   getFamilyStats: (): Promise<FamilyStats> => fetcher({ url: "/family/stats" }),
   getFamilyHistory: (url?: string): Promise<FamilyHistory> =>
-    fetcher({ url: url || "/family/history" }),
+    fetcher({ url: url || "/family/stats/history" }),
+  // --- GoodDollar endpoints ---
+  getGDBalance: (address: string) =>
+    fetcher({ url: `/gooddollar/wallet/${address}` }),
+  getGDStatus: (address: string) =>
+    fetcher({ url: `/gooddollar/status/${address}` }),
+  claimGoodDollar: (address: string) =>
+    fetcher({ url: `/gooddollar/claim`, method: "POST", body: { address } }),
 };

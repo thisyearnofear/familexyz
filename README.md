@@ -12,7 +12,7 @@
 
 ## 🚩 Overview
 
-Family-Connection AI Agents is a privacy-first suite of specialized AI agents designed to strengthen family bonds. Each agent brings expertise in emotional intelligence, relationship skills, generational connection, mindfulness, and shared growth—offering families practical support and tools for deeper, healthier relationships.
+Familexyz is a privacy-first suite of specialized AI agents designed to strengthen family bonds. Each agent brings expertise in emotional intelligence, relationship skills, generational connection, mindfulness, and shared growth—offering families practical support and tools for deeper, healthier relationships.
 
 <div align="center">
   <img src="./docs/static/img/eliza_diagram.png" alt="Family-Connection AI Agents Diagram" width="100%" />
@@ -20,11 +20,11 @@ Family-Connection AI Agents is a privacy-first suite of specialized AI agents de
 
 ## ✨ Five Family Agents
 
-- 🧠 **Wisdom Agent** - Philosophy & Emotional Intelligence guidance  
-- 💑 **Intimacy Agent** - Couple & family relationship coaching  
-- 👵👦 **Generational Bridge Agent** - Cross-generational storytelling  
-- 🧘 **Presence Agent** - Mindful presence & digital-wellness nudges  
-- 🚀 **Growth Agent** - Shared family growth challenges  
+- 🧠 **Wisdom Agent** - Philosophy & Emotional Intelligence guidance
+- 💑 **Intimacy Agent** - Couple & family relationship coaching
+- 👵👦 **Generational Bridge Agent** - Cross-generational storytelling
+- 🧘 **Presence Agent** - Mindful presence & digital-wellness nudges
+- 🚀 **Growth Agent** - Shared family growth challenges
 
 ## 🚀 Quick Start
 
@@ -47,15 +47,19 @@ pnpm dev
 ### 🔧 Development Options
 
 **Launch Everything (Recommended)**
+
 ```bash
 pnpm dev
 ```
+
 This starts:
+
 - Backend: All five family agents (Wisdom, Intimacy, Generational Bridge, Presence, Growth)
 - Frontend: Web dashboard at `http://localhost:5173`
 - Hot reload for both backend and frontend
 
 **Backend Only**
+
 ```bash
 # Start all family agents
 pnpm start
@@ -68,13 +72,16 @@ pnpm cleanstart
 ```
 
 **Frontend Only**
+
 ```bash
 # Start the web dashboard
 pnpm start:client
 ```
+
 The dashboard will be available at `http://localhost:5173`
 
 **Individual Components**
+
 ```bash
 # Backend agent server
 cd agent && pnpm dev
@@ -90,14 +97,14 @@ cd packages/core && pnpm dev
 
 1. **Copy the template**: `cp environments/development/.env.development.template environments/development/.env.development`
 2. **Add your API keys**:
-   - Venice AI API key (primary)
-   - OpenAI API key (fallback)
-   - Hedera testnet credentials
-   - Social platform tokens (optional)
+    - Venice AI API key (primary)
+    - OpenAI API key (fallback)
+    - Hedera testnet credentials
+    - Social platform tokens (optional)
 3. **Configure family settings**:
-   - Encryption keys for privacy
-   - Data retention policies
-   - Parental controls
+    - Encryption keys for privacy
+    - Data retention policies
+    - Parental controls
 
 **Important**: Never commit your actual `.env.development` file with real API keys. The template file is provided for reference.
 
@@ -143,7 +150,7 @@ Family data protection is our top priority:
 ```
 familexyz/
 ├── 📂 packages/family/         # 👨‍👩‍👧‍👦 Family-specific AI agents
-├── 📂 packages/blockchain/     # ⛓️ Hedera & Web3 integrations  
+├── 📂 packages/blockchain/     # ⛓️ Hedera & Web3 integrations
 ├── 📂 packages/adapters/       # 🔌 Database adapters
 ├── 📂 packages/clients/        # 📱 Platform clients
 ├── 📂 config/                  # ⚙️ Centralized configuration
@@ -172,5 +179,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **Ready to strengthen your family connections?** Start with our [Installation Guide](docs/setup/installation.md) and join the growing community of families using AI to deepen their relationships.
+
 # Trigger CI/CD deployment
+
 # Cache cleared for mega nuclear deployment

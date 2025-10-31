@@ -1,26 +1,5 @@
-import type { Plugin } from "@elizaos/core";
-import { classifyByCategories, KeywordCategory } from "@elizaos/family-nlp-utils";
-import { storeMetrics } from "../../../agent/src/storeMetrics";
+import { familyMetricsPlugin, FAMILY_METRICS_CONFIGS } from "@elizaos/family-metrics";
 
-interface GenerationalMetrics {
-  total: number;
-  bridge: number;
-  gap: number;
-  positivity?: number;
-}
-
-const categories: KeywordCategory[] = [
-  { id: "bridge", words: ["share", "story", "remember", "tradition", "together"] },
-  { id: "gap", words: ["can't", "don't understand", "old", "young", "outdated"] },
-];
-
-const plugin: Plugin = {
-  name: "family-plugin-generational-bridge",
-  description: "Tracks generational bridge and gap metrics in family conversations",
-  actions: [],
-  evaluators: [],
-  providers: [],
-  services: []
-};
+const plugin = familyMetricsPlugin(FAMILY_METRICS_CONFIGS.GENERATIONAL_BRIDGE);
 
 export default plugin;

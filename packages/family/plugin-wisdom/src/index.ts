@@ -20,11 +20,12 @@ import {
   DEFAULT_TOKENOMICS,
   HederaService,
 } from "@elizaos/family-nlp-utils";
+import { calculateFamilyMetrics, storeMetrics } from "@elizaos/family-metrics";
 import NodeCache from "node-cache";
 
 /**
  * Wisdom Agent - Philosophy & Emotional Intelligence
- * Enhanced with Hedera blockchain integration for Stage 2A
+ * Enhanced with Hedera blockchain integration and family metrics tracking
  */
 
 // Wisdom-specific interaction types
@@ -81,7 +82,7 @@ Help them:
 Focus on practical empathy-building exercises.`,
 };
 
-// Wisdom-specific action for Hedera-integrated responses
+// Wisdom-specific action for Hedera-integrated responses with metrics tracking
 const wisdomAction: Action = {
   name: "SHARE_FAMILY_WISDOM",
   similes: [
@@ -92,7 +93,7 @@ const wisdomAction: Action = {
     "SHARE_EMOTIONAL_INTELLIGENCE",
   ],
   description:
-    "Share philosophical wisdom and emotional intelligence guidance for family growth, with Hedera consensus tracking",
+    "Share philosophical wisdom and emotional intelligence guidance for family growth, with Hedera consensus tracking and metrics",
   validate: async (runtime: IAgentRuntime, message: Memory) => {
     const content = message.content.text.toLowerCase();
 
@@ -193,6 +194,25 @@ const wisdomAction: Action = {
         },
       };
 
+      // Calculate and store metrics for this wisdom interaction
+      const metrics = calculateFamilyMetrics(message.content.text, [
+        { id: "philosophical", words: ["wisdom", "philosophy", "meaning", "purpose", "values", "principles"] },
+        { id: "empathy", words: ["understand", "empathy", "feel", "emotion", "perspective", "support"] },
+        { id: "resolution", words: ["resolve", "solution", "peace", "together", "understanding"] }
+      ]);
+
+      storeMetrics({
+        pluginName: "family-wisdom",
+        metrics: {
+          ...metrics,
+          categoryScores: {
+            ...metrics.categoryScores,
+            interactionType: 1, // Track the type of wisdom interaction
+            qualityScore: wisdomResponse.qualityScore / 10 // Normalize to 0-10 scale
+          }
+        }
+      });
+
       // Cache the interaction for follow-up
       await cacheWisdomInteraction(runtime, message.roomId, {
         message: result.message,
@@ -205,6 +225,7 @@ const wisdomAction: Action = {
         interactionType,
         rewardAmount: result.rewards.amount,
         healthImpact: result.familyHealthImpact,
+        qualityScore: wisdomResponse.qualityScore,
       });
 
       callback?.(enhancedResponse);
@@ -570,7 +591,7 @@ async function getOrCreateHederaIntegration(
 export const wisdomPlugin: Plugin = {
   name: "familyWisdom",
   description:
-    "Family wisdom and emotional intelligence guidance with Hedera blockchain integration",
+    "Family wisdom and emotional intelligence guidance with Hedera blockchain integration and metrics tracking",
   actions: [wisdomAction],
   evaluators: [],
   providers: [],

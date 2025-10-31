@@ -5,8 +5,8 @@
     "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
-    "scripts": {
-        "build": "tsup --format esm --dts",
+  "scripts": {
+        "build": "tsc -p tsconfig.json",
         "dev": "tsup --format esm --watch",
         "lint": "eslint . --ext .ts,.tsx --fix",
         "type-check": "tsc --noEmit"
@@ -22,16 +22,15 @@
     ],
     "author": "FamilyXYZ Team",
     "license": "MIT",
-    "dependencies": {
-        "@elizaos/core": "workspace:*",
-        "@elizaos/plugin-evm": "workspace:*",
-        "@gooddollar/goodlogin-sdk": "^1.0.0",
-        "@superfluid-finance/sdk-core": "^0.6.0",
-        "ethers": "^6.13.0",
-        "node-cache": "^5.1.2",
-        "viem": "^2.21.58",
-        "zod": "^3.22.0"
-    },
+  "dependencies": {
+    "@elizaos/core": "workspace:*",
+    "@elizaos/plugin-evm": "workspace:*",
+    "@superfluid-finance/sdk-core": "^0.6.0",
+    "ethers": "^6.13.0",
+    "node-cache": "^5.1.2",
+    "viem": "^2.21.58",
+    "zod": "^3.22.0"
+  },
     "devDependencies": {
         "@types/aws-lambda": "^8.10.0",
         "@types/better-sqlite3": "^7.6.0",

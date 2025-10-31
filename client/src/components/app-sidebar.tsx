@@ -16,7 +16,7 @@ import {
 import { apiClient } from "@/lib/api";
 import { NavLink, useLocation } from "react-router";
 import type { UUID } from "@elizaos/core";
-import { Book, Cog, User } from "lucide-react";
+import { Book, Cog, User, Home } from "lucide-react";
 import ConnectionStatus from "./connection-status";
 
 export function AppSidebar() {
@@ -30,14 +30,16 @@ export function AppSidebar() {
     const agents = query?.data?.data?.agents;
 
     return (
-        <Sidebar>
+        <Sidebar aria-label="Main navigation">
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
                             <NavLink to="/">
-                                <div className="flex items-center justify-center size-7 text-2xl">
-                                    👨‍👩‍👧‍👦
+                                <div className="flex items-center justify-center size-7">
+                                    <div className="flex items-center justify-center size-7 text-2xl">
+                                        👨‍👩‍👧‍👦
+                                    </div>
                                 </div>
 
                                 <div className="flex flex-col gap-0.5 leading-none">
@@ -50,27 +52,21 @@ export function AppSidebar() {
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
-                {/* Dashboard link */}
+                {/* Dashboard links */}
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <NavLink to="/dashboard">
                             <SidebarMenuButton>
-                                {/* Home icon */}
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    className="h-5 w-5 mr-2"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M3 12l2-2m0 0l7-7 7 7m-9 2v8m0 0h4m-4 0a2 2 0 01-2-2v-5a2 2 0 012-2h4a2 2 0 012 2v5a2 2 0 01-2 2z"
-                                    />
-                                </svg>
+                                <Home className="h-5 w-5 mr-2" />
                                 Dashboard
+                            </SidebarMenuButton>
+                        </NavLink>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <NavLink to="/enhanced-dashboard">
+                            <SidebarMenuButton>
+                                <Home className="h-5 w-5 mr-2" />
+                                Enhanced Dashboard
                             </SidebarMenuButton>
                         </NavLink>
                     </SidebarMenuItem>
@@ -104,7 +100,7 @@ export function AppSidebar() {
                                                             agent.id,
                                                         )}
                                                     >
-                                                        <User />
+                                                        <User className="h-4 w-4" />
                                                         <span>
                                                             {agent.name}
                                                         </span>
@@ -124,13 +120,13 @@ export function AppSidebar() {
                     <SidebarMenuItem>
                         <NavLink to="/docs" target="_blank">
                             <SidebarMenuButton>
-                                <Book /> Documentation
+                                <Book className="h-4 w-4" /> Documentation
                             </SidebarMenuButton>
                         </NavLink>
                     </SidebarMenuItem>
                     <SidebarMenuItem>
                         <SidebarMenuButton disabled>
-                            <Cog /> Settings
+                            <Cog className="h-4 w-4" /> Settings
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                     <ConnectionStatus />

@@ -34,6 +34,7 @@
         "@elizaos/client-slack": "workspace:*",
         "@elizaos/client-telegram": "workspace:*",
         "@elizaos/client-twitter": "workspace:*",
+        "@elizaos/hedera-core": "workspace:*",
         "@elizaos/config": "workspace:*",
         "@elizaos/core": "workspace:*",
         "@elizaos/family-plugin-generational-bridge": "workspace:*",

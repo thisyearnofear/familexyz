@@ -22,6 +22,7 @@ import { HederaConsensusService } from "./HederaConsensusService.js";
 import { HederaTokenService } from "./HederaTokenService.js";
 import { HederaContractService } from "./HederaContractService.js";
 import { HederaPerformanceOptimizer } from "../utils/HederaPerformanceOptimizer.js";
+import { HederaMirrorService } from './HederaMirrorService.js';
 
 export class HederaService {
   private static instance: HederaService;
@@ -36,6 +37,7 @@ export class HederaService {
   public readonly tokens: HederaTokenService;
   public readonly contracts: HederaContractService;
   public readonly optimizer: HederaPerformanceOptimizer;
+  public readonly mirror: HederaMirrorService;
 
   // Configuration
   private readonly defaultPerformanceConfig: PerformanceConfig = {
@@ -82,6 +84,7 @@ export class HederaService {
       this,
       this.performanceConfig,
     );
+    this.mirror = new HederaMirrorService(this);
   }
 
   /**

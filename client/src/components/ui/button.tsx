@@ -11,18 +11,20 @@ const buttonVariants = cva(
         variants: {
             variant: {
                 default:
-                    "bg-primary text-primary-foreground shadow hover:bg-primary/90 hover:shadow-lg",
+                    "bg-primary text-primary-foreground shadow hover:bg-primary/90 hover:shadow-lg focus-visible:ring-primary",
                 destructive:
-                    "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90 hover:shadow-lg",
+                    "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90 hover:shadow-lg focus-visible:ring-destructive",
                 outline:
-                    "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground hover:shadow-md",
+                    "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground hover:shadow-md focus-visible:ring-accent",
                 secondary:
-                    "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80 hover:shadow-md",
-                ghost: "hover:bg-accent hover:text-accent-foreground",
-                link: "text-primary underline-offset-4 hover:underline",
-                premium: "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg hover:from-purple-600 hover:to-pink-600 hover:shadow-xl hover:scale-105",
-                electric: "relative bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:translate-x-[-100%] hover:before:translate-x-[100%] before:transition-transform before:duration-500",
-                gleam: "bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-lg hover:from-amber-500 hover:to-orange-600 hover:shadow-xl relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent before:translate-x-[-100%] hover:before:translate-x-[100%] before:transition-transform before:duration-700"
+                    "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80 hover:shadow-md focus-visible:ring-secondary",
+                ghost: "hover:bg-accent hover:text-accent-foreground focus-visible:ring-accent",
+                link: "text-primary underline-offset-4 hover:underline focus-visible:ring-primary",
+                premium:
+                    "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg hover:from-purple-600 hover:to-pink-600 hover:shadow-xl hover:scale-105 focus-visible:ring-purple-500",
+                electric:
+                    "relative bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:translate-x-[-100%] hover:before:translate-x-[100%] before:transition-transform before:duration-500 focus-visible:ring-indigo-500",
+                gleam: "bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-lg hover:from-amber-500 hover:to-orange-600 hover:shadow-xl relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent before:translate-x-[-100%] hover:before:translate-x-[100%] before:transition-transform before:duration-700 focus-visible:ring-amber-500",
             },
             size: {
                 default: "h-9 px-4 py-2",
@@ -35,7 +37,7 @@ const buttonVariants = cva(
             variant: "default",
             size: "default",
         },
-    }
+    },
 );
 
 export interface ButtonProps
@@ -46,7 +48,17 @@ export interface ButtonProps
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-    ({ className, variant, size, asChild = false, animated = true, ...props }, ref) => {
+    (
+        {
+            className,
+            variant,
+            size,
+            asChild = false,
+            animated = true,
+            ...props
+        },
+        ref,
+    ) => {
         if (asChild) {
             return (
                 <Slot
@@ -89,7 +101,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
                 {...props}
             />
         );
-    }
+    },
 );
 Button.displayName = "Button";
 

@@ -5,10 +5,11 @@
     "types": "dist/index.d.ts",
     "private": true,
     "scripts": {
-        "build": "echo 'Skipping build for disabled family-nlp-utils package'"
+        "build": "tsup src/index.ts --format esm,cjs"
     },
     "dependencies": {
-        "@elizaos/hedera-core": "workspace:*"
+        "@elizaos/hedera-core": "workspace:*",
+        "@hashgraph/sdk": "^2.50.0"
     },
     "devDependencies": {
         "tsup": "^8.3.5",

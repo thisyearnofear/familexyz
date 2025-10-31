@@ -23,7 +23,7 @@
                 "packages/core/dist/index.js"
             ],
             "@elizaos/hedera-core": [
-                "packages/hedera-core/dist/index.js"
+                "packages/blockchain/hedera-core/dist/index.js"
             ],
             "@elizaos/plugin-node": [
                 "packages/plugin-node/dist/index.js"
@@ -46,7 +46,8 @@
     },
     "include": [
         "src/**/*",
-        "../packages/*/dist/**/*.d.ts"
+        "../packages/*/dist/**/*.d.ts",
+        "../packages/blockchain/hedera-core/dist/**/*.d.ts"
     ],
     "exclude": [
         "node_modules",

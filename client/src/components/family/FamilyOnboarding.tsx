@@ -1,24 +1,41 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { FamilyLogo } from "@/components/FamilyLogo";
-import { 
-  Heart, 
-  MessageCircle, 
-  Target, 
-  Users, 
-  Sparkles, 
-  ArrowRight, 
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { GuidedTour } from "./GuidedTour";
+import {
+  Heart,
+  MessageCircle,
+  Target,
+  Users,
+  Sparkles,
+  ArrowRight,
   ArrowLeft,
   CheckCircle,
   Star,
   Trophy,
   Calendar,
   Lightbulb,
-  Zap
+  Zap,
+  Play,
+  Pause,
+  Volume2,
+  HelpCircle,
+  BookOpen,
+  Gift,
+  Camera,
+  Mic,
+  Shield,
+  Clock,
+  Home,
+  Baby,
+  Gamepad2
 } from "lucide-react";
 
 interface OnboardingStep {
@@ -28,38 +45,109 @@ interface OnboardingStep {
   description: string;
   icon: React.ReactNode;
   component: React.ReactNode;
+  helpContent?: {
+    title: string;
+    description: string;
+    tips: string[];
+  };
 }
 
 interface FamilyOnboardingProps {
-  onComplete?: () => void;
+  onComplete?: (profile: FamilyProfile) => void;
   onCancel?: () => void;
+}
+
+interface FamilyProfile {
+  name: string;
+  members: Array<{
+    name: string;
+    relationship: string;
+    age?: number;
+    interests?: string[];
+    avatar?: string;
+  }>;
+  goals: string[];
+  agents: string[];
+  preferences: {
+    communicationStyle: "warm" | "formal" | "casual";
+    meetingFrequency: "daily" | "weekly" | "monthly";
+    privacyLevel: "open" | "balanced" | "private";
+    notifications: boolean;
+    dataSharing: boolean;
+  };
+  customization: {
+    theme: string;
+    language: string;
+    timezone: string;
+  };
 }
 
 export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, onCancel }) => {
   const [currentStep, setCurrentStep] = useState(0);
-  const [familyProfile, setFamilyProfile] = useState({
+  const [showHelp, setShowHelp] = useState(false);
+  const [showTour, setShowTour] = useState(false);
+  const [familyProfile, setFamilyProfile] = useState<FamilyProfile>({
     name: "",
-    members: [] as Array<{name: string, relationship: string}>,
-    goals: [] as string[],
-    agents: [] as string[],
+    members: [],
+    goals: [],
+    agents: [],
     preferences: {
       communicationStyle: "warm",
       meetingFrequency: "weekly",
-      privacyLevel: "balanced"
+      privacyLevel: "balanced",
+      notifications: true,
+      dataSharing: false
+    },
+    customization: {
+      theme: "family",
+      language: "en",
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
     }
   });
+
+  // Auto-save progress to localStorage
+  useEffect(() => {
+    localStorage.setItem('familyOnboardingProgress', JSON.stringify({
+      currentStep,
+      familyProfile
+    }));
+  }, [currentStep, familyProfile]);
+
+  // Load saved progress on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('familyOnboardingProgress');
+    if (saved) {
+      try {
+        const { currentStep: savedStep, familyProfile: savedProfile } = JSON.parse(saved);
+        setCurrentStep(savedStep);
+        setFamilyProfile(savedProfile);
+      } catch (e) {
+        console.warn('Failed to load onboarding progress');
+      }
+    }
+  }, []);
 
   const steps: OnboardingStep[] = [
     {
       id: "welcome",
       title: "Welcome to Your Family Journey",
       subtitle: "Let's get to know your family",
-      description: "Every family is unique. We'll help you create a personalized experience.",
+      description: "Every family is unique. We'll help you create a personalized experience that strengthens your bonds.",
       icon: <Heart className="w-8 h-8 text-red-500" />,
+      helpContent: {
+        title: "Getting Started",
+        description: "This onboarding will help us understand your family's unique needs and preferences.",
+        tips: [
+          "Take your time - you can always come back and change settings later",
+          "Involve family members in the setup process for better engagement",
+          "All information is kept private and secure"
+        ]
+      },
       component: (
-        <WelcomeStep 
+        <WelcomeStep
           onNext={() => setCurrentStep(1)}
-          onSkip={() => setCurrentStep(5)}
+          onSkip={() => setCurrentStep(6)}
+          onStartTour={() => setShowTour(true)}
         />
       )
     },
@@ -69,8 +157,17 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
       subtitle: "Create your family profile",
       description: "Help us understand who's in your family and what matters most to you.",
       icon: <Users className="w-8 h-8 text-blue-500" />,
+      helpContent: {
+        title: "Family Profile Setup",
+        description: "Creating detailed family profiles helps our AI agents provide more personalized guidance.",
+        tips: [
+          "Add interests and hobbies to get better activity recommendations",
+          "Age information helps tailor communication styles",
+          "You can add or remove family members anytime"
+        ]
+      },
       component: (
-        <FamilyProfileStep 
+        <FamilyProfileStep
           profile={familyProfile}
           onUpdate={setFamilyProfile}
           onNext={() => setCurrentStep(2)}
@@ -84,8 +181,17 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
       subtitle: "What do you want to achieve together?",
       description: "Choose the areas where you'd like to see your family grow and flourish.",
       icon: <Target className="w-8 h-8 text-green-500" />,
+      helpContent: {
+        title: "Setting Family Goals",
+        description: "Goals help focus your family's growth journey and measure progress over time.",
+        tips: [
+          "Start with 2-3 goals to avoid overwhelming your family",
+          "Goals can be adjusted as your family's needs change",
+          "Each goal unlocks specific activities and guidance"
+        ]
+      },
       component: (
-        <FamilyGoalsStep 
+        <FamilyGoalsStep
           selectedGoals={familyProfile.goals}
           onGoalsChange={(goals) => setFamilyProfile(prev => ({...prev, goals}))}
           onNext={() => setCurrentStep(3)}
@@ -99,8 +205,17 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
       subtitle: "Choose your AI companions",
       description: "Select the AI agents who will support your family's unique journey.",
       icon: <Sparkles className="w-8 h-8 text-purple-500" />,
+      helpContent: {
+        title: "Your AI Family Team",
+        description: "Each agent specializes in different aspects of family wellness and growth.",
+        tips: [
+          "Start with 2-3 agents and add more as you get comfortable",
+          "Each agent has unique personality and expertise",
+          "You can chat with agents individually or in group sessions"
+        ]
+      },
       component: (
-        <AgentSelectionStep 
+        <AgentSelectionStep
           selectedAgents={familyProfile.agents}
           onAgentsChange={(agents) => setFamilyProfile(prev => ({...prev, agents}))}
           onNext={() => setCurrentStep(4)}
@@ -115,7 +230,7 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
       description: "Set preferences that match your family's communication style and values.",
       icon: <Zap className="w-8 h-8 text-yellow-500" />,
       component: (
-        <PreferencesStep 
+        <PreferencesStep
           preferences={familyProfile.preferences}
           onPreferencesChange={(prefs) => setFamilyProfile(prev => ({...prev, preferences: prefs}))}
           onNext={() => setCurrentStep(5)}
@@ -130,7 +245,7 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
       description: "You're all set to strengthen your family bonds with AI-powered guidance.",
       icon: <Trophy className="w-8 h-8 text-orange-500" />,
       component: (
-        <CompletionStep 
+        <CompletionStep
           profile={familyProfile}
           onComplete={onComplete}
           onBack={() => setCurrentStep(4)}
@@ -139,10 +254,23 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
     }
   ];
 
+  // Show guided tour if requested
+  if (showTour) {
+    return (
+      <GuidedTour
+        onComplete={() => {
+          setShowTour(false);
+          setCurrentStep(1);
+        }}
+        onSkip={() => setShowTour(false)}
+      />
+    );
+  }
+
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 z-50 overflow-hidden">
       <div className="absolute inset-0 bg-black/20 backdrop-blur-sm"></div>
-      
+
       <div className="relative h-full flex items-center justify-center p-4">
         <Card className="w-full max-w-2xl mx-auto shadow-2xl border-0">
           <CardContent className="p-0">
@@ -156,17 +284,27 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
                     <p className="text-white/80 text-sm">AI-powered family wellness</p>
                   </div>
                 </div>
-                <button 
-                  onClick={onCancel}
-                  className="text-white/70 hover:text-white transition-colors"
-                >
-                  Skip Onboarding
-                </button>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowHelp(!showHelp)}
+                    className="text-white/70 hover:text-white hover:bg-white/10"
+                  >
+                    <HelpCircle className="w-4 h-4" />
+                  </Button>
+                  <button
+                    onClick={onCancel}
+                    className="text-white/70 hover:text-white transition-colors text-sm"
+                  >
+                    Skip Onboarding
+                  </button>
+                </div>
               </div>
-              
+
               <div className="mt-4 flex items-center space-x-2">
-                <Progress 
-                  value={(currentStep / (steps.length - 1)) * 100} 
+                <Progress
+                  value={(currentStep / (steps.length - 1)) * 100}
                   className="h-2 bg-white/20"
                 />
                 <span className="text-sm text-white/90">
@@ -174,7 +312,7 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
                 </span>
               </div>
             </div>
-            
+
             {/* Step Content */}
             <div className="p-8">
               <AnimatePresence mode="wait">
@@ -198,15 +336,47 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
                       </p>
                     </div>
                   </div>
-                  
+
                   <p className="text-gray-600 mb-8">
                     {steps[currentStep].description}
                   </p>
-                  
+
                   <div className="mb-8">
                     {steps[currentStep].component}
                   </div>
-                  
+
+                  {/* Help Panel */}
+                  <AnimatePresence>
+                    {showHelp && steps[currentStep].helpContent && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg"
+                      >
+                        <div className="flex items-start space-x-3">
+                          <Lightbulb className="w-5 h-5 text-blue-600 mt-0.5" />
+                          <div>
+                            <h4 className="font-semibold text-blue-900 mb-2">
+                              {steps[currentStep].helpContent!.title}
+                            </h4>
+                            <p className="text-blue-800 text-sm mb-3">
+                              {steps[currentStep].helpContent!.description}
+                            </p>
+                            <ul className="space-y-1">
+                              {steps[currentStep].helpContent!.tips.map((tip, index) => (
+                                <li key={index} className="flex items-start space-x-2 text-sm text-blue-700">
+                                  <Star className="w-3 h-3 text-blue-500 mt-1 flex-shrink-0" />
+                                  <span>{tip}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
                   <div className="flex justify-between items-center">
                     <Button
                       variant="outline"
@@ -217,7 +387,7 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
                       <ArrowLeft className="w-4 h-4" />
                       <span>Back</span>
                     </Button>
-                    
+
                     <div className="flex space-x-2">
                       {currentStep > 0 && currentStep < steps.length - 1 && (
                         <Button
@@ -227,14 +397,14 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
                           Skip for now
                         </Button>
                       )}
-                      
+
                       {currentStep < steps.length - 1 ? (
                         <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 flex items-center space-x-2">
                           <span>Continue</span>
                           <ArrowRight className="w-4 h-4" />
                         </Button>
                       ) : (
-                        <Button 
+                        <Button
                           className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 flex items-center space-x-2"
                           onClick={onComplete}
                         >
@@ -254,7 +424,7 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
   );
 };
 
-const WelcomeStep: React.FC<{ onNext: () => void; onSkip: () => void }> = ({ onNext, onSkip }) => {
+const WelcomeStep: React.FC<{ onNext: () => void; onSkip: () => void; onStartTour?: () => void }> = ({ onNext, onSkip, onStartTour }) => {
   return (
     <div className="text-center space-y-6">
       <div className="bg-gradient-to-r from-purple-100 to-pink-100 p-8 rounded-2xl">
@@ -263,10 +433,10 @@ const WelcomeStep: React.FC<{ onNext: () => void; onSkip: () => void }> = ({ onN
           Welcome to Your Family's AI Journey
         </h3>
         <p className="text-gray-600 mb-6">
-          Our AI family agents are here to help strengthen your family bonds, 
+          Our AI family agents are here to help strengthen your family bonds,
           improve communication, and create lasting memories together.
         </p>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div className="p-4 bg-white rounded-lg border border-purple-100">
             <div className="text-2xl mb-2">💬</div>
@@ -279,11 +449,17 @@ const WelcomeStep: React.FC<{ onNext: () => void; onSkip: () => void }> = ({ onN
             <p className="text-sm text-gray-600">Build deeper connections across generations</p>
           </div>
         </div>
-        
+
         <div className="space-y-3">
           <Button onClick={onNext} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
             Start Setup
           </Button>
+          {onStartTour && (
+            <Button variant="outline" onClick={onStartTour} className="w-full">
+              <BookOpen className="w-4 h-4 mr-2" />
+              Take a Tour First
+            </Button>
+          )}
           <Button variant="outline" onClick={onSkip} className="w-full">
             Skip Setup
           </Button>
@@ -326,7 +502,7 @@ const FamilyProfileStep: React.FC<{
             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
           />
         </div>
-        
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Family Members
@@ -355,8 +531,8 @@ const FamilyProfileStep: React.FC<{
               </div>
             ))}
           </div>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={addMember}
             className="w-full mt-2 border-dashed"
           >
@@ -417,7 +593,7 @@ const FamilyGoalsStep: React.FC<{
           </div>
         ))}
       </div>
-      
+
       <div className="text-center text-sm text-gray-500">
         Select the goals that resonate with your family's needs
       </div>
@@ -465,12 +641,12 @@ const AgentSelectionStep: React.FC<{
               <h3 className="font-bold text-lg text-gray-800 mb-1">{agent.name}</h3>
               <p className="text-sm font-medium text-gray-600 mb-2">{agent.specialty}</p>
               <p className="text-sm text-gray-600 mb-3">{agent.desc}</p>
-              
+
               <div className="flex flex-wrap justify-center gap-1">
                 <Badge variant="secondary" className="text-xs">Supports</Badge>
                 <Badge variant="secondary" className="text-xs">Guidance</Badge>
               </div>
-              
+
               {selectedAgents.includes(agent.id) && (
                 <div className="mt-3 flex items-center justify-center text-purple-600">
                   <CheckCircle className="w-4 h-4 mr-1" />
@@ -481,7 +657,7 @@ const AgentSelectionStep: React.FC<{
           </div>
         ))}
       </div>
-      
+
       <div className="text-center text-sm text-gray-500">
         Choose 2-3 agents to start with - you can always add more later
       </div>
@@ -525,7 +701,7 @@ const PreferencesStep: React.FC<{
           ))}
         </div>
       </div>
-      
+
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-3">
           Check-in Frequency
@@ -577,10 +753,10 @@ const CompletionStep: React.FC<{
           Your family profile is ready. Your AI agents are prepared to help strengthen your family bonds.
         </p>
       </motion.div>
-      
+
       <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-2xl">
         <h4 className="font-semibold text-gray-800 mb-4">Your Family Profile</h4>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
           <div>
             <h5 className="text-sm font-medium text-gray-600 mb-1">Family Name</h5>
@@ -600,14 +776,14 @@ const CompletionStep: React.FC<{
           </div>
         </div>
       </div>
-      
+
       <div className="space-y-3">
         <p className="text-gray-600">
-          Your family journey starts now. Your AI agents will help you build stronger bonds, 
+          Your family journey starts now. Your AI agents will help you build stronger bonds,
           improve communication, and create lasting memories together.
         </p>
-        
-        <Button 
+
+        <Button
           onClick={onComplete}
           className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-lg py-4"
         >
@@ -638,7 +814,7 @@ export const FamilyGuidance: React.FC = () => {
                 <Lightbulb className="w-5 h-5 text-yellow-500" />
                 <h3 className="font-semibold text-gray-800">Family Tip</h3>
               </div>
-              <button 
+              <button
                 onClick={() => setShowGuidance(false)}
                 className="text-gray-400 hover:text-gray-600"
               >
@@ -646,7 +822,7 @@ export const FamilyGuidance: React.FC = () => {
               </button>
             </div>
             <p className="text-gray-600 mb-4">
-              Did you know? Families that have just 15 minutes of device-free conversation daily 
+              Did you know? Families that have just 15 minutes of device-free conversation daily
               report 40% stronger emotional connections.
             </p>
             <Button size="sm" className="w-full bg-gradient-to-r from-purple-500 to-pink-500">
@@ -655,7 +831,7 @@ export const FamilyGuidance: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
-      
+
       <Button
         onClick={() => setShowGuidance(!showGuidance)}
         className="w-14 h-14 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg"

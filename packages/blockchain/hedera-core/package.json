@@ -42,16 +42,21 @@
   "dependencies": {
     "@elizaos/core": "workspace:*",
     "@hashgraph/sdk": "^2.49.2",
+    "@hashgraphonline/standards-sdk": "0.1.126",
     "node-cache": "^5.1.2"
   },
   "devDependencies": {
+    "ts-node": "10.9.2",
     "tsup": "^8.3.5",
+    "tsx": "^4.0.0",
     "typescript": "^5.6.3"
   },
   "scripts": {
-    "build": "echo 'Skipping build for disabled blockchain package'",
-    "dev": "echo 'Skipping dev for disabled blockchain package'",
-    "clean": "rm -rf dist"
+    "build": "tsup 'src/**/*.ts' --format esm,cjs --clean",
+    "dev": "tsup src/index.ts --format esm --watch",
+    "clean": "rm -rf dist",
+    "test": "tsx test/test-runner.ts",
+    "smoke:e2e": "tsx test/e2e-smoke.ts"
   },
   "private": true
 }

@@ -5,11 +5,21 @@ import { AppSidebar } from "./components/app-sidebar";
 import { TooltipProvider } from "./components/ui/tooltip";
 import { Toaster } from "./components/ui/toaster";
 import { BrowserRouter, Route, Routes } from "react-router";
+import { lazy, Suspense } from "react";
 
-import Overview from "./routes/overview";
-import Home from "./routes/home";
-import Dashboard from "./routes/dashboard";
-import Chat from "./routes/chat";
+// Lazy load routes
+const Overview = lazy(() => import("./routes/overview"));
+const Home = lazy(() => import("./routes/home"));
+const Dashboard = lazy(() => import("./routes/dashboard"));
+const EnhancedDashboard = lazy(() => import("./routes/enhanced-dashboard"));
+const Chat = lazy(() => import("./routes/chat"));
+
+// Loading component for suspense
+const LoadingSpinner = () => (
+    <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+    </div>
+);
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -27,28 +37,43 @@ function App() {
                 style={{
                     colorScheme: "dark",
                 }}
+                role="application"
+                aria-label="Family Connection Platform"
             >
                 <BrowserRouter>
                     <TooltipProvider delayDuration={0}>
                         <SidebarProvider>
                             <AppSidebar />
                             <SidebarInset>
-                                <div className="flex flex-1 flex-col gap-4 size-full container">
-                                    <Routes>
-                                        <Route path="/" element={<Home />} />
-                                        <Route
-                                            path="/dashboard"
-                                            element={<Dashboard />}
-                                        />
-                                        <Route
-                                            path="chat/:agentId"
-                                            element={<Chat />}
-                                        />
-                                        <Route
-                                            path="settings/:agentId"
-                                            element={<Overview />}
-                                        />
-                                    </Routes>
+                                <div
+                                    className="flex flex-1 flex-col gap-4 size-full container"
+                                    role="main"
+                                    aria-label="Main content"
+                                >
+                                    <Suspense fallback={<LoadingSpinner />}>
+                                        <Routes>
+                                            <Route
+                                                path="/"
+                                                element={<Home />}
+                                            />
+                                            <Route
+                                                path="/dashboard"
+                                                element={<Dashboard />}
+                                            />
+                                            <Route
+                                                path="/enhanced-dashboard"
+                                                element={<EnhancedDashboard />}
+                                            />
+                                            <Route
+                                                path="chat/:agentId"
+                                                element={<Chat />}
+                                            />
+                                            <Route
+                                                path="settings/:agentId"
+                                                element={<Overview />}
+                                            />
+                                        </Routes>
+                                    </Suspense>
                                 </div>
                             </SidebarInset>
                         </SidebarProvider>

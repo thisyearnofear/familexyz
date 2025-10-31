@@ -24,6 +24,8 @@ import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { healthCheck, readinessCheck } from "./health.js";
 import { GoodDollarService } from "./integrations/gooddollar.js";
+import { HederaService } from "@elizaos/hedera-core";
+import type { HederaConfig, HederaFamilyMetrics } from "@elizaos/hedera-core";
 
 // NEW: Central config and plugin loader
 import { config, ModelProviderName } from "@elizaos/config";
@@ -1041,8 +1043,106 @@ async function startAgent(
             token,
         );
 
-        // start services/plugins/process knowledge
-        await runtime.initialize();
+        // Initialize Hedera service if env configuration is present
+        try {
+            const hasOperatorCreds =
+                !!process.env.HEDERA_OPERATOR_ID &&
+                !!process.env.HEDERA_OPERATOR_KEY;
+            if (hasOperatorCreds) {
+                const hederaConfig: HederaConfig = {
+                    network:
+                        (process.env.HEDERA_NETWORK as any) || "testnet",
+                    accountId: process.env.HEDERA_OPERATOR_ID!,
+                    privateKey: process.env.HEDERA_OPERATOR_KEY!,
+                    familyTopicId: process.env.HEDERA_WISDOM_TOPIC_ID,
+                    familyHealthTokenId: process.env.HEDERA_FAMILY_TOKEN_ID,
+                    treasuryAccountId: process.env.HEDERA_TREASURY_ACCOUNT_ID,
+                };
+
+                const hederaService = HederaService.getInstance(hederaConfig);
+                const init = await hederaService.initialize();
+                if (!init.success) {
+                    elizaLogger.warn(
+                        "HederaService initialization failed:",
+                        init.error,
+                    );
+                } else {
+                    (runtime as any).hederaService = hederaService;
+                    elizaLogger.info("HederaService initialized and attached");
+
+                    // Ensure consensus topic exists when enabled
+                    const consensusEnabled =
+                        process.env.HEDERA_ENABLE_CONSENSUS === "true";
+                    const hasTopicId = !!process.env.HEDERA_WISDOM_TOPIC_ID;
+                    if (consensusEnabled && !hasTopicId) {
+                        const memo =
+                            process.env.HEDERA_TOPIC_MEMO_DEFAULT ||
+                            `Family interactions consensus log for ${character.name}`;
+                        const topicResp =
+                            await hederaService.consensus.createFamilyTopic(
+                                character.id ?? character.name,
+                                memo,
+                            );
+                        if (topicResp.success && topicResp.data) {
+                            process.env.HEDERA_WISDOM_TOPIC_ID = topicResp.data;
+                            elizaLogger.info(
+                                `Created HCS topic: ${topicResp.data} and set HEDERA_WISDOM_TOPIC_ID`,
+                            );
+                        } else {
+                            elizaLogger.warn(
+                                "Failed to create HCS topic:",
+                                topicResp.error,
+                            );
+                        }
+                    }
+
+                    // Optional: submit a startup test message to verify HCS flow
+                    const submitStartupTest =
+                        process.env.HEDERA_SUBMIT_STARTUP_TEST === "true";
+                    if (
+                        submitStartupTest &&
+                        process.env.HEDERA_WISDOM_TOPIC_ID
+                    ) {
+                        const metrics: HederaFamilyMetrics = {
+                            familyId: character.id ?? character.name,
+                            agentId: runtime.agentId,
+                            timestamp: Date.now(),
+                            sentiment: { positive: 1, negative: 0, neutral: 0 },
+                            healthScore: 1,
+                            messageHash: `${runtime.agentId}-${Date.now()}`,
+                            interactionType: "wisdom",
+                        };
+                        const submitResp =
+                            await hederaService.consensus.submitInteractionDirect(
+                                process.env.HEDERA_WISDOM_TOPIC_ID,
+                                metrics,
+                            );
+                        if (submitResp.success) {
+                            elizaLogger.info(
+                                `Submitted startup HCS test message: ${submitResp.transactionId}`,
+                            );
+                        } else {
+                            elizaLogger.warn(
+                                "Failed to submit startup HCS test message:",
+                                submitResp.error,
+                            );
+                        }
+                    }
+                }
+            } else {
+                elizaLogger.info(
+                    "Hedera env not found; skipping HederaService initialization",
+                );
+            }
+        } catch (hederaError) {
+            elizaLogger.warn(
+                "Error initializing HederaService; continuing without it:",
+                hederaError,
+            );
+        }
+
+    // start services/plugins/process knowledge
+    await runtime.initialize();
 
         // start assigned clients
         runtime.clients = await initializeClients(character, runtime);

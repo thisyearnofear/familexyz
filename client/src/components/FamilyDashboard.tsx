@@ -10,21 +10,17 @@ import { ChatInterface } from "@/components/ChatInterface";
 import { FamilyMetricsCards } from "@/components/family/FamilyMetricsCards";
 import { FamilyRadarChart } from "@/components/family/FamilyRadarChart";
 import { FamilyLineChart } from "@/components/family/FamilyLineChart";
-import { 
-  MessageCircle, 
-  TrendingUp, 
-  Heart, 
-  Zap, 
-  Target, 
-  Calendar,
+import { FamilyConnectionRings } from "@/components/family/FamilyConnectionRings";
+import { visualEffects, familyTheme } from "@/lib/visual-effects";
+import {
+  TrendingUp,
+  Heart,
+  Zap,
+  Target,
   BarChart3,
-  Smartphone,
   Users,
-  Settings,
   Star,
-  Trophy,
-  Activity,
-  Sparkles
+  Trophy
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
@@ -111,7 +107,7 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
     const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
     const [showCelebration, setShowCelebration] = useState(false);
 
-    const { data: familyStats, isLoading: isFamilyStatsLoading, refetch: refetchStats } = useQuery({
+    const { data: familyStats, isLoading: isFamilyStatsLoading } = useQuery({
         queryKey: ["familyStats"],
         queryFn: apiClient.getFamilyStats,
         refetchInterval: 10000, // Auto-refresh every 10 seconds
@@ -123,7 +119,7 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
         refetchInterval: 30000, // Refetch every 30 seconds
     });
 
-    const { data: agentsData, isLoading: isAgentsLoading } = useQuery({
+    const { data: agentsData } = useQuery({
         queryKey: ["agents"],
         queryFn: async () => {
             try {
@@ -146,8 +142,8 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
     });
 
     // Calculate previous health score from history
-    const previousHealthScore = familyHistory?.timeline && familyHistory.timeline.length > 1 
-        ? familyHistory.timeline[familyHistory.timeline.length - 2]?.health 
+    const previousHealthScore = familyHistory?.timeline && familyHistory.timeline.length > 1
+        ? familyHistory.timeline[familyHistory.timeline.length - 2]?.health
         : undefined;
 
     // Check if there's been improvement to show celebration
@@ -237,9 +233,9 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                                 </p>
                             </div>
                         </div>
-                        
+
                         <div className="flex items-center space-x-3 self-start lg:self-auto">
-                            <motion.div 
+                            <motion.div
                                 className="flex items-center space-x-2"
                                 animate={showCelebration ? { scale: [1, 1.2, 1] } : {}}
                                 transition={{ duration: 0.6 }}
@@ -252,7 +248,7 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                                     <span className="text-xs text-white/90">Bond Strength</span>
                                 </div>
                             </motion.div>
-                            
+
                             <Badge className="bg-green-500 text-white border-green-500">
                                 <div className="w-2 h-2 bg-white rounded-full mr-2 animate-pulse"></div>
                                 <span>5 Agents Active</span>
@@ -331,38 +327,66 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                                 <FamilyMetricsCards stats={familyStats} isLoading={isFamilyStatsLoading} />
                             </div>
 
-                            {/* Agent Quick Access */}
-                            <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-0 shadow-lg">
-                                <CardHeader>
-                                    <CardTitle className="flex items-center space-x-2">
-                                        <Zap className="w-5 h-5 text-purple-600" />
-                                        <span>Your Family AI Team</span>
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                                        {agentQuickAccess.map((agent: any, index: number) => (
-                                            <motion.div
-                                                key={agent.id}
-                                                initial={{ opacity: 0, scale: 0.9 }}
-                                                animate={{ opacity: 1, scale: 1 }}
-                                                transition={{ delay: index * 0.1 }}
-                                                whileHover={{ scale: 1.05 }}
-                                                whileTap={{ scale: 0.95 }}
-                                            >
-                                                <button
-                                                    onClick={() => handleAgentSelect(agent.id)}
-                                                    className={`w-full p-4 rounded-xl text-center transition-all duration-300 bg-gradient-to-br ${agent.color} text-white shadow-lg hover:shadow-xl`}
+                            {/* Family Connection Visualization */}
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <Card variant="premium" className="border-0">
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center space-x-2">
+                                            <Zap className="w-5 h-5 text-purple-600" />
+                                            <span>Family Connection Network</span>
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="flex justify-center">
+                                        <FamilyConnectionRings
+                                            healthScore={familyStats?.healthScore}
+                                            activeAgents={agentQuickAccess.map((a: any) => a.name)}
+                                        />
+                                    </CardContent>
+                                </Card>
+
+                                {/* Agent Quick Access */}
+                                <Card variant="gleam" className="border-0">
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center space-x-2">
+                                            <Users className="w-5 h-5 text-purple-600" />
+                                            <span>Your Family AI Team</span>
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="grid grid-cols-1 gap-3">
+                                            {agentQuickAccess.slice(0, 3).map((agent: any, index: number) => (
+                                                <motion.div
+                                                    key={agent.id}
+                                                    initial={{ opacity: 0, x: -20 }}
+                                                    animate={{ opacity: 1, x: 0 }}
+                                                    transition={{ delay: index * 0.1 }}
                                                 >
-                                                    <div className="text-3xl mb-2">{agent.icon}</div>
-                                                    <div className="font-semibold text-sm">{agent.name}</div>
-                                                    <div className="text-xs opacity-90 mt-1">{agent.description}</div>
-                                                </button>
-                                            </motion.div>
-                                        ))}
-                                    </div>
-                                </CardContent>
-                            </Card>
+                                                    <Button
+                                                        variant="premium"
+                                                        onClick={() => handleAgentSelect(agent.id)}
+                                                        className="w-full justify-start p-4 h-auto"
+                                                    >
+                                                        <div className="flex items-center space-x-3">
+                                                            <div className="text-2xl">{agent.icon}</div>
+                                                            <div className="text-left">
+                                                                <div className="font-semibold">{agent.name}</div>
+                                                                <div className="text-xs opacity-90">{agent.description}</div>
+                                                            </div>
+                                                        </div>
+                                                    </Button>
+                                                </motion.div>
+                                            ))}
+                                            <Button
+                                                variant="outline"
+                                                onClick={() => setActiveTab("agents")}
+                                                className="mt-2"
+                                            >
+                                                View All Agents
+                                            </Button>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </div>
 
                             {/* Family Health Radar Chart */}
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -416,7 +440,7 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                             </Card>
 
                             {/* Quick Activities */}
-                            <Card>
+                            <Card variant="premium">
                                 <CardHeader>
                                     <CardTitle className="flex items-center space-x-2">
                                         <Heart className="w-5 h-5 text-red-500" />
@@ -425,30 +449,39 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                                 </CardHeader>
                                 <CardContent>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                                            <div className="text-2xl mb-2">💬</div>
-                                            <div className="font-semibold text-blue-800 mb-1">Family Check-in</div>
-                                            <p className="text-sm text-blue-600 mb-2">Ask each family member about their day</p>
-                                            <Button size="sm" className="bg-blue-500 hover:bg-blue-600 text-white">
-                                                Start Activity
-                                            </Button>
-                                        </div>
-                                        <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-                                            <div className="text-2xl mb-2">🎯</div>
-                                            <div className="font-semibold text-green-800 mb-1">Weekly Goal</div>
-                                            <p className="text-sm text-green-600 mb-2">Set one family goal together</p>
-                                            <Button size="sm" className="bg-green-500 hover:bg-green-600 text-white">
-                                                Set Goal
-                                            </Button>
-                                        </div>
-                                        <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
-                                            <div className="text-2xl mb-2">📱</div>
-                                            <div className="font-semibold text-purple-800 mb-1">Digital Break</div>
-                                            <p className="text-sm text-purple-600 mb-2">30 minutes phone-free time</p>
-                                            <Button size="sm" className="bg-purple-500 hover:bg-purple-600 text-white">
-                                                Start Break
-                                            </Button>
-                                        </div>
+                                        {[
+                                            { emoji: "💬", title: "Family Check-in", desc: "Ask each family member about their day", color: "blue", variant: "gleam" as const },
+                                            { emoji: "🎯", title: "Weekly Goal", desc: "Set one family goal together", color: "green", variant: "premium" as const },
+                                            { emoji: "📱", title: "Digital Break", desc: "30 minutes phone-free time", color: "purple", variant: "electric" as const }
+                                        ].map((activity, index) => (
+                                            <motion.div
+                                                key={activity.title}
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: index * 0.1 }}
+                                            >
+                                                <Card variant={activity.variant} className="p-4 h-full">
+                                                    <div className="text-center">
+                                                        <motion.div
+                                                            className="text-3xl mb-3"
+                                                            animate={{ rotate: [0, 10, -10, 0] }}
+                                                            transition={{ duration: 2, repeat: Infinity, delay: index * 0.5 }}
+                                                        >
+                                                            {activity.emoji}
+                                                        </motion.div>
+                                                        <div className="font-semibold mb-2">{activity.title}</div>
+                                                        <p className="text-sm opacity-80 mb-3">{activity.desc}</p>
+                                                        <Button
+                                                            size="sm"
+                                                            variant={activity.variant}
+                                                            className="w-full"
+                                                        >
+                                                            Start Activity
+                                                        </Button>
+                                                    </div>
+                                                </Card>
+                                            </motion.div>
+                                        ))}
                                     </div>
                                 </CardContent>
                             </Card>
@@ -533,7 +566,7 @@ export const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
                                                         </li>
                                                     ))}
                                                 </ul>
-                                                <Button 
+                                                <Button
                                                     className="mt-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
                                                     onClick={() => handleAgentSelect(agent.id)}
                                                 >

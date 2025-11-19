@@ -28,6 +28,7 @@ export interface FamilyStats {
   presence?: PresenceMetrics;
   generational?: GenerationalMetrics;
   growth?: GrowthMetrics;
+  latestTransactionId?: string;
 }
 
 export interface FamilyHistoryPoint {
@@ -44,6 +45,30 @@ export interface ConnectionOpportunity {
   description: string;
   category?: 'activity' | 'conversation' | 'tradition';
   difficulty?: 'easy' | 'medium' | 'challenging';
+}
+
+export interface FamilyMember {
+  id: string;
+  name: string;
+  relationship: string;
+  age?: number;
+  birthday?: string;
+  avatar?: string;
+  interests: string[];
+  favoriteActivities: string[];
+  communicationStyle: "visual" | "auditory" | "kinesthetic";
+  personalityTraits: string[];
+  goals: string[];
+  preferences: {
+    notifications: boolean;
+    privacy: "open" | "moderate" | "private";
+    shareProgress: boolean;
+  };
+  contact?: {
+    email?: string;
+    phone?: string;
+  };
+  notes?: string;
 }
 
 export interface ConsentScopes {

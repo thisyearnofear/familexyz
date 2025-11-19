@@ -139,7 +139,8 @@
     "hedera": {
       "network": "testnet",
       "consensusLogging": true,
-      "tokenRewards": false,
+      "tokenRewards": true,
+      "tokenId": "0.0.493123",
       "privacyFirst": true,
       "metadataOnly": true
     },

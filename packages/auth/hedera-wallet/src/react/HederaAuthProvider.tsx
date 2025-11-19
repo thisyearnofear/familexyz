@@ -18,6 +18,7 @@ import {
   JoinFamilyRequest,
   JoinFamilyResponse,
   AuthError,
+  FamilyPermission,
   HederaAuthConfig,
   SigningRequest,
   SigningResponse,
@@ -528,7 +529,7 @@ export const useFamilyAuth = () => {
   const hasPermission = useCallback(
     (permission: string) => {
       const member = getCurrentMember();
-      return member?.permissions.includes(permission) || false;
+      return member?.permissions.includes(permission as FamilyPermission) || false;
     },
     [getCurrentMember],
   );

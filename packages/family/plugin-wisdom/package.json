@@ -23,12 +23,13 @@
   },
   "dependencies": {
     "@elizaos/core": "workspace:*",
-    "@elizaos/family-nlp-utils": "workspace:*",
     "@elizaos/family-metrics": "workspace:*",
+    "@elizaos/family-nlp-utils": "workspace:*",
     "@elizaos/hedera-core": "workspace:*",
     "node-cache": "^5.1.2"
   },
   "devDependencies": {
+    "@types/node": "24.10.1",
     "tsup": "^8.3.5",
     "typescript": "^5.6.3"
   }

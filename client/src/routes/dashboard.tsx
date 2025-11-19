@@ -1,10 +1,10 @@
-import { FamilyDashboard } from "@/components/FamilyDashboard";
+import { EnhancedFamilyDashboard } from "@/components/EnhancedFamilyDashboard";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export default function Dashboard() {
   return (
     <ErrorBoundary>
-      <FamilyDashboard />
+      <EnhancedFamilyDashboard />
     </ErrorBoundary>
   );
 }

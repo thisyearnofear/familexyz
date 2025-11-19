@@ -11,7 +11,6 @@ import { lazy, Suspense } from "react";
 const Overview = lazy(() => import("./routes/overview"));
 const Home = lazy(() => import("./routes/home"));
 const Dashboard = lazy(() => import("./routes/dashboard"));
-const EnhancedDashboard = lazy(() => import("./routes/enhanced-dashboard"));
 const Chat = lazy(() => import("./routes/chat"));
 
 // Loading component for suspense
@@ -59,10 +58,6 @@ function App() {
                                             <Route
                                                 path="/dashboard"
                                                 element={<Dashboard />}
-                                            />
-                                            <Route
-                                                path="/enhanced-dashboard"
-                                                element={<EnhancedDashboard />}
                                             />
                                             <Route
                                                 path="chat/:agentId"

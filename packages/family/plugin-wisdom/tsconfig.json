@@ -1,41 +1,59 @@
 {
-  "compilerOptions": {
-    "target": "ES2020",
-    "module": "ESNext",
-    "moduleResolution": "node",
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "allowSyntheticDefaultImports": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmitOnError": false,
-    "lib": ["ES2020"],
-    "composite": true,
-    "baseUrl": ".",
-    "paths": {
-      "@elizaos/core": ["../../core/src"],
-      "@elizaos/family-nlp-utils": ["../nlp-utils/src"],
-      "@elizaos/hedera-core": ["../../blockchain/hedera-core/src"]
-    }
-  },
-  "include": ["src/**/*"],
-  "exclude": ["dist", "node_modules", "**/*.test.ts", "**/*.spec.ts"],
-  "references": [
-    {
-      "path": "../../core"
+    "compilerOptions": {
+        "target": "ES2020",
+        "module": "ESNext",
+        "moduleResolution": "node",
+        "outDir": "./dist",
+        "declaration": true,
+        "declarationMap": true,
+        "sourceMap": true,
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "allowSyntheticDefaultImports": true,
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "noEmitOnError": false,
+        "lib": [
+            "ES2020",
+            "DOM"
+        ],
+        "composite": true,
+        "baseUrl": ".",
+        "paths": {
+            "@elizaos/core": [
+                "../../core/src"
+            ],
+            "@elizaos/family-nlp-utils": [
+                "../nlp-utils/src"
+            ],
+            "@elizaos/family-metrics": [
+                "../metrics/src"
+            ],
+            "@elizaos/hedera-core": [
+                "../../blockchain/hedera-core/src"
+            ]
+        }
     },
-    {
-      "path": "../nlp-utils"
-    },
-    {
-      "path": "../../blockchain/hedera-core"
-    }
-  ]
+    "include": [
+        "src/**/*"
+    ],
+    "exclude": [
+        "dist",
+        "node_modules",
+        "**/*.test.ts",
+        "**/*.spec.ts"
+    ],
+    "references": [
+        {
+            "path": "../nlp-utils"
+        },
+        {
+            "path": "../metrics"
+        },
+        {
+            "path": "../../blockchain/hedera-core"
+        }
+    ]
 }

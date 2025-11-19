@@ -246,12 +246,4 @@ export const calculateCorrelations = (
     return correlations;
 };
 
-// Export all functions for use in components
-export {
-    calculateTrend,
-    predictHealthScore,
-    getImprovementAreas,
-    calculateVolatility,
-    generateRecommendations,
-    calculateCorrelations,
-};
+// All functions are already exported individually above

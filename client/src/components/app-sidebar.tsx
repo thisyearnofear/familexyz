@@ -62,14 +62,6 @@ export function AppSidebar() {
                             </SidebarMenuButton>
                         </NavLink>
                     </SidebarMenuItem>
-                    <SidebarMenuItem>
-                        <NavLink to="/enhanced-dashboard">
-                            <SidebarMenuButton>
-                                <Home className="h-5 w-5 mr-2" />
-                                Enhanced Dashboard
-                            </SidebarMenuButton>
-                        </NavLink>
-                    </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarHeader>
             <SidebarContent>

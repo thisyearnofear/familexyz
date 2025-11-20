@@ -19,26 +19,45 @@ async function main() {
 
   try {
     const accountId = AccountId.fromString(accountIdStr);
+    console.log(`📋 Account ID: ${accountId.toString()}`);
+
     // Strip 0x prefix if present
     const cleanPrivateKey = privateKeyStr.startsWith("0x") ? privateKeyStr.slice(2) : privateKeyStr;
 
-    // Try ED25519 first (most common for Hedera), fallback to ECDSA
+    // HashScan shows this account uses ECDSA_SECP256K1, so try ECDSA first
     let privateKey: PrivateKey;
+    let keyType: string;
+
     try {
-      privateKey = PrivateKey.fromStringED25519(cleanPrivateKey);
-      console.log(`🔑 Using ED25519 key`);
-    } catch {
+      privateKey = PrivateKey.fromStringECDSA(cleanPrivateKey);
+      keyType = "ECDSA_SECP256K1";
+      console.log(`🔑 Using ECDSA_SECP256K1 key`);
+    } catch (ecdsaError) {
       try {
-        privateKey = PrivateKey.fromStringECDSA(cleanPrivateKey);
-        console.log(`🔑 Using ECDSA key`);
-      } catch {
-        // Last resort: try DER format
-        privateKey = PrivateKey.fromStringDer(cleanPrivateKey);
-        console.log(`🔑 Using DER format key`);
+        privateKey = PrivateKey.fromStringED25519(cleanPrivateKey);
+        keyType = "ED25519";
+        console.log(`🔑 Using ED25519 key`);
+      } catch (ed25519Error) {
+        try {
+          privateKey = PrivateKey.fromStringDer(cleanPrivateKey);
+          keyType = "DER";
+          console.log(`🔑 Using DER format key`);
+        } catch (derError) {
+          console.error("❌ Failed to parse private key in any format");
+          console.error("ECDSA error:", ecdsaError);
+          console.error("ED25519 error:", ed25519Error);
+          console.error("DER error:", derError);
+          process.exit(1);
+        }
       }
     }
 
-    console.log(`🔑 Public Key: ${privateKey.publicKey.toString()}`);
+    const publicKey = privateKey.publicKey;
+    console.log(`🔑 Key Type: ${keyType}`);
+    console.log(`🔑 Public Key (toString): ${publicKey.toString()}`);
+    console.log(`🔑 Public Key (hex): 0x${publicKey.toStringRaw()}`);
+    console.log(`\n⚠️  Expected Admin Key from HashScan: 0x0226025dd4cfaa90271c7a6f4dd0889bccbcba11eee67b06124d98d8d4b431e07f`);
+    console.log(`📌 If these don't match, the private key is incorrect for this account!\n`);
 
     const client = Client.forTestnet();
     client.setOperator(accountId, privateKey);

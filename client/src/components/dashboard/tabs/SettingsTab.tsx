@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Settings as SettingsIcon, Save, RotateCcw } from "lucide-react";
+import { Settings as SettingsIcon, Save, RotateCcw, Wallet, Coins, ArrowRight } from "lucide-react";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
+import { useWalletConnection } from "@elizaos/hedera-wallet/react";
 
 interface SettingsFormData {
   familyName: string;
@@ -16,6 +18,9 @@ interface SettingsFormData {
 
 export const SettingsTab: React.FC = () => {
   const { familyMembers } = useFamilyMembers();
+  const { isConnected, isConnecting, connection, connectWallet, disconnectWallet } = useWalletConnection();
+  const [balance, setBalance] = useState<string>("0");
+
   const [formData, setFormData] = useState<SettingsFormData>({
     familyName: "",
     communicationStyle: "warm",
@@ -46,6 +51,23 @@ export const SettingsTab: React.FC = () => {
       }
     }
   }, []);
+
+  // Fetch balance when connected
+  useEffect(() => {
+    if (isConnected && connection?.accountId) {
+        fetch(`https://testnet.mirrornode.hedera.com/api/v1/accounts/${connection.accountId}`)
+            .then(res => res.json())
+            .then(data => {
+                 if(data && data.balance) {
+                     // Convert tinybar to HBAR
+                     setBalance((data.balance.balance / 100_000_000).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+                 }
+            })
+            .catch(err => console.error("Failed to fetch balance:", err));
+    } else {
+        setBalance("0");
+    }
+  }, [isConnected, connection?.accountId]);
 
   const handleInputChange = (
     field: keyof SettingsFormData,
@@ -102,6 +124,16 @@ export const SettingsTab: React.FC = () => {
     setHasChanges(false);
   };
 
+  const handleConnectWallet = async () => {
+      try {
+          // Default to HashPack for this demo
+          await connectWallet("hashpack");
+      } catch (error) {
+          console.error("Wallet connection failed:", error);
+          alert("Failed to connect wallet. Please ensure HashPack is installed.");
+      }
+  };
+
   return (
     <motion.div
       key="settings"
@@ -111,6 +143,87 @@ export const SettingsTab: React.FC = () => {
       transition={{ duration: 0.3 }}
       className="space-y-6"
     >
+      {/* Family Treasury / Wallet Section - REAL INTEGRATION */}
+      <Card className="border-2 border-purple-100 overflow-hidden">
+          <div className="absolute top-0 right-0 p-4 opacity-10">
+              <Wallet className="w-24 h-24 text-purple-600" />
+          </div>
+        <CardHeader className="bg-gradient-to-r from-purple-50 to-white border-b border-purple-100">
+          <CardTitle className="flex items-center space-x-2 text-purple-900">
+            <Wallet className="w-5 h-5 text-purple-600" />
+            <span>Family Treasury (Hedera)</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6 space-y-4">
+            {!isConnected ? (
+                <div className="text-center py-6">
+                    <p className="text-gray-600 mb-4">Connect a wallet to fund your Family Agent and enable blockchain rewards.</p>
+                    <Button
+                        onClick={handleConnectWallet}
+                        disabled={isConnecting}
+                        className="bg-black hover:bg-gray-800 text-white font-bold py-2 px-6 rounded-full transition-all transform hover:scale-105"
+                    >
+                        {isConnecting ? "Connecting..." : "Connect HashPack Wallet"}
+                    </Button>
+                    <p className="text-xs text-gray-400 mt-4">
+                        Requires HashPack browser extension
+                    </p>
+                </div>
+            ) : (
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between bg-white p-4 rounded-lg border border-purple-100 shadow-sm">
+                        <div>
+                            <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Connected Account</p>
+                            <p className="font-mono text-lg font-bold text-purple-900">{connection?.accountId}</p>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-xs text-gray-500 uppercase font-bold tracking-wider">Balance</p>
+                            <p className="text-2xl font-bold text-green-600 flex items-center justify-end gap-1">
+                                {balance} <span className="text-sm text-gray-400">HBAR</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
+                            <div className="flex items-center gap-2 mb-2">
+                                <Coins className="w-4 h-4 text-purple-600" />
+                                <h4 className="font-bold text-purple-900 text-sm">Inference Fund</h4>
+                            </div>
+                            <p className="text-xs text-gray-600 mb-3">
+                                HBAR allocated to power your Family Agents' intelligence.
+                            </p>
+                            <div className="w-full bg-purple-200 rounded-full h-2 mb-1">
+                                <div className="bg-purple-600 h-2 rounded-full" style={{ width: '75%' }}></div>
+                            </div>
+                            <p className="text-xs text-right text-purple-700 font-mono">Allocated: 75%</p>
+                        </div>
+
+                        <div className="bg-pink-50 p-4 rounded-lg border border-pink-100">
+                            <div className="flex items-center gap-2 mb-2">
+                                <ArrowRight className="w-4 h-4 text-pink-600" />
+                                <h4 className="font-bold text-pink-900 text-sm">Reward Pool</h4>
+                            </div>
+                            <p className="text-xs text-gray-600 mb-3">
+                                HBAR distributed to family members for completing growth challenges.
+                            </p>
+                            <div className="w-full bg-pink-200 rounded-full h-2 mb-1">
+                                <div className="bg-pink-500 h-2 rounded-full" style={{ width: '25%' }}></div>
+                            </div>
+                            <p className="text-xs text-right text-pink-700 font-mono">Allocated: 25%</p>
+                        </div>
+                    </div>
+
+                    <div className="flex justify-end">
+                        <Button variant="ghost" size="sm" onClick={() => disconnectWallet()} className="text-red-500 hover:text-red-700 hover:bg-red-50">
+                            Disconnect Wallet
+                        </Button>
+                    </div>
+                </div>
+            )}
+        </CardContent>
+      </Card>
+
       {/* Family Profile Settings */}
       <Card>
         <CardHeader>

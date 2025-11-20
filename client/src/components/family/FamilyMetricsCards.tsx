@@ -103,6 +103,24 @@ export const FamilyMetricsCards = ({
                           : "negative"
                 }
             />
+            {stats?.latestTransactionId && (
+                <div className="col-span-1 md:col-span-2 lg:col-span-4 bg-green-50 border border-green-200 rounded-lg p-3 flex items-center justify-between animate-in fade-in slide-in-from-top-2">
+                    <div className="flex items-center gap-2">
+                        <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                        <span className="text-sm font-medium text-green-800">
+                            Hedera Consensus Verified
+                        </span>
+                    </div>
+                    <a
+                        href={`https://hashscan.io/testnet/transaction/${stats.latestTransactionId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-green-600 hover:text-green-800 hover:underline font-mono truncate max-w-[200px]"
+                    >
+                        Tx: {stats.latestTransactionId}
+                    </a>
+                </div>
+            )}
             <MetricCard
                 title="💬 Conversations"
                 value={metrics.total}

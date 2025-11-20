@@ -6,6 +6,7 @@ import { describe, it, expect } from "vitest";
 import { familyMetricsPlugin, FAMILY_METRICS_CONFIGS } from "./index";
 import type { Memory, State } from "@elizaos/core";
 import { ModelProviderName } from "@elizaos/core";
+import type { FamilyMetricsConfig } from "./plugin";
 
 describe("Family Metrics Plugin Factory", () => {
   // Mock Runtime (reusable across all tests)
@@ -41,7 +42,8 @@ describe("Family Metrics Plugin Factory", () => {
   });
 
   describe("Intimacy Plugin", () => {
-    const plugin = familyMetricsPlugin(FAMILY_METRICS_CONFIGS.INTIMACY);
+    // Cast readonly config to mutable type for plugin factory
+    const plugin = familyMetricsPlugin(FAMILY_METRICS_CONFIGS.INTIMACY as FamilyMetricsConfig);
 
     it("should create plugin with correct configuration", () => {
       expect(plugin.name).toBe("family-intimacy");
@@ -73,7 +75,7 @@ describe("Family Metrics Plugin Factory", () => {
   });
 
   describe("Generational Bridge Plugin", () => {
-    const plugin = familyMetricsPlugin(FAMILY_METRICS_CONFIGS.GENERATIONAL_BRIDGE);
+    const plugin = familyMetricsPlugin(FAMILY_METRICS_CONFIGS.GENERATIONAL_BRIDGE as FamilyMetricsConfig);
 
     it("should create plugin with correct configuration", () => {
       expect(plugin.name).toBe("family-generational-bridge");
@@ -103,7 +105,7 @@ describe("Family Metrics Plugin Factory", () => {
   });
 
   describe("Presence Plugin", () => {
-    const plugin = familyMetricsPlugin(FAMILY_METRICS_CONFIGS.PRESENCE);
+    const plugin = familyMetricsPlugin(FAMILY_METRICS_CONFIGS.PRESENCE as FamilyMetricsConfig);
 
     it("should create plugin with correct configuration", () => {
       expect(plugin.name).toBe("family-presence");
@@ -133,7 +135,7 @@ describe("Family Metrics Plugin Factory", () => {
   });
 
   describe("Growth Plugin", () => {
-    const plugin = familyMetricsPlugin(FAMILY_METRICS_CONFIGS.GROWTH);
+    const plugin = familyMetricsPlugin(FAMILY_METRICS_CONFIGS.GROWTH as FamilyMetricsConfig);
 
     it("should create plugin with correct configuration", () => {
       expect(plugin.name).toBe("family-growth");
@@ -165,10 +167,10 @@ describe("Family Metrics Plugin Factory", () => {
   describe("Plugin Factory Consistency", () => {
     it("should create plugins with consistent structure", () => {
       const plugins = [
-        familyMetricsPlugin(FAMILY_METRICS_CONFIGS.INTIMACY),
-        familyMetricsPlugin(FAMILY_METRICS_CONFIGS.GENERATIONAL_BRIDGE),
-        familyMetricsPlugin(FAMILY_METRICS_CONFIGS.PRESENCE),
-        familyMetricsPlugin(FAMILY_METRICS_CONFIGS.GROWTH)
+        familyMetricsPlugin(FAMILY_METRICS_CONFIGS.INTIMACY as FamilyMetricsConfig),
+        familyMetricsPlugin(FAMILY_METRICS_CONFIGS.GENERATIONAL_BRIDGE as FamilyMetricsConfig),
+        familyMetricsPlugin(FAMILY_METRICS_CONFIGS.PRESENCE as FamilyMetricsConfig),
+        familyMetricsPlugin(FAMILY_METRICS_CONFIGS.GROWTH as FamilyMetricsConfig)
       ];
 
       plugins.forEach(plugin => {

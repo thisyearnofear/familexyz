@@ -16,5 +16,5 @@ export interface MetricEntry {
 
 export interface KeywordCategory {
   id: string;
-  words: string[];
+  words: readonly string[] | string[];
 }

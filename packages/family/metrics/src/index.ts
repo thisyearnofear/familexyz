@@ -1,15 +1,9 @@
 // packages/family/metrics/src/index.ts
 
 import type { Plugin } from "@elizaos/core";
-import { createFamilyMetricsPlugin } from "./plugin";
+import { createFamilyMetricsPlugin, type FamilyMetricsConfig } from "./plugin";
 import { calculateFamilyMetrics, storeMetrics, getMetrics, getLatestMetrics, clearMetrics } from "./metrics";
 import type { FamilyMetrics, MetricEntry, KeywordCategory } from "./types";
-
-export interface FamilyMetricsConfig {
-  pluginName: string;
-  categories: Array<{ id: string; words: string[] }>;
-  description: string;
-}
 
 export const familyMetricsPlugin = (config: FamilyMetricsConfig): Plugin => {
   return createFamilyMetricsPlugin(config);
@@ -42,7 +36,7 @@ export const FAMILY_METRICS_CONFIGS = {
     ]
   },
   GENERATIONAL_BRIDGE: {
-    pluginName: "family-generational-bridge", 
+    pluginName: "family-generational-bridge",
     description: "Tracks generational bridge and gap metrics in family conversations",
     categories: [
       { id: "bridge", words: ["share", "story", "remember", "tradition", "together"] },
@@ -51,7 +45,7 @@ export const FAMILY_METRICS_CONFIGS = {
   },
   PRESENCE: {
     pluginName: "family-presence",
-    description: "Tracks presence and attention metrics in family conversations", 
+    description: "Tracks presence and attention metrics in family conversations",
     categories: [
       { id: "attention", words: ["listen", "focus", "present", "here", "now"] },
       { id: "distraction", words: ["phone", "scroll", "screen", "device", "online"] },

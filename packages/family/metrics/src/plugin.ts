@@ -6,7 +6,7 @@ import { calculateFamilyMetrics, storeMetrics } from "./metrics";
 
 export interface FamilyMetricsConfig {
   pluginName: string;
-  categories: KeywordCategory[];
+  categories: readonly KeywordCategory[] | KeywordCategory[];
   description: string;
 }
 
@@ -18,12 +18,11 @@ export function createFamilyMetricsPlugin(config: FamilyMetricsConfig): Plugin {
     evaluators: [],
     providers: [
       {
-        name: `${config.pluginName}-provider`,
         get: async (runtime: IAgentRuntime, message: Memory, state?: State) => {
           // Calculate metrics based on recent conversation
           const text = message.content?.text || "";
           const metrics: FamilyMetrics = calculateFamilyMetrics(text, config.categories);
-          
+
           // Store the calculated metrics
           storeMetrics({
             pluginName: config.pluginName,

@@ -2,7 +2,7 @@
 
 import type { FamilyMetrics, MetricEntry, KeywordCategory } from "./types";
 
-function classifyByCategories(text: string, categories: KeywordCategory[]): Record<string, number> {
+function classifyByCategories(text: string, categories: readonly KeywordCategory[] | KeywordCategory[]): Record<string, number> {
   const results: Record<string, number> = {};
   const lowerText = text.toLowerCase();
 
@@ -24,7 +24,7 @@ const MAX_STORE_SIZE = 1000;
 
 export function calculateFamilyMetrics(
   text: string,
-  categories: KeywordCategory[]
+  categories: readonly KeywordCategory[] | KeywordCategory[]
 ): FamilyMetrics {
   const categoryResults = classifyByCategories(text, categories);
 

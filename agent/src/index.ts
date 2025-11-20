@@ -1256,10 +1256,23 @@ const startAgents = async () => {
 
     directClient.start(serverPort);
 
-    // Minimal HTTP health server without extra deps
+    // Minimal HTTP health server with CORS support
     const http = await import("http");
     const healthPort = Number.parseInt(process.env.HEALTH_PORT || "3001");
-    const server = http.createServer(async (_req, res) => {
+    const server = http.createServer(async (req, res) => {
+        // Add CORS headers to all responses
+        const origin = req.headers.origin || "*";
+        res.setHeader("Access-Control-Allow-Origin", origin);
+        res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+        res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+        
+        // Handle preflight requests
+        if (req.method === "OPTIONS") {
+            res.statusCode = 200;
+            res.end();
+            return;
+        }
+        
         res.statusCode = 200;
         res.setHeader("Content-Type", "application/json");
         const ready = await readinessCheck();

@@ -32,35 +32,46 @@ pnpm install
 
 # 2. Set up environment
 cp environments/development/.env.development .env
-# Edit .env with your API keys
+# Edit .env with your API keys (Venice AI, OpenAI, Hedera credentials)
 
-# 3. Launch the full stack
-pnpm dev
+# 3. Start the backend agents (required first)
+pnpm --filter agent start
+
+# 4. In a new terminal, start the frontend dashboard
+pnpm start:client
 ```
 
-> **Note:** `pnpm dev` launches both the backend (all five family agents) and frontend dashboard automatically.
+The dashboard will be available at `http://localhost:5173`
 
 ### 🔧 Development Options
 
-**Launch Everything (Recommended)**
+**Terminal 1: Start Backend Agents**
 
 ```bash
-pnpm dev
+pnpm --filter agent start
 ```
 
-**Backend Only**
+Backend agents will initialize and listen for connections on port 3001.
 
-```bash
-pnpm start
-```
-
-**Frontend Only**
+**Terminal 2: Start Frontend Dashboard**
 
 ```bash
 pnpm start:client
 ```
 
-The dashboard will be available at `http://localhost:5173`
+Frontend development server runs at `http://localhost:5173`
+
+**Alternative: Using Client Direct Interface**
+
+For testing agents without the web dashboard:
+
+```bash
+# Terminal 1: Start agents
+pnpm --filter agent start
+
+# Terminal 2: Start CLI client
+pnpm --filter "@elizaos/client-direct" start
+```
 
 See [Development Guide](./docs/development-deployment.md) for detailed setup instructions.
 

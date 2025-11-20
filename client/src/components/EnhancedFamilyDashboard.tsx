@@ -46,6 +46,8 @@ export const EnhancedFamilyDashboard: React.FC<EnhancedFamilyDashboardProps> = (
   } = useFamilyMembers();
 
   const handleOnboardingComplete = () => {
+    baseHandleOnboardingComplete?.();
+    setShowOnboarding(false);
     setShowCelebration(true);
     setTimeout(() => setShowCelebration(false), 3000);
   };
@@ -60,7 +62,11 @@ export const EnhancedFamilyDashboard: React.FC<EnhancedFamilyDashboardProps> = (
   if (showOnboarding) {
     return (
       <FamilyOnboarding
-        onComplete={handleOnboardingComplete}
+        onComplete={(profile) => {
+          baseHandleOnboardingComplete?.(profile);
+          setShowOnboarding(false);
+          handleOnboardingComplete();
+        }}
         onCancel={() => setShowOnboarding(false)}
       />
     );

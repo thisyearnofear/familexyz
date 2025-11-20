@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -67,6 +68,7 @@ interface FamilyProfile {
 }
 
 export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, onCancel }) => {
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
   const [showHelp, setShowHelp] = useState(false);
   const [showTour, setShowTour] = useState(false);
@@ -130,7 +132,7 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
       component: (
         <WelcomeStep
           onNext={() => setCurrentStep(1)}
-          onSkip={() => setCurrentStep(6)}
+          onSkip={() => setCurrentStep(5)}
           onStartTour={() => setShowTour(true)}
         />
       )
@@ -221,11 +223,13 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
       description: "You're all set to strengthen your family bonds with AI-powered guidance.",
       icon: <Trophy className="w-8 h-8 text-orange-500" />,
       component: (
-        <CompletionStep
-          profile={familyProfile}
-          onComplete={onComplete}
-        />
-      )
+         <CompletionStep
+           profile={familyProfile}
+           onComplete={() => {
+             onComplete?.(familyProfile);
+           }}
+         />
+       )
     }
   ];
 
@@ -299,23 +303,27 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <div className="flex items-center space-x-4 mb-6">
-                      <div className="p-3 rounded-xl bg-gradient-to-r from-purple-100 to-pink-100">
-                        {steps[currentStep]?.icon}
-                      </div>
-                      <div>
-                        <h2 className="text-2xl font-bold text-gray-800">
-                          {steps[currentStep]?.title}
-                        </h2>
-                        <p className="text-gray-600">
-                          {steps[currentStep]?.subtitle}
-                        </p>
-                      </div>
-                    </div>
+                    {currentStep !== 0 && (
+                      <>
+                        <div className="flex items-center space-x-4 mb-6">
+                          <div className="p-3 rounded-xl bg-gradient-to-r from-purple-100 to-pink-100">
+                            {steps[currentStep]?.icon}
+                          </div>
+                          <div>
+                            <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                              {steps[currentStep]?.title}
+                            </h2>
+                            <p className="text-purple-600 font-semibold">
+                              {steps[currentStep]?.subtitle}
+                            </p>
+                          </div>
+                        </div>
 
-                    <p className="text-gray-600 mb-8">
-                      {steps[currentStep]?.description}
-                    </p>
+                        <p className="text-gray-900 mb-8 font-semibold">
+                          {steps[currentStep]?.description}
+                        </p>
+                      </>
+                    )}
 
                   <div className="mb-8">
                     {steps[currentStep].component}
@@ -352,49 +360,51 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
                       </motion.div>
                     )}
                   </AnimatePresence>
+                  </motion.div>
+                  )}
+                  </AnimatePresence>
+                  </div>
 
-                  <div className="flex justify-between items-center">
+                  {currentStep !== 0 && (
+                  <div className="flex justify-between items-center px-8 pb-6">
+                  <Button
+                  variant="outline"
+                  onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
+                  disabled={currentStep === 0}
+                  className="flex items-center space-x-2"
+                  >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Back</span>
+                  </Button>
+
+                  <div className="flex space-x-2">
+                  {currentStep > 0 && currentStep < steps.length - 1 && (
                     <Button
                       variant="outline"
-                      onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
-                      disabled={currentStep === 0}
-                      className="flex items-center space-x-2"
+                      onClick={() => setCurrentStep(5)} // Skip to completion
                     >
-                      <ArrowLeft className="w-4 h-4" />
-                      <span>Back</span>
+                      Skip for now
                     </Button>
+                  )}
 
-                    <div className="flex space-x-2">
-                      {currentStep > 0 && currentStep < steps.length - 1 && (
-                        <Button
-                          variant="outline"
-                          onClick={() => setCurrentStep(5)} // Skip to completion
-                        >
-                          Skip for now
-                        </Button>
-                      )}
-
-                      {currentStep < steps.length - 1 ? (
-                        <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 flex items-center space-x-2">
-                          <span>Continue</span>
-                          <ArrowRight className="w-4 h-4" />
-                        </Button>
-                      ) : (
-                        <Button
-                          className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 flex items-center space-x-2"
-                          onClick={() => onComplete?.(familyProfile)}
-                        >
-                          <Trophy className="w-4 h-4" />
-                          <span>Start My Family Journey</span>
-                        </Button>
-                      )}
-                    </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </CardContent>
+                  {currentStep < steps.length - 1 ? (
+                    <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 flex items-center space-x-2">
+                      <span>Continue</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  ) : (
+                    <Button
+                      className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 flex items-center space-x-2"
+                      onClick={() => onComplete?.(familyProfile)}
+                    >
+                      <Trophy className="w-4 h-4" />
+                      <span>Start My Family Journey</span>
+                    </Button>
+                  )}
+                  </div>
+                  </div>
+                  )}
+                    </CardContent>
         </Card>
       </div>
     </div>

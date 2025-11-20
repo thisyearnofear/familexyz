@@ -121,29 +121,26 @@ familexyz/
 
 ## 🚀 Development Workflow
 
-### Hot Reload Development
+### Local Development Setup (Recommended)
+
+Start the backend agents and frontend dashboard in separate terminal windows:
+
+**Terminal 1: Start Backend Agents**
 
 ```bash
-# Start full stack with hot reload
-pnpm dev
+# Start all five family agents
+pnpm --filter agent start
+
+# Or with debug logging
+pnpm --filter agent start:debug
+
+# Or with clean database reset
+pnpm --filter agent run cleanstart
 ```
 
-This command starts both the backend agents and frontend dashboard with automatic reloading on code changes.
+The agents will initialize and listen on port 3001.
 
-### Backend Development Only
-
-```bash
-# Start all family agents
-pnpm start
-
-# Start with debug logging
-pnpm start:debug
-
-# Clean start (resets database)
-pnpm cleanstart
-```
-
-### Frontend Development Only
+**Terminal 2: Start Frontend Dashboard**
 
 ```bash
 # Start web dashboard
@@ -152,6 +149,20 @@ pnpm start:client
 
 Dashboard available at `http://localhost:5173`
 
+### Alternative: CLI Direct Client
+
+For testing agents without the web dashboard:
+
+```bash
+# Terminal 1: Start agents
+pnpm --filter agent start
+
+# Terminal 2: Start CLI client
+pnpm --filter "@elizaos/client-direct" start
+```
+
+This provides a direct terminal interface to interact with the family agents.
+
 ### Individual Package Development
 
 ```bash
@@ -159,6 +170,15 @@ Dashboard available at `http://localhost:5173`
 cd packages/family/plugin-wisdom && pnpm dev
 cd packages/blockchain/hedera-core && pnpm dev
 cd client && pnpm dev
+```
+
+### Backend Development Only
+
+```bash
+# Start all family agents with various options
+pnpm --filter agent start          # Normal mode
+pnpm --filter agent start:debug    # Debug logging
+pnpm --filter agent run cleanstart # Reset database & start
 ```
 
 ## 🧪 Testing

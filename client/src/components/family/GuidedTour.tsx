@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,7 @@ import {
   Target,
   Sparkles,
   Trophy,
-  MessageCircle
+  ArrowUpRight
 } from "lucide-react";
 
 interface TourStep {
@@ -36,6 +37,7 @@ interface GuidedTourProps {
 }
 
 export const GuidedTour: React.FC<GuidedTourProps> = ({ onComplete, onSkip }) => {
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
@@ -44,7 +46,7 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({ onComplete, onSkip }) =>
     {
       id: "welcome",
       title: "Welcome to Your Family Journey",
-      description: "FamilyXYZ is designed to strengthen family bonds through AI-powered guidance, personalized activities, and meaningful connections.",
+      description: "Strengthen family bonds with AI-powered guidance designed specifically for how your family communicates, grows, and connects.",
       icon: <Heart className="w-8 h-8 text-red-500" />,
       highlight: "AI-powered family wellness platform",
       tips: [
@@ -57,7 +59,7 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({ onComplete, onSkip }) =>
     {
       id: "family-profiles",
       title: "Family Member Profiles",
-      description: "Create detailed profiles for each family member to get personalized recommendations and activities tailored to everyone's interests and communication styles.",
+      description: "Build rich profiles for each family member to unlock personalized activities, recommendations, and communication tailored to their unique interests and style.",
       icon: <Users className="w-8 h-8 text-blue-500" />,
       highlight: "Personalized for each family member",
       tips: [
@@ -70,7 +72,7 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({ onComplete, onSkip }) =>
     {
       id: "ai-agents",
       title: "Your AI Family Team",
-      description: "Meet your specialized AI agents: Wisdom (emotional guidance), Intimacy (relationships), Bridge (generations), Presence (mindfulness), and Growth (challenges).",
+      description: "Five specialized AI coaches ready to guide you: 🧠 Wisdom for emotional clarity, 💑 Intimacy for relationships, 👵👦 Bridge for generations, 🧘 Presence for mindfulness, 🚀 Growth for challenges.",
       icon: <Sparkles className="w-8 h-8 text-purple-500" />,
       highlight: "5 specialized AI family coaches",
       tips: [
@@ -83,7 +85,7 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({ onComplete, onSkip }) =>
     {
       id: "activities",
       title: "Personalized Activities",
-      description: "Discover activities, conversations, and challenges specifically designed for your family's goals, interests, and dynamics.",
+      description: "Experience activities and challenges that evolve with your family—designed around your goals, interests, and the unique dynamics that make your family special.",
       icon: <Target className="w-8 h-8 text-green-500" />,
       highlight: "Activities that grow with your family",
       tips: [
@@ -96,7 +98,7 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({ onComplete, onSkip }) =>
     {
       id: "social-features",
       title: "Family Social Hub",
-      description: "Share achievements, collaborate on challenges, and celebrate your family's journey together in a private, secure environment.",
+      description: "Celebrate victories, collaborate on challenges, and build shared memories in a private space designed exclusively for your family.",
       icon: <Trophy className="w-8 h-8 text-yellow-500" />,
       highlight: "Private family social network",
       tips: [
@@ -109,7 +111,7 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({ onComplete, onSkip }) =>
     {
       id: "insights",
       title: "Family Insights & Growth",
-      description: "Track your family's emotional health, communication patterns, and growth over time with AI-powered insights and recommendations.",
+      description: "Watch your family thrive with AI-powered insights into emotional health, communication patterns, and meaningful growth—backed by personalized recommendations.",
       icon: <Lightbulb className="w-8 h-8 text-orange-500" />,
       highlight: "Data-driven family wellness",
       tips: [
@@ -247,7 +249,7 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({ onComplete, onSkip }) =>
                         {currentTourStep.icon}
                       </div>
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                    <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
                       {currentTourStep.title}
                     </h2>
                     {currentTourStep.highlight && (
@@ -255,7 +257,7 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({ onComplete, onSkip }) =>
                         {currentTourStep.highlight}
                       </Badge>
                     )}
-                    <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+                    <p className="text-gray-100 text-lg max-w-2xl mx-auto font-medium">
                       {currentTourStep.description}
                     </p>
                   </div>
@@ -295,13 +297,18 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({ onComplete, onSkip }) =>
                         {currentStep === 4 && "Celebrate achievements and build lasting memories"}
                         {currentStep === 5 && "Track progress and discover insights about your family"}
                       </p>
-                      <Button
-                        variant="outline"
-                        className="border-purple-300 text-purple-700 hover:bg-purple-50"
-                      >
-                        <MessageCircle className="w-4 h-4 mr-2" />
-                        Try Interactive Demo
-                      </Button>
+                      {currentStep === tourSteps.length - 1 && (
+                        <Button
+                          onClick={() => {
+                            onComplete();
+                            navigate("/dashboard");
+                          }}
+                          className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+                        >
+                          Go to Dashboard
+                          <ArrowUpRight className="w-4 h-4 ml-2" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </motion.div>

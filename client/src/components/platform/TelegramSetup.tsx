@@ -6,7 +6,6 @@ import { Progress } from "@/components/ui/progress";
 import { 
   MessageSquare, 
   CheckCircle, 
-  AlertCircle, 
   Copy,
   ExternalLink,
   Users,
@@ -164,7 +163,7 @@ export const TelegramSetup: React.FC<TelegramSetupProps> = ({ onComplete }) => {
               </Badge>
             ) : (
               <Badge variant="outline" className="text-orange-600 border-orange-200">
-                <AlertCircle className="w-3 h-3 mr-1" />
+                <span className="text-red-500 text-xs mr-1">⚠️</span>
                 Not Connected
               </Badge>
             )}
@@ -213,7 +212,7 @@ export const TelegramSetup: React.FC<TelegramSetupProps> = ({ onComplete }) => {
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              {setupSteps.map((step, index) => {
+              {setupSteps.map((step, index: number) => {
                 const stepNumber = index + 1;
                 const isActive = stepNumber === setupStep;
                 const isCompleted = stepNumber < setupStep;
@@ -259,7 +258,7 @@ export const TelegramSetup: React.FC<TelegramSetupProps> = ({ onComplete }) => {
         </CardHeader>
         <CardContent>
           <div className="space-y-3 text-sm">
-            {telegramIntegration.getSetupInstructions('@FamilyWisdomBot').map((instruction, index) => (
+            {telegramIntegration.getSetupInstructions('@FamilyWisdomBot').map((instruction, index: number) => (
               <div key={index} className="flex items-start space-x-2">
                 <div className="w-1 h-1 bg-gray-400 rounded-full mt-2 flex-shrink-0"></div>
                 <span className="text-gray-700">{instruction}</span>

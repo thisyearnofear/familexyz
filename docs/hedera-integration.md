@@ -2,7 +2,7 @@
 
 ## 🚀 Hedera Africa Hackathon 2025 - Track 4 (AI & DePIN)
 
-This documentation details the Family-Connection AI Agents implementation for the Hedera Africa Hackathon 2025 Track 4 submission, focusing on AI agents with decentralized infrastructure integration.
+This documentation details the Family-Connection AI Agents implementation for the Hedera Africa Hackathon 2025 Track 4 submission. Our architecture is deeply aligned with the principles of the **Hedera AI Agent Kit**, using a modular, tool-based approach for all on-chain interactions.
 
 ## ⛓️ HCS-10 Compliant Messaging
 
@@ -96,9 +96,11 @@ The platform implements full HCS-10 compliance for all family interactions, ensu
 
 ## 🏗️ Technical Implementation
 
-### Core Services
+### Hedera Agent Kit: Tools
 
-#### HederaService
+Our core services function as "Tools" in the Hedera AI Agent Kit paradigm, providing reusable and direct access to Hedera's functionalities.
+
+#### HederaService Tool
 
 Singleton service managing all Hedera interactions:
 
@@ -107,7 +109,7 @@ Singleton service managing all Hedera interactions:
 - Retry logic and error handling
 - Performance optimization
 
-#### HederaConsensusService
+#### HederaConsensusService Tool
 
 Handles all HCS operations:
 
@@ -116,7 +118,7 @@ Handles all HCS operations:
 - HCS-10 compliant message formatting
 - Consensus message querying
 
-#### HederaTokenService
+#### HederaTokenService Tool
 
 Manages tokenomics and rewards:
 
@@ -125,25 +127,36 @@ Manages tokenomics and rewards:
 - Balance tracking and reporting
 - Custom token management
 
-### Integration Layers
+### Hedera Agent Kit: Plugins
 
-#### FamilyHederaIntegration
+Our integration layers act as "Plugins" that adapt the core Tools for the specific context of our family agents.
+
+#### FamilyHederaIntegration Plugin
 
 Primary integration point for family agents:
 
-- Process family interactions with HCS-10 compliance
-- Submit family milestones to consensus
-- Distribute token rewards automatically
-- Maintain conversation context
+- Processes family interactions with HCS-10 compliance using the Consensus Service Tool.
+- Submits family milestones to consensus.
+- Distributes token rewards automatically via the Token Service Tool.
+- Maintains conversation context.
 
-#### FamilyHederaMetricsLogger
+#### FamilyHederaMetricsLogger Plugin
 
 Metrics tracking and logging:
 
-- Sentiment analysis logging
-- Health score calculation
-- Reward calculation and distribution
-- Performance metrics collection
+- Logs sentiment analysis to HCS.
+- Calculates and records family health scores on-chain.
+- Triggers reward calculations and distribution.
+- Collects and logs performance metrics.
+
+##  executionModes
+
+### Execution Modes
+
+Our system supports dual execution modes, a key feature of the Hedera AI Agent Kit:
+
+-   **Autonomous Mode**: Agents can autonomously record milestones and distribute rewards based on predefined family goals and rules, perfect for automated positive reinforcement.
+-   **Human-in-the-Loop Mode**: For sensitive actions, such as resolving a significant conflict, the agent can prepare a transaction (e.g., a special reward) and present it to a family member for approval before execution.
 
 ## 🔧 Configuration
 
@@ -278,3 +291,8 @@ Family interactions are scored based on:
 - Peer-to-peer family communication
 - Decentralized family reputation system
 - Community-driven family support networks
+
+### Hedera AI Agent Kit Adoption
+
+- **Direct Integration**: Adapt our architecture to use the official `Hedera AI Agent Kit` tools and plugins directly, potentially replacing our custom `HederaService` with the official kit's adaptors.
+- **LangChain Integration**: Leverage the kit's compatibility with LangChain to enhance our agents' conversational and decision-making capabilities.

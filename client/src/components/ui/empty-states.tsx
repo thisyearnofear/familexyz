@@ -153,7 +153,7 @@ export const OnboardingFlow: React.FC<{
       {showProgress && (
         <div className="flex justify-center mb-6">
           <div className="flex items-center space-x-2">
-            {steps.map((_, index) => (
+            {steps.map((_, index: number) => (
               <React.Fragment key={index}>
                 <div 
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300 ${

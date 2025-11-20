@@ -65,7 +65,7 @@ export const FamilyConnectionRings: React.FC<FamilyConnectionRingsProps> = ({
             </div>
 
             {/* Connection rings */}
-            {rings.map((ring, index) => (
+            {rings.map((ring, index: number) => (
                 <motion.div
                     key={ring.agent}
                     className="absolute inset-0"

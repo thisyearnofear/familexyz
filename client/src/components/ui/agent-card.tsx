@@ -129,7 +129,7 @@ export const AgentCard: React.FC<AgentCardProps> = ({
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                    {benefits.slice(0, 3).map((benefit, index) => (
+                    {benefits.slice(0, 3).map((benefit, index: number) => (
                         <Badge
                             key={index}
                             variant="secondary"

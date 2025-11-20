@@ -205,7 +205,7 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({ onComplete, onSkip }) =>
             {/* Step Navigation */}
             <div className="px-6 py-4 bg-gray-50 border-b">
               <div className="flex items-center justify-center space-x-2">
-                {tourSteps.map((step, index) => (
+                {tourSteps.map((step, index: number) => (
                   <button
                     key={step.id}
                     onClick={() => goToStep(index)}
@@ -267,7 +267,7 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({ onComplete, onSkip }) =>
                       Key Features:
                     </h3>
                     <ul className="space-y-2">
-                      {currentTourStep.tips.map((tip, index) => (
+                      {currentTourStep.tips.map((tip, index: number) => (
                         <li key={index} className="flex items-start space-x-2 text-blue-800">
                           <CheckCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
                           <span className="text-sm">{tip}</span>

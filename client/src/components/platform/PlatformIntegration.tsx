@@ -10,7 +10,6 @@ import {
   Settings,
   CheckCircle,
   Clock,
-  AlertCircle,
   ExternalLink
 } from "lucide-react";
 
@@ -113,7 +112,7 @@ export const PlatformCard: React.FC<PlatformCardProps> = ({
       case 'coming-soon':
         return <Clock className="w-4 h-4 text-orange-600" />;
       case 'error':
-        return <AlertCircle className="w-4 h-4 text-red-600" />;
+        return <span className="text-red-600 text-sm">⚠️</span>;
     }
   };
 
@@ -208,7 +207,7 @@ export const PlatformCard: React.FC<PlatformCardProps> = ({
             <div className="space-y-2">
               <h4 className="text-sm font-medium text-gray-700">Features:</h4>
               <ul className="text-xs text-gray-600 space-y-1">
-                {platform.features.map((feature, index) => (
+                {platform.features.map((feature, index: number) => (
                   <li key={index} className="flex items-center space-x-2">
                     <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
                     <span>{feature}</span>

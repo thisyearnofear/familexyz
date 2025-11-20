@@ -6,6 +6,7 @@ import { TooltipProvider } from "./components/ui/tooltip";
 import { Toaster } from "./components/ui/toaster";
 import { BrowserRouter, Route, Routes } from "react-router";
 import { lazy, Suspense } from "react";
+import { ConnectionBanner } from "./components/ConnectionBanner";
 
 // Lazy load routes
 const Overview = lazy(() => import("./routes/overview"));
@@ -39,6 +40,7 @@ function App() {
                 role="application"
                 aria-label="Family Connection Platform"
             >
+                <ConnectionBanner />
                 <BrowserRouter>
                     <TooltipProvider delayDuration={0}>
                         <SidebarProvider>

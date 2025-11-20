@@ -103,6 +103,15 @@ Custom tokenomics system that rewards positive family interactions with health t
 
 Secure, tamper-proof logging of family milestones, achievements, and health metrics on the Hedera public ledger.
 
+### Alignment with Hedera AI Agent Kit
+
+Our architecture, built on the Eliza OS framework, mirrors the principles of the **Hedera AI Agent Kit**. We use a modular, plugin-based system for all Hedera network interactions, which allows for flexibility and extensibility.
+
+-   **Tools**: Our core services (`HederaConsensusService`, `HederaTokenService`) function as reusable "Tools" that provide direct access to Hedera's core functionalities.
+-   **Plugins**: Our integration layers (`FamilyHederaIntegration`) act as "Plugins" that adapt these tools for the specific context of our family agents.
+
+This approach demonstrates a powerful, practical implementation of the concepts promoted by the Hedera AI Agent Kit, making our project a native citizen of the Hedera AI ecosystem.
+
 ## 🛡️ Privacy & Security Framework
 
 ### Data Classification

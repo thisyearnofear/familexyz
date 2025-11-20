@@ -1,17 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Card, CardContent } from "@/components/ui/card";
 import { FamilyLogo } from "@/components/FamilyLogo";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { GuidedTour } from "./GuidedTour";
 import {
   Heart,
-  MessageCircle,
   Target,
   Users,
   Sparkles,
@@ -20,22 +16,10 @@ import {
   CheckCircle,
   Star,
   Trophy,
-  Calendar,
   Lightbulb,
   Zap,
-  Play,
-  Pause,
-  Volume2,
   HelpCircle,
-  BookOpen,
-  Gift,
-  Camera,
-  Mic,
-  Shield,
-  Clock,
-  Home,
-  Baby,
-  Gamepad2
+  BookOpen
 } from "lucide-react";
 
 interface OnboardingStep {
@@ -170,8 +154,6 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
         <FamilyProfileStep
           profile={familyProfile}
           onUpdate={setFamilyProfile}
-          onNext={() => setCurrentStep(2)}
-          onBack={() => setCurrentStep(0)}
         />
       )
     },
@@ -194,8 +176,6 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
         <FamilyGoalsStep
           selectedGoals={familyProfile.goals}
           onGoalsChange={(goals) => setFamilyProfile(prev => ({...prev, goals}))}
-          onNext={() => setCurrentStep(3)}
-          onBack={() => setCurrentStep(1)}
         />
       )
     },
@@ -218,8 +198,6 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
         <AgentSelectionStep
           selectedAgents={familyProfile.agents}
           onAgentsChange={(agents) => setFamilyProfile(prev => ({...prev, agents}))}
-          onNext={() => setCurrentStep(4)}
-          onBack={() => setCurrentStep(2)}
         />
       )
     },
@@ -233,8 +211,6 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
         <PreferencesStep
           preferences={familyProfile.preferences}
           onPreferencesChange={(prefs) => setFamilyProfile(prev => ({...prev, preferences: prefs}))}
-          onNext={() => setCurrentStep(5)}
-          onBack={() => setCurrentStep(3)}
         />
       )
     },
@@ -248,7 +224,6 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
         <CompletionStep
           profile={familyProfile}
           onComplete={onComplete}
-          onBack={() => setCurrentStep(4)}
         />
       )
     }
@@ -316,30 +291,31 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
             {/* Step Content */}
             <div className="p-8">
               <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentStep}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <div className="flex items-center space-x-4 mb-6">
-                    <div className="p-3 rounded-xl bg-gradient-to-r from-purple-100 to-pink-100">
-                      {steps[currentStep].icon}
+                {steps[currentStep] && (
+                  <motion.div
+                    key={currentStep}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <div className="flex items-center space-x-4 mb-6">
+                      <div className="p-3 rounded-xl bg-gradient-to-r from-purple-100 to-pink-100">
+                        {steps[currentStep]?.icon}
+                      </div>
+                      <div>
+                        <h2 className="text-2xl font-bold text-gray-800">
+                          {steps[currentStep]?.title}
+                        </h2>
+                        <p className="text-gray-600">
+                          {steps[currentStep]?.subtitle}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h2 className="text-2xl font-bold text-gray-800">
-                        {steps[currentStep].title}
-                      </h2>
-                      <p className="text-gray-600">
-                        {steps[currentStep].subtitle}
-                      </p>
-                    </div>
-                  </div>
 
-                  <p className="text-gray-600 mb-8">
-                    {steps[currentStep].description}
-                  </p>
+                    <p className="text-gray-600 mb-8">
+                      {steps[currentStep]?.description}
+                    </p>
 
                   <div className="mb-8">
                     {steps[currentStep].component}
@@ -364,7 +340,7 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
                               {steps[currentStep].helpContent!.description}
                             </p>
                             <ul className="space-y-1">
-                              {steps[currentStep].helpContent!.tips.map((tip, index) => (
+                              {steps[currentStep].helpContent!.tips.map((tip, index: number) => (
                                 <li key={index} className="flex items-start space-x-2 text-sm text-blue-700">
                                   <Star className="w-3 h-3 text-blue-500 mt-1 flex-shrink-0" />
                                   <span>{tip}</span>
@@ -406,15 +382,16 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
                       ) : (
                         <Button
                           className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 flex items-center space-x-2"
-                          onClick={onComplete}
+                          onClick={() => onComplete?.(familyProfile)}
                         >
                           <Trophy className="w-4 h-4" />
                           <span>Start My Family Journey</span>
                         </Button>
                       )}
                     </div>
-                  </div>
-                </motion.div>
+                    </div>
+                  </motion.div>
+                )}
               </AnimatePresence>
             </div>
           </CardContent>
@@ -470,13 +447,11 @@ const WelcomeStep: React.FC<{ onNext: () => void; onSkip: () => void; onStartTou
 };
 
 const FamilyProfileStep: React.FC<{
-  profile: any;
-  onUpdate: (profile: any) => void;
-  onNext: () => void;
-  onBack: () => void;
-}> = ({ profile, onUpdate, onNext, onBack }) => {
-  const [familyName, setFamilyName] = useState(profile.name);
-  const [members, setMembers] = useState(profile.members.length > 0 ? profile.members : [{ name: "", relationship: "Parent" }]);
+   profile: any;
+   onUpdate: (profile: any) => void;
+}> = ({ profile, onUpdate: _onUpdate }) => {
+   const [familyName, setFamilyName] = useState(profile.name);
+   const [members, setMembers] = useState(profile.members.length > 0 ? profile.members : [{ name: "", relationship: "Parent" }]);
 
   const addMember = () => setMembers([...members, { name: "", relationship: "Child" }]);
   const updateMember = (index: number, field: string, value: string) => {
@@ -485,7 +460,7 @@ const FamilyProfileStep: React.FC<{
     setMembers(newMembers);
   };
 
-  const canContinue = familyName.trim() && members.every(m => m.name.trim());
+  const canContinue = familyName.trim() && members.every((m: any) => m.name.trim());
 
   return (
     <div className="space-y-6">
@@ -508,7 +483,7 @@ const FamilyProfileStep: React.FC<{
             Family Members
           </label>
           <div className="space-y-3">
-            {members.map((member, index) => (
+            {members.map((member: any, index: number) => (
               <div key={index} className="flex space-x-3">
                 <input
                   type="text"
@@ -547,9 +522,7 @@ const FamilyProfileStep: React.FC<{
 const FamilyGoalsStep: React.FC<{
   selectedGoals: string[];
   onGoalsChange: (goals: string[]) => void;
-  onNext: () => void;
-  onBack: () => void;
-}> = ({ selectedGoals, onGoalsChange, onNext, onBack }) => {
+}> = ({ selectedGoals, onGoalsChange }) => {
   const goals = [
     { id: "communication", label: "Better Communication", emoji: "💬", desc: "Help family members express themselves" },
     { id: "bonding", label: "Stronger Bonds", emoji: "❤️", desc: "Create more meaningful moments together" },
@@ -604,9 +577,7 @@ const FamilyGoalsStep: React.FC<{
 const AgentSelectionStep: React.FC<{
   selectedAgents: string[];
   onAgentsChange: (agents: string[]) => void;
-  onNext: () => void;
-  onBack: () => void;
-}> = ({ selectedAgents, onAgentsChange, onNext, onBack }) => {
+}> = ({ selectedAgents, onAgentsChange }) => {
   const agents = [
     { id: "wisdom", name: "Wisdom", emoji: "🧠", specialty: "Emotional Intelligence", desc: "Guides through life's big questions" },
     { id: "intimacy", name: "Intimacy", emoji: "💖", specialty: "Relationship Coaching", desc: "Strengthens family bonds" },
@@ -668,9 +639,7 @@ const AgentSelectionStep: React.FC<{
 const PreferencesStep: React.FC<{
   preferences: any;
   onPreferencesChange: (prefs: any) => void;
-  onNext: () => void;
-  onBack: () => void;
-}> = ({ preferences, onPreferencesChange, onNext, onBack }) => {
+}> = ({ preferences, onPreferencesChange }) => {
   return (
     <div className="space-y-6">
       <div>
@@ -736,7 +705,7 @@ const PreferencesStep: React.FC<{
 
 const CompletionStep: React.FC<{
   profile: any;
-  onComplete: () => void;
+  onComplete?: (profile: any) => void;
 }> = ({ profile, onComplete }) => {
   return (
     <div className="text-center space-y-8">
@@ -784,7 +753,7 @@ const CompletionStep: React.FC<{
         </p>
 
         <Button
-          onClick={onComplete}
+          onClick={() => onComplete?.(profile)}
           className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-lg py-4"
         >
           <Trophy className="w-5 h-5 mr-2" />

@@ -274,7 +274,7 @@ export const EnhancedAnalytics: React.FC<EnhancedAnalyticsProps> = ({
                 </CardHeader>
                 <CardContent>
                     <ul className="space-y-3">
-                        {recommendations.map((rec, index) => (
+                        {recommendations.map((rec, index: number) => (
                             <li
                                 key={index}
                                 className="flex items-start space-x-2"

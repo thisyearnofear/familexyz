@@ -370,7 +370,7 @@ export default function FamilyCelebrations() {
           </div>
 
           <div className="space-y-4">
-            {UPCOMING_CELEBRATIONS.map((upcoming, index) => (
+            {UPCOMING_CELEBRATIONS.map((upcoming, index: number) => (
               <UpcomingCard key={index} upcoming={upcoming} />
             ))}
           </div>

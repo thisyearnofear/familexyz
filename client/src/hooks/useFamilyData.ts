@@ -35,10 +35,17 @@ export const useAgents = () => {
         }
       } catch (error) {
         console.error("Failed to load agents:", error);
+        // Return empty data instead of throwing to prevent infinite retries
         return { agents: [], total: 0 };
       }
     },
     refetchInterval: 30000,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    // Only refetch if we have a successful connection
+    refetchOnWindowFocus: false,
+    // Don't show stale data as fresh
+    staleTime: 10000,
   });
 };
 

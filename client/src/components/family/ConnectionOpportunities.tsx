@@ -62,7 +62,7 @@ export const ConnectionOpportunities = ({
         <CardTitle>Connection Opportunities</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {opportunities.map((opportunity, index) => (
+        {opportunities.map((opportunity, index: number) => (
           <div
             key={index}
             className="p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"

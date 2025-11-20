@@ -26,8 +26,8 @@
       "@elizaos/*": ["packages/*/src"],
       "@familexyz/*": ["*/src"]
     },
-    "typeRoots": [],
-    "types": []
+    "typeRoots": ["./node_modules/@types"],
+    "types": ["node"]
   },
   "include": [
     "agent/src/**/*",

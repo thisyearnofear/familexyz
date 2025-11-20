@@ -161,7 +161,7 @@ export const FamilyTimeline: React.FC<FamilyTimelineProps> = ({ events }) => {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {events.map((event, index) => (
+          {events.map((event, index: number) => (
             <div key={index} className="flex items-start space-x-4">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                 event.impact === 'positive' ? 'bg-green-100 text-green-600' :

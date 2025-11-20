@@ -398,7 +398,7 @@ export const PersonalizedRecommendations: React.FC<PersonalizedRecommendationsPr
       {/* Recommendations Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <AnimatePresence>
-          {filteredRecommendations.map((rec, index) => (
+          {filteredRecommendations.map((rec, index: number) => (
             <motion.div
               key={rec.id}
               initial={{ opacity: 0, y: 20 }}

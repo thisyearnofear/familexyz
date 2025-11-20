@@ -214,7 +214,7 @@ const AgentCard = ({
         <p className="text-sm text-gray-600 mb-4">{agent.description}</p>
 
         <div className="space-y-1">
-          {agent.benefits.map((benefit, index) => (
+          {agent.benefits.map((benefit, index: number) => (
             <Badge
               key={index}
               variant="secondary"
@@ -385,7 +385,7 @@ export default function FamilyWelcome({
                       Who's in your family? 👨‍👩‍👧‍👦
                     </Label>
                     <div className="space-y-3">
-                      {profile.members.map((member, index) => (
+                      {profile.members.map((member, index: number) => (
                         <div key={index} className="flex space-x-3">
                           <Input
                             placeholder="Name"

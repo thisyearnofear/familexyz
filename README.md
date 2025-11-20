@@ -75,6 +75,23 @@ pnpm --filter "@elizaos/client-direct" start
 
 See [Development Guide](./docs/development-deployment.md) for detailed setup instructions.
 
+### 🎬 Running the Demo
+
+To showcase the platform's capabilities and Hedera integration, you can run the automated simulation script:
+
+1.  **Ensure Backend & Frontend are running** (see above).
+2.  **Run the simulation script** in a new terminal:
+
+```bash
+npx tsx scripts/simulate_family.ts
+```
+
+This will:
+*   Simulate a family scenario with multiple acts.
+*   Populate the dashboard with live data.
+*   **Trigger a real Hedera transaction** and verify it on-chain.
+
+
 ## 📚 Documentation
 
 See our consolidated documentation:

@@ -99,9 +99,26 @@ async function getAgents(): Promise<Agent[]> {
             throw new Error(`Failed to fetch agents: ${response.statusText}`);
         }
         const data = await response.json();
-        return (data as any).agents || data;
+
+        if (data && typeof data === 'object') {
+             // Check for { agents: [...] }
+             if ('agents' in data && Array.isArray((data as any).agents)) {
+                 return (data as any).agents;
+             }
+             // Check for { data: { agents: [...] } }
+             if ('data' in data && (data as any).data && 'agents' in (data as any).data && Array.isArray((data as any).data.agents)) {
+                 return (data as any).data.agents;
+             }
+             // Check for direct array [...]
+             if (Array.isArray(data)) {
+                 return data as Agent[];
+             }
+        }
+
+        console.warn("⚠️ Unexpected response format from /agents:", JSON.stringify(data).substring(0, 200));
+        return [];
     } catch (error) {
-        // console.error("Error fetching agents:", error);
+        console.error("Error fetching agents:", error);
         return [];
     }
 }

@@ -4,7 +4,6 @@ import { Heart, Bell } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FamilyLogo } from "@/components/FamilyLogo";
-import { ChatInterface } from "@/components/ChatInterface";
 import { FamilyOnboarding } from "@/components/family/FamilyOnboarding";
 import { TabNavigation } from "@/components/dashboard";
 import { useFamilyStats, useAgents } from "@/hooks/useFamilyData";
@@ -13,25 +12,18 @@ import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 // Tab components
 import { OverviewTab } from "./dashboard/tabs/OverviewTab";
 import { InsightsTab } from "./dashboard/tabs/InsightsTab";
-import { AgentsTab } from "./dashboard/tabs/AgentsTab";
 import { ActivitiesTab } from "./dashboard/tabs/ActivitiesTab";
 import { SocialTab } from "./dashboard/tabs/SocialTab";
 import { MembersTab } from "./dashboard/tabs/MembersTab";
 import { SettingsTab } from "./dashboard/tabs/SettingsTab";
 
-interface EnhancedFamilyDashboardProps {
-  onAgentSelect?: (agentId: string) => void;
-}
+interface EnhancedFamilyDashboardProps {}
 
-export const EnhancedFamilyDashboard: React.FC<EnhancedFamilyDashboardProps> = ({
-  onAgentSelect,
-}) => {
+export const EnhancedFamilyDashboard: React.FC<EnhancedFamilyDashboardProps> = () => {
   const [activeTab, setActiveTab] = useState<
-    "overview" | "insights" | "agents" | "activities" | "social" | "members" | "settings"
+    "overview" | "insights" | "activities" | "social" | "members" | "settings"
   >("overview");
-  const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
   const [showCelebration, setShowCelebration] = useState(false);
-  const [familyGoals, setFamilyGoals] = useState<string[]>([]);
 
   // Custom hooks for data and state management
   const { data: familyStats, isLoading: isFamilyStatsLoading } = useFamilyStats();
@@ -45,17 +37,13 @@ export const EnhancedFamilyDashboard: React.FC<EnhancedFamilyDashboardProps> = (
     handleOnboardingComplete: baseHandleOnboardingComplete,
   } = useFamilyMembers();
 
-  const handleOnboardingComplete = () => {
-    baseHandleOnboardingComplete?.();
+  const handleOnboardingComplete = (profile?: any) => {
+    if (profile) {
+      baseHandleOnboardingComplete?.(profile);
+    }
     setShowOnboarding(false);
     setShowCelebration(true);
     setTimeout(() => setShowCelebration(false), 3000);
-  };
-
-  const handleAgentSelect = (agentId: string) => {
-    setSelectedAgent(agentId);
-    setActiveTab("agents");
-    onAgentSelect?.(agentId);
   };
 
   // Show onboarding if needed
@@ -63,9 +51,7 @@ export const EnhancedFamilyDashboard: React.FC<EnhancedFamilyDashboardProps> = (
     return (
       <FamilyOnboarding
         onComplete={(profile) => {
-          baseHandleOnboardingComplete?.(profile);
-          setShowOnboarding(false);
-          handleOnboardingComplete();
+          handleOnboardingComplete(profile);
         }}
         onCancel={() => setShowOnboarding(false)}
       />
@@ -176,14 +162,6 @@ export const EnhancedFamilyDashboard: React.FC<EnhancedFamilyDashboardProps> = (
             <InsightsTab familyStats={familyStats} familyMembers={familyMembers} />
           )}
 
-          {activeTab === "agents" && (
-            <AgentsTab
-              agentsData={agentsData}
-              selectedAgent={selectedAgent}
-              onAgentSelect={handleAgentSelect}
-            />
-          )}
-
           {activeTab === "activities" && <ActivitiesTab familyMembers={familyMembers} />}
 
           {activeTab === "social" && <SocialTab familyMembers={familyMembers} />}
@@ -198,13 +176,6 @@ export const EnhancedFamilyDashboard: React.FC<EnhancedFamilyDashboardProps> = (
 
           {activeTab === "settings" && <SettingsTab />}
         </AnimatePresence>
-
-        {/* Chat Interface */}
-        {selectedAgent && (
-          <div className="mt-8">
-            <ChatInterface initialAgentId={selectedAgent} />
-          </div>
-        )}
       </div>
     </div>
   );

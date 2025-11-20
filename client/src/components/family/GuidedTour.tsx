@@ -206,28 +206,50 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({ onComplete, onSkip }) =>
 
             {/* Step Navigation */}
             <div className="px-6 py-4 bg-gray-50 border-b">
-              <div className="flex items-center justify-center space-x-2">
-                {tourSteps.map((step, index: number) => (
-                  <button
-                    key={step.id}
-                    onClick={() => goToStep(index)}
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all ${
-                      index === currentStep
-                        ? "bg-purple-600 text-white"
-                        : completedSteps.includes(index)
-                        ? "bg-green-500 text-white"
-                        : index < currentStep
-                        ? "bg-purple-200 text-purple-700"
-                        : "bg-gray-200 text-gray-500"
-                    }`}
-                  >
-                    {completedSteps.includes(index) ? (
-                      <CheckCircle className="w-4 h-4" />
-                    ) : (
-                      index + 1
-                    )}
-                  </button>
-                ))}
+              <div className="flex items-center justify-center space-x-3">
+                {/* Prev Button */}
+                <button
+                    onClick={prevStep}
+                    disabled={currentStep === 0}
+                    className="p-1.5 rounded-full bg-purple-100 hover:bg-purple-200 disabled:opacity-30 disabled:cursor-not-allowed transition-all text-purple-600"
+                    aria-label="Previous step"
+                >
+                    <ArrowLeft className="w-4 h-4" />
+                </button>
+
+                <div className="flex items-center justify-center space-x-2">
+                  {tourSteps.map((step, index: number) => (
+                    <button
+                      key={step.id}
+                      onClick={() => goToStep(index)}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all ${
+                        index === currentStep
+                          ? "bg-purple-600 text-white scale-110 shadow-md"
+                          : completedSteps.includes(index)
+                          ? "bg-green-500 text-white hover:bg-green-600"
+                          : index < currentStep
+                          ? "bg-purple-200 text-purple-700 hover:bg-purple-300"
+                          : "bg-gray-200 text-gray-500"
+                      }`}
+                    >
+                      {completedSteps.includes(index) ? (
+                        <CheckCircle className="w-4 h-4" />
+                      ) : (
+                        index + 1
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Next Button */}
+                <button
+                    onClick={nextStep}
+                    disabled={currentStep === tourSteps.length - 1}
+                    className="p-1.5 rounded-full bg-purple-100 hover:bg-purple-200 disabled:opacity-30 disabled:cursor-not-allowed transition-all text-purple-600"
+                    aria-label="Next step"
+                >
+                    <ArrowRight className="w-4 h-4" />
+                </button>
               </div>
             </div>
 

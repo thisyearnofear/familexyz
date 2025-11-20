@@ -1,19 +1,18 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { BarChart3, Users, MessageCircle, Settings, TrendingUp, Heart } from "lucide-react";
+import { Users, MessageCircle, Settings, TrendingUp, LayoutDashboard, Target } from "lucide-react";
 
 interface TabNavigationProps {
-    activeTab: "overview" | "insights" | "agents" | "activities" | "social" | "members" | "settings";
-    onTabChange: (tab: "overview" | "insights" | "agents" | "activities" | "social" | "members" | "settings") => void;
+    activeTab: "overview" | "insights" | "activities" | "social" | "members" | "settings";
+    onTabChange: (tab: "overview" | "insights" | "activities" | "social" | "members" | "settings") => void;
 }
 
 const tabs = [
-    { id: "overview" as const, label: "Overview", icon: BarChart3 },
+    { id: "overview" as const, label: "Overview", icon: LayoutDashboard },
     { id: "insights" as const, label: "Insights", icon: TrendingUp },
-    { id: "agents" as const, label: "AI Agents", icon: Heart },
     { id: "members" as const, label: "Members", icon: Users },
-    { id: "activities" as const, label: "Activities", icon: MessageCircle },
+    { id: "activities" as const, label: "Activities", icon: Target },
     { id: "social" as const, label: "Social", icon: MessageCircle },
     { id: "settings" as const, label: "Settings", icon: Settings },
 ];

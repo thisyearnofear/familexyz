@@ -76,19 +76,16 @@ See our consolidated documentation:
 
 Family data protection is our top priority:
 
-- **End-to-end encryption** for sensitive conversations
-- **Local data storage** options for maximum privacy
-- **Parental controls** and content moderation
+- **Privacy-First Design** - Built with privacy in mind
+- **Secure Architecture** - Modern security practices
+- **Family Focused** - Designed for safe family interactions
 - **Age-appropriate responses** for all family members
 - **Data retention policies** with automatic cleanup
 
 ## 🌐 Platform Support
 
-- **💬 Discord** - Family server with dedicated channels
-- **📱 Telegram** - Family group chat integration
-- **🐦 Twitter/X** - Social sharing (optional)
 - **🌐 Web Dashboard** - Family management interface
-- **📞 WhatsApp** - Private family messaging
+- **🔜 Future Support** - Discord, Telegram, and WhatsApp integrations coming soon
 
 ## 🛠️ Built For Developers
 

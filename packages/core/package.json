@@ -19,7 +19,7 @@
         "dist"
     ],
     "scripts": {
-        "build": "tsup --format esm --no-dts",
+        "build": "tsup --format esm --no-dts && tsc --declaration --emitDeclarationOnly --outDir dist --rootDir src",
         "watch": "tsc --watch",
         "dev": "tsup --format esm --no-dts --watch",
         "build:docs": "cd docs && pnpm run build",

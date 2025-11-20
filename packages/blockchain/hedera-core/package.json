@@ -12,6 +12,10 @@
         "@elizaos/source": "./src/index.ts",
         "types": "./dist/index.d.ts",
         "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.cjs"
       }
     },
     "./services": {
@@ -19,6 +23,10 @@
         "@elizaos/source": "./src/services/index.ts",
         "types": "./dist/services/index.d.ts",
         "default": "./dist/services/index.js"
+      },
+      "require": {
+        "types": "./dist/services/index.d.ts",
+        "default": "./dist/services/index.cjs"
       }
     },
     "./types": {
@@ -26,6 +34,10 @@
         "@elizaos/source": "./src/types/index.ts",
         "types": "./dist/types/index.d.ts",
         "default": "./dist/types/index.js"
+      },
+      "require": {
+        "types": "./dist/types/index.d.ts",
+        "default": "./dist/types/index.cjs"
       }
     },
     "./utils": {
@@ -33,6 +45,10 @@
         "@elizaos/source": "./src/utils/index.ts",
         "types": "./dist/utils/index.d.ts",
         "default": "./dist/utils/index.js"
+      },
+      "require": {
+        "types": "./dist/utils/index.d.ts",
+        "default": "./dist/utils/index.cjs"
       }
     }
   },

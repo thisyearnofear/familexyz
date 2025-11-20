@@ -36,6 +36,7 @@
         "dist",
         "src/**/*.d.ts",
         "src/**/*.test.ts",
+        "src/test_resources/**/*",
         "**/@types/aws-lambda",
         "**/@types/better-sqlite3",
         "**/@types/body-parser",

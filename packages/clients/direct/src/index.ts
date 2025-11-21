@@ -372,6 +372,32 @@ export class DirectClient {
                 await runtime.messageManager.addEmbeddingToMemory(memory);
                 await runtime.messageManager.createMemory(memory);
 
+                // Parse Venice parameters from client (if provided)
+                let veniceParamsFromClient = {};
+                if (req.body.veniceParameters) {
+                    try {
+                        veniceParamsFromClient = typeof req.body.veniceParameters === 'string'
+                            ? JSON.parse(req.body.veniceParameters)
+                            : req.body.veniceParameters;
+                        elizaLogger.debug("Received Venice parameters from client:", veniceParamsFromClient);
+                    } catch (e) {
+                        elizaLogger.warn("Failed to parse veniceParameters:", e);
+                    }
+                }
+
+                // Temporarily override Venice parameters for this message
+                const originalVeniceParams = runtime.character.settings?.veniceParameters;
+                if (Object.keys(veniceParamsFromClient).length > 0) {
+                    if (!runtime.character.settings) {
+                        runtime.character.settings = {};
+                    }
+                    runtime.character.settings.veniceParameters = {
+                        ...originalVeniceParams,
+                        ...veniceParamsFromClient
+                    };
+                    elizaLogger.debug("Merged Venice parameters:", runtime.character.settings.veniceParameters);
+                }
+
                 let state = await runtime.composeState(userMessage, {
                     agentName: runtime.character.name,
                 });
@@ -421,6 +447,14 @@ export class DirectClient {
                 );
 
                 await runtime.evaluate(memory, state);
+
+                // Restore original Venice parameters
+                if (Object.keys(veniceParamsFromClient).length > 0) {
+                    if (runtime.character.settings) {
+                        runtime.character.settings.veniceParameters = originalVeniceParams;
+                    }
+                    elizaLogger.debug("Restored original Venice parameters");
+                }
 
                 // Check if we should suppress the initial message
                 const action = runtime.actions.find(

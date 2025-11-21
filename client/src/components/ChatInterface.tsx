@@ -287,10 +287,26 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         setIsLoading(true);
 
         try {
+            // Read settings from localStorage
+            const savedProfile = localStorage.getItem("familyProfile");
+            let settings = {};
+            if (savedProfile) {
+                try {
+                    const profile = JSON.parse(savedProfile);
+                    if (profile.preferences?.enableWebSearch) {
+                        settings = { enable_web_search: "auto" };
+                    }
+                } catch (e) {
+                    console.error("Failed to parse familyProfile", e);
+                }
+            }
+
             // Use the apiClient instead of hardcoded localhost
             const data = await apiClient.sendMessage(
                 selectedAgent.id,
                 inputMessage,
+                null,
+                settings
             );
 
             // Handle both array and object responses

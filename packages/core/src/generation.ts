@@ -1143,6 +1143,18 @@ export async function generateText({
                 const venice = createOpenAI({
                     apiKey: apiKey,
                     baseURL: endpoint,
+                    fetch: async (url, options) => {
+                        if (options && options.body) {
+                            const body = JSON.parse(options.body as string);
+                            const veniceParameters =
+                                runtime.character.settings?.veniceParameters;
+                            if (veniceParameters) {
+                                body.venice_parameters = veniceParameters;
+                                options.body = JSON.stringify(body);
+                            }
+                        }
+                        return fetch(url, options);
+                    },
                 });
 
                 const { text: veniceResponse } = await aiGenerateText({

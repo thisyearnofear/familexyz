@@ -65,6 +65,30 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
     abstract close(): Promise<void>;
 
     /**
+     * Execute a SQL statement and return the result.
+     * @param sql The SQL statement to execute.
+     * @param params Optional parameters for the SQL statement.
+     * @returns A Promise that resolves to the result of the SQL execution.
+     */
+    abstract run(sql: string, params?: any[]): Promise<any>;
+
+    /**
+     * Get a single row from a SQL query.
+     * @param sql The SQL query to execute.
+     * @param params Optional parameters for the SQL query.
+     * @returns A Promise that resolves to the first row or null if not found.
+     */
+    abstract get(sql: string, params?: any[]): Promise<any>;
+
+    /**
+     * Get all rows from a SQL query.
+     * @param sql The SQL query to execute.
+     * @param params Optional parameters for the SQL query.
+     * @returns A Promise that resolves to an array of all matching rows.
+     */
+    abstract all(sql: string, params?: any[]): Promise<any[]>;
+
+    /**
      * Retrieves an account by its ID.
      * @param userId The UUID of the user account to retrieve.
      * @returns A Promise that resolves to the Account object or null if not found.

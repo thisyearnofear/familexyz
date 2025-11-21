@@ -150,6 +150,50 @@ class MockDatabaseAdapter extends DatabaseAdapter {
     getRelationships(_params: { userId: UUID }): Promise<Relationship[]> {
         throw new Error("Method not implemented.");
     }
+    
+    async run(sql: string, params: any[] = []): Promise<any> {
+        // Mock implementation
+        return { changes: 1 };
+    }
+
+    async get(sql: string, params: any[] = []): Promise<any> {
+        // Mock implementation - return first matching record
+        return { id: "test-id", name: "test-record" };
+    }
+
+    async all(sql: string, params: any[] = []): Promise<any[]> {
+        // Mock implementation - return array of records
+        return [{ id: "test-id-1" }, { id: "test-id-2" }];
+    }
+
+    async init(): Promise<void> {
+        // Mock implementation
+    }
+
+    async close(): Promise<void> {
+        // Mock implementation
+    }
+
+    async getKnowledge(params: any): Promise<any[]> {
+        return [];
+    }
+
+    async searchKnowledge(params: any): Promise<any[]> {
+        return [];
+    }
+
+    async createKnowledge(knowledge: any): Promise<void> {
+        // Mock implementation
+    }
+
+    async removeKnowledge(id: any): Promise<void> {
+        // Mock implementation
+    }
+
+    async clearKnowledge(agentId: any, shared?: boolean): Promise<void> {
+        // Mock implementation
+    }
+    
     db: any = {};
 
     // Mock method for getting memories by room IDs

@@ -839,6 +839,10 @@ export type Character = {
         };
         transcription?: TranscriptionProvider;
         ragKnowledge?: boolean;
+        veniceParameters?: {
+            include_venice_system_prompt?: boolean;
+            enable_web_search?: "auto" | "on" | "off";
+        };
     };
 
     /** Optional client-specific config */
@@ -965,6 +969,15 @@ export interface IDatabaseAdapter {
 
     /** Close database connection */
     close(): Promise<void>;
+
+    /** Execute a SQL statement and return the result */
+    run(sql: string, params?: any[]): Promise<any>;
+
+    /** Get a single row from a SQL query */
+    get(sql: string, params?: any[]): Promise<any>;
+
+    /** Get all rows from a SQL query */
+    all(sql: string, params?: any[]): Promise<any[]>;
 
     /** Get account by ID */
     getAccountById(userId: UUID): Promise<Account | null>;

@@ -263,6 +263,42 @@ export class PostgresDatabaseAdapter
         await this.pool.end();
     }
 
+    async run(sql: string, params: any[] = []): Promise<any> {
+        return this.withDatabase(async () => {
+            const client = await this.pool.connect();
+            try {
+                const result = await client.query(sql, params);
+                return result;
+            } finally {
+                client.release();
+            }
+        }, "run");
+    }
+
+    async get(sql: string, params: any[] = []): Promise<any> {
+        return this.withDatabase(async () => {
+            const client = await this.pool.connect();
+            try {
+                const result = await client.query(sql, params);
+                return result.rows[0] || null;
+            } finally {
+                client.release();
+            }
+        }, "get");
+    }
+
+    async all(sql: string, params: any[] = []): Promise<any[]> {
+        return this.withDatabase(async () => {
+            const client = await this.pool.connect();
+            try {
+                const result = await client.query(sql, params);
+                return result.rows;
+            } finally {
+                client.release();
+            }
+        }, "all");
+    }
+
     async testConnection(): Promise<boolean> {
         let client;
         try {

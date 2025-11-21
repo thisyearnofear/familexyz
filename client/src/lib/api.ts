@@ -69,6 +69,7 @@ export const apiClient = {
     agentId: string,
     message: string,
     selectedFile?: File | null,
+    settings?: any,
   ) => {
     const formData = new FormData();
     formData.append("text", message);
@@ -77,6 +78,11 @@ export const apiClient = {
     if (selectedFile) {
       formData.append("file", selectedFile);
     }
+
+    if (settings) {
+        formData.append("veniceParameters", JSON.stringify(settings));
+    }
+
     return fetcher({
       url: `/${agentId}/message`,
       method: "POST",

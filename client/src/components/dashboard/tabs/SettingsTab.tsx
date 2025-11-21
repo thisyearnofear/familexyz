@@ -14,6 +14,7 @@ interface SettingsFormData {
   privacyLevel: "open" | "balanced" | "private";
   notifications: boolean;
   dataSharing: boolean;
+  enableWebSearch: boolean;
 }
 
 export const SettingsTab: React.FC = () => {
@@ -28,6 +29,7 @@ export const SettingsTab: React.FC = () => {
     privacyLevel: "balanced",
     notifications: true,
     dataSharing: false,
+    enableWebSearch: false,
   });
   const [hasChanges, setHasChanges] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -45,6 +47,7 @@ export const SettingsTab: React.FC = () => {
           privacyLevel: profile.preferences?.privacyLevel || "balanced",
           notifications: profile.preferences?.notifications !== false,
           dataSharing: profile.preferences?.dataSharing || false,
+          enableWebSearch: profile.preferences?.enableWebSearch || false,
         });
       } catch (error) {
         console.error("Failed to load profile:", error);
@@ -92,6 +95,7 @@ export const SettingsTab: React.FC = () => {
           privacyLevel: formData.privacyLevel,
           notifications: formData.notifications,
           dataSharing: formData.dataSharing,
+          enableWebSearch: formData.enableWebSearch,
         },
       };
 
@@ -116,6 +120,7 @@ export const SettingsTab: React.FC = () => {
           privacyLevel: profile.preferences?.privacyLevel || "balanced",
           notifications: profile.preferences?.notifications !== false,
           dataSharing: profile.preferences?.dataSharing || false,
+          enableWebSearch: profile.preferences?.enableWebSearch || false,
         });
       } catch (error) {
         console.error("Failed to reset settings:", error);
@@ -321,6 +326,41 @@ export const SettingsTab: React.FC = () => {
             <p className="text-xs text-gray-700 mt-2 font-medium">
               How family information is shared across the platform
             </p>
+          </div>
+
+          {/* AI Capabilities */}
+          <div className="bg-gradient-to-r from-cyan-50 to-blue-50 p-4 rounded-lg border border-cyan-100">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-semibold text-gray-900">
+                    Enable Web Search
+                  </label>
+                  <span className="px-2 py-0.5 rounded-full bg-cyan-100 text-cyan-800 text-[10px] font-bold uppercase tracking-wider border border-cyan-200">
+                    Premium
+                  </span>
+                </div>
+                <p className="text-xs text-gray-700 mt-1 font-medium">
+                  Allow AI agents to search the internet for real-time information
+                </p>
+              </div>
+              <button
+                onClick={() =>
+                  handleInputChange("enableWebSearch", !formData.enableWebSearch)
+                }
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ml-4 flex-shrink-0 ${
+                  formData.enableWebSearch
+                    ? "bg-cyan-600"
+                    : "bg-gray-300"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    formData.enableWebSearch ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
+            </div>
           </div>
 
           {/* Notifications Toggle */}

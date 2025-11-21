@@ -8,6 +8,10 @@
         "secrets": {},
         "voice": {
             "model": "en_US-female-medium"
+        },
+        "veniceParameters": {
+            "enable_web_search": "auto",
+            "include_venice_system_prompt": false
         }
     },
     "plugins": ["@elizaos/family-plugin-wisdom"],

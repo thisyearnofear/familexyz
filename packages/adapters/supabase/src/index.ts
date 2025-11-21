@@ -110,6 +110,48 @@ export class SupabaseDatabaseAdapter extends DatabaseAdapter {
         // noop
     }
 
+    async run(sql: string, params: any[] = []): Promise<any> {
+        // For Supabase, we'll use rpc to execute custom SQL
+        const { data, error } = await this.supabase.rpc('execute_sql', {
+            query: sql,
+            params: params
+        });
+        
+        if (error) {
+            throw new Error(`SQL execution error: ${error.message}`);
+        }
+        
+        return { changes: data?.changes || 0 };
+    }
+
+    async get(sql: string, params: any[] = []): Promise<any> {
+        // For Supabase, we'll use rpc to execute custom SQL and return first row
+        const { data, error } = await this.supabase.rpc('execute_sql_get', {
+            query: sql,
+            params: params
+        });
+        
+        if (error) {
+            throw new Error(`SQL execution error: ${error.message}`);
+        }
+        
+        return data && data.length > 0 ? data[0] : null;
+    }
+
+    async all(sql: string, params: any[] = []): Promise<any[]> {
+        // For Supabase, we'll use rpc to execute custom SQL and return all rows
+        const { data, error } = await this.supabase.rpc('execute_sql_all', {
+            query: sql,
+            params: params
+        });
+        
+        if (error) {
+            throw new Error(`SQL execution error: ${error.message}`);
+        }
+        
+        return data || [];
+    }
+
     async getMemoriesByRoomIds(params: {
         roomIds: UUID[];
         agentId?: UUID;

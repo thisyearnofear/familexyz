@@ -5,7 +5,7 @@
         "allowImportingTsExtensions": true,
         "noEmit": false,
         "declaration": true,
-        "emitDeclarationOnly": false,
+        "emitDeclarationOnly": true,
         "strict": false,
         "noImplicitAny": false,
         "strictNullChecks": false,

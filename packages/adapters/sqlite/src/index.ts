@@ -89,6 +89,18 @@ export class SqliteDatabaseAdapter
         this.db.close();
     }
 
+    async run(sql: string, params: any[] = []): Promise<any> {
+        return this.db.prepare(sql).run(...params);
+    }
+
+    async get(sql: string, params: any[] = []): Promise<any> {
+        return this.db.prepare(sql).get(...params);
+    }
+
+    async all(sql: string, params: any[] = []): Promise<any[]> {
+        return this.db.prepare(sql).all(...params);
+    }
+
     async getAccountById(userId: UUID): Promise<Account | null> {
         const sql = "SELECT * FROM accounts WHERE id = ?";
         const account = this.db.prepare(sql).get(userId) as Account;

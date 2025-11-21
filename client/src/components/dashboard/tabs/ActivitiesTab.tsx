@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -9,7 +9,6 @@ import {
   MessageCircle,
   Users,
   TrendingUp,
-  Filter,
   ChevronDown,
   Clock,
   Zap,
@@ -17,10 +16,10 @@ import {
   Gamepad2,
   Coffee,
   Utensils,
-  Home,
   Plus,
 } from "lucide-react";
 import type { FamilyMember } from "@/types/family";
+import { AgentBadge, AskAgentButton } from "@/components/agents";
 
 interface Activity {
   id: string;
@@ -33,6 +32,12 @@ interface Activity {
   icon: React.ReactNode;
   color: string;
   impact: number; // 1-5 scale
+  recommendedBy?: {
+    agentId: string;
+    agentName: string;
+    agentEmoji: string;
+    reason?: string;
+  };
 }
 
 interface ActivitiesTabProps {
@@ -58,6 +63,12 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({ familyMembers }) =
         icon: <Gamepad2 className="w-5 h-5" />,
         color: "from-blue-50 to-blue-100 border-blue-200",
         impact: 5,
+        recommendedBy: {
+          agentId: "intimacy",
+          agentName: "Intimacy",
+          agentEmoji: "💖",
+          reason: "Strengthens family bonds through playful interaction"
+        }
       },
       {
         id: "2",
@@ -70,6 +81,12 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({ familyMembers }) =
         icon: <MessageCircle className="w-5 h-5" />,
         color: "from-purple-50 to-purple-100 border-purple-200",
         impact: 4,
+        recommendedBy: {
+          agentId: "wisdom",
+          agentName: "Wisdom",
+          agentEmoji: "🧠",
+          reason: "Promotes emotional clarity and understanding"
+        }
       },
       {
         id: "3",
@@ -82,6 +99,12 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({ familyMembers }) =
         icon: <Users className="w-5 h-5" />,
         color: "from-green-50 to-green-100 border-green-200",
         impact: 4,
+        recommendedBy: {
+          agentId: "presence",
+          agentName: "Presence",
+          agentEmoji: "🧘",
+          reason: "Encourages mindfulness and quality time"
+        }
       },
       {
         id: "4",
@@ -94,6 +117,12 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({ familyMembers }) =
         icon: <Coffee className="w-5 h-5" />,
         color: "from-amber-50 to-amber-100 border-amber-200",
         impact: 5,
+        recommendedBy: {
+          agentId: "bridge",
+          agentName: "Bridge",
+          agentEmoji: "👵👦",
+          reason: "Creates shared memories across generations"
+        }
       },
       {
         id: "5",
@@ -106,6 +135,12 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({ familyMembers }) =
         icon: <BookOpen className="w-5 h-5" />,
         color: "from-rose-50 to-rose-100 border-rose-200",
         impact: 4,
+        recommendedBy: {
+          agentId: "growth",
+          agentName: "Growth",
+          agentEmoji: "🌱",
+          reason: "Supports continuous family development"
+        }
       },
       {
         id: "6",
@@ -118,6 +153,12 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({ familyMembers }) =
         icon: <Utensils className="w-5 h-5" />,
         color: "from-orange-50 to-orange-100 border-orange-200",
         impact: 5,
+        recommendedBy: {
+          agentId: "intimacy",
+          agentName: "Intimacy",
+          agentEmoji: "💖",
+          reason: "Builds connection through collaboration"
+        }
       },
     ];
 
@@ -268,11 +309,19 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({ familyMembers }) =
                           {activity.icon}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center space-x-2 mb-1">
+                          <div className="flex items-center flex-wrap gap-2 mb-1">
                             <h3 className="font-bold text-gray-900">{activity.title}</h3>
                             <Badge className="bg-white bg-opacity-70 text-gray-800 text-xs font-semibold capitalize">
                               {activity.type}
                             </Badge>
+                            {activity.recommendedBy && (
+                              <AgentBadge
+                                agentId={activity.recommendedBy.agentId}
+                                agentName={activity.recommendedBy.agentName}
+                                agentEmoji={activity.recommendedBy.agentEmoji}
+                                size="sm"
+                              />
+                            )}
                           </div>
                           <p className="text-sm text-gray-700 mb-2">{activity.description}</p>
                           <div className="flex flex-wrap items-center gap-3 text-xs text-gray-700 font-medium">
@@ -313,6 +362,24 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({ familyMembers }) =
                           className="mt-4 pt-4 border-t border-white border-opacity-40"
                         >
                           <div className="space-y-3">
+                            {activity.recommendedBy && (
+                              <div className="bg-white bg-opacity-60 p-3 rounded-lg">
+                                <p className="text-sm text-gray-800 font-medium mb-2">
+                                  <span className="text-purple-700 font-bold">{activity.recommendedBy.agentEmoji} {activity.recommendedBy.agentName}</span> recommends this because:
+                                </p>
+                                <p className="text-sm text-gray-700 italic">
+                                  "{activity.recommendedBy.reason}"
+                                </p>
+                                <div className="mt-2">
+                                  <AskAgentButton
+                                    agentId={activity.recommendedBy.agentId}
+                                    agentName={activity.recommendedBy.agentName}
+                                    agentEmoji={activity.recommendedBy.agentEmoji}
+                                    context="this activity"
+                                  />
+                                </div>
+                              </div>
+                            )}
                             <div className="flex justify-between items-center">
                               <span className="text-sm font-semibold text-gray-800">
                                 Impact Score

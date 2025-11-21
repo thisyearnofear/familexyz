@@ -6,7 +6,7 @@
 
 <div align="center">
 
-📑 [Technical Paper](https://arxiv.org/pdf/2501.06781) | 📖 [Platform Overview](./docs/platform-overview.md) | ⛓️ [Hedera Integration](./docs/hedera-integration.md) | 🚀 [Development Guide](./docs/development-deployment.md)
+📑 [Technical Paper](https://arxiv.org/pdf/2501.06781) | 📖 [Platform Overview](./docs/PLATFORM_OVERVIEW.md) | ⛓️ [Hedera Integration](./docs/HEDERA_INTEGRATION.md) | 🚀 [Development Guide](./docs/DEVELOPMENT_GUIDE.md)
 
 </div>
 
@@ -73,7 +73,7 @@ pnpm --filter agent start
 pnpm --filter "@elizaos/client-direct" start
 ```
 
-See [Development Guide](./docs/development-deployment.md) for detailed setup instructions.
+See [Development Guide](./docs/DEVELOPMENT_GUIDE.md) for detailed setup instructions.
 
 ### 🎬 Running the Demo
 
@@ -96,9 +96,10 @@ This will:
 
 See our consolidated documentation:
 
-- **[Platform Overview](./docs/platform-overview.md)** - Complete platform features and architecture
-- **[Hedera Integration](./docs/hedera-integration.md)** - HCS-10 compliance and blockchain features
-- **[Development Guide](./docs/development-deployment.md)** - Setup, deployment, and maintenance
+- **[Platform Overview](./docs/PLATFORM_OVERVIEW.md)** - Complete platform features and architecture
+- **[Hedera Integration](./docs/HEDERA_INTEGRATION.md)** - HCS-10 compliance and blockchain features
+- **[Development Guide](./docs/DEVELOPMENT_GUIDE.md)** - Setup, deployment, and maintenance
+- **[Agent Guide](./docs/AGENT_GUIDE.md)** - Agent integration and testing
 
 ## 🛡️ Privacy & Safety First
 

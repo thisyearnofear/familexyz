@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { FamilyMetricsCards } from "@/components/family/FamilyMetricsCards";
 import { FamilyRadarChart } from "@/components/family/FamilyRadarChart";
 import { FamilyConnectionRings } from "@/components/family/FamilyConnectionRings";
-import { Zap, Target, Users } from "lucide-react";
+import { Zap, Target, Users, Sparkles } from "lucide-react";
 import type { FamilyStats } from "@/types/family";
 import type { FamilyMember } from "@/types/family";
+import { AgentBadge, AskAgentButton } from "@/components/agents";
 
 interface OverviewTabProps {
   familyStats?: FamilyStats;
@@ -24,6 +25,31 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   familyMembers,
   onViewMembers,
 }) => {
+  // Agent highlights - proactive insights from agents
+  const agentHighlights = [
+    {
+      agentId: "wisdom",
+      agentName: "Wisdom",
+      agentEmoji: "🧠",
+      insight: "Your family's communication score improved 15% this week!",
+      action: "Keep up the great work with daily check-ins"
+    },
+    {
+      agentId: "intimacy",
+      agentName: "Intimacy",
+      agentEmoji: "💖",
+      insight: "Quality time together is at an all-time high",
+      action: "Consider planning a special family activity this weekend"
+    },
+    {
+      agentId: "presence",
+      agentName: "Presence",
+      agentEmoji: "🧘",
+      insight: "Mindfulness practices are showing positive results",
+      action: "Try extending your morning walks by 10 minutes"
+    }
+  ];
+
   return (
     <motion.div
       key="overview"
@@ -34,6 +60,49 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
       className="space-y-6"
     >
       <FamilyMetricsCards stats={familyStats} isLoading={isFamilyStatsLoading} />
+
+      {/* Agent Highlights Card */}
+      <Card className="border-0 bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Sparkles className="w-5 h-5 text-purple-600" />
+              <span>Agent Highlights</span>
+            </div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {agentHighlights.map((highlight) => (
+              <div
+                key={highlight.agentId}
+                className="bg-white bg-opacity-70 backdrop-blur-sm p-4 rounded-xl border border-purple-200 hover:border-purple-400 transition-all"
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <AgentBadge
+                    agentId={highlight.agentId}
+                    agentName={highlight.agentName}
+                    agentEmoji={highlight.agentEmoji}
+                    size="sm"
+                  />
+                </div>
+                <p className="text-sm font-semibold text-gray-900 mb-2">
+                  {highlight.insight}
+                </p>
+                <p className="text-xs text-gray-700 mb-3">
+                  💡 {highlight.action}
+                </p>
+                <AskAgentButton
+                  agentId={highlight.agentId}
+                  agentName={highlight.agentName}
+                  agentEmoji={highlight.agentEmoji}
+                  context="this insight"
+                />
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card variant="premium" className="border-0">

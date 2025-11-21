@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,32 +16,19 @@ import {
   Gift,
   Star,
   Users,
-  Calendar,
   Target,
-  Zap,
   Award,
-  Smile,
-  ThumbsUp,
   Send,
   Plus,
-  Clock,
   CheckCircle,
-  Sparkles,
   Crown,
   Medal,
   Flame,
-  TrendingUp,
   BookOpen,
-  Music,
   Gamepad2,
-  Home,
-  Baby,
-  Leaf,
-  Brain,
-  Eye,
-  Lock,
-  Globe
+  Home
 } from "lucide-react";
+
 
 interface FamilyMember {
   id: string;
@@ -91,6 +79,12 @@ interface FamilyPost {
   comments: Comment[];
   tags: string[];
   privacy: "family" | "extended" | "public";
+  agentReactions?: Array<{
+    agentId: string;
+    agentName: string;
+    agentEmoji: string;
+    reaction: string;
+  }>;
 }
 
 interface Comment {
@@ -111,8 +105,8 @@ export const FamilySocialFeatures: React.FC<FamilySocialFeaturesProps> = ({
   currentUserId: initialUserId
 }) => {
   // Ensure currentUserId is set to a valid family member
-  const validUserId = initialUserId && familyMembers.some(m => m.id === initialUserId) 
-    ? initialUserId 
+  const validUserId = initialUserId && familyMembers.some(m => m.id === initialUserId)
+    ? initialUserId
     : familyMembers[0]?.id || "user-1";
 
   const [activeTab, setActiveTab] = useState<"feed" | "achievements" | "challenges" | "memories">("feed");
@@ -121,7 +115,14 @@ export const FamilySocialFeatures: React.FC<FamilySocialFeaturesProps> = ({
   const [posts, setPosts] = useState<FamilyPost[]>([]);
   const [newPost, setNewPost] = useState("");
   const [showCreateChallenge, setShowCreateChallenge] = useState(false);
-  const [selectedAchievement, setSelectedAchievement] = useState<Achievement | null>(null);
+  const [newChallenge, setNewChallenge] = useState({
+    title: "",
+    description: "",
+    category: "",
+    duration: "",
+    target: 7,
+    reward: ""
+  });
   const currentUserId = validUserId;
 
   // Initialize sample data
@@ -144,7 +145,15 @@ export const FamilySocialFeatures: React.FC<FamilySocialFeaturesProps> = ({
         rarity: "common",
         shareCount: 3,
         likes: [familyMembers[0]?.id, familyMembers[1]?.id].filter(Boolean),
-        comments: []
+        comments: [
+          {
+            id: "agent-1",
+            author: "AI-Intimacy",
+            content: "🎉 Amazing! Game nights create lasting memories and strengthen family bonds. I'm so proud of you all!",
+            timestamp: new Date(Date.now() - 86300000),
+            likes: familyMembers.map(m => m.id)
+          }
+        ]
       },
       {
         id: "2",
@@ -158,7 +167,15 @@ export const FamilySocialFeatures: React.FC<FamilySocialFeaturesProps> = ({
         rarity: "rare",
         shareCount: 1,
         likes: [],
-        comments: []
+        comments: [
+          {
+            id: "agent-2",
+            author: "AI-Wisdom",
+            content: "💫 Incredible consistency! Daily check-ins build emotional intelligence and family understanding. This is a huge milestone!",
+            timestamp: new Date(Date.now() - 172700000),
+            likes: familyMembers.map(m => m.id)
+          }
+        ]
       },
       {
         id: "3",
@@ -172,7 +189,15 @@ export const FamilySocialFeatures: React.FC<FamilySocialFeaturesProps> = ({
         rarity: "epic",
         shareCount: 5,
         likes: familyMembers.map(m => m.id),
-        comments: []
+        comments: [
+          {
+            id: "agent-3",
+            author: "AI-Bridge",
+            content: "🌟 This is beautiful! Sharing stories across generations strengthens family identity and creates lasting connections. You're building a legacy!",
+            timestamp: new Date(Date.now() - 259100000),
+            likes: familyMembers.map(m => m.id)
+          }
+        ]
       }
     ];
 
@@ -235,7 +260,21 @@ export const FamilySocialFeatures: React.FC<FamilySocialFeaturesProps> = ({
           }
         ],
         tags: ["family-time", "games", "achievement"],
-        privacy: "family"
+        privacy: "family",
+        agentReactions: [
+          {
+            agentId: "intimacy",
+            agentName: "Intimacy",
+            agentEmoji: "💖",
+            reaction: "Incredible bonding moment!"
+          },
+          {
+            agentId: "wisdom",
+            agentName: "Wisdom",
+            agentEmoji: "🧠",
+            reaction: "Learning together strengthens connections"
+          }
+        ]
       },
       {
         id: "2",
@@ -246,7 +285,21 @@ export const FamilySocialFeatures: React.FC<FamilySocialFeaturesProps> = ({
         likes: familyMembers.filter(m => m.id !== familyMembers[1]?.id).map(m => m.id),
         comments: [],
         tags: ["gratitude", "morning-walks", "family-time"],
-        privacy: "family"
+        privacy: "family",
+        agentReactions: [
+          {
+            agentId: "presence",
+            agentName: "Presence",
+            agentEmoji: "🧘",
+            reaction: "Beautiful mindful practice!"
+          },
+          {
+            agentId: "growth",
+            agentName: "Growth",
+            agentEmoji: "🌱",
+            reaction: "Consistency builds lasting habits"
+          }
+        ]
       }
     ];
 
@@ -341,6 +394,37 @@ export const FamilySocialFeatures: React.FC<FamilySocialFeaturesProps> = ({
       case "legendary": return <Medal className="w-3 h-3" />;
       default: return <Star className="w-3 h-3" />;
     }
+  };
+
+  const handleCreateChallenge = () => {
+    if (!newChallenge.title || !newChallenge.description) return;
+
+    const challenge: FamilyChallenge = {
+      id: Date.now().toString(),
+      title: newChallenge.title,
+      description: newChallenge.description,
+      category: newChallenge.category || "bonding",
+      duration: newChallenge.duration ? `${newChallenge.duration} days` : "7 days",
+      participants: [currentUserId],
+      progress: { [currentUserId]: 0 },
+      target: newChallenge.target || 7,
+      reward: newChallenge.reward || "Family Glory",
+      startDate: new Date(),
+      endDate: new Date(Date.now() + (parseInt(newChallenge.duration || "7") * 86400000)),
+      isActive: true,
+      createdBy: currentUserId
+    };
+
+    setChallenges([challenge, ...challenges]);
+    setShowCreateChallenge(false);
+    setNewChallenge({
+      title: "",
+      description: "",
+      category: "",
+      duration: "",
+      target: 7,
+      reward: ""
+    });
   };
 
   const getMemberName = (memberId: string) => {
@@ -445,14 +529,14 @@ export const FamilySocialFeatures: React.FC<FamilySocialFeaturesProps> = ({
                     </div>
                     <div className="flex justify-between items-center pt-2">
                       <div className="flex space-x-2">
-                        <Button 
+                        <Button
                           size="sm"
                           className="bg-white border-2 border-purple-400 hover:bg-purple-50 text-purple-700 font-semibold"
                         >
                           <Camera className="w-4 h-4 mr-2" />
                           Photo
                         </Button>
-                        <Button 
+                        <Button
                           size="sm"
                           className="bg-white border-2 border-purple-400 hover:bg-purple-50 text-purple-700 font-semibold"
                         >
@@ -522,14 +606,29 @@ export const FamilySocialFeatures: React.FC<FamilySocialFeaturesProps> = ({
                             {post.tags.length > 0 && (
                               <div className="flex flex-wrap gap-2 mb-4">
                                 {post.tags.map((tag, idx) => (
-                                  <Badge 
+                                  <Badge
                                     key={idx}
-                                    variant="secondary" 
+                                    variant="secondary"
                                     className="text-xs bg-white bg-opacity-60 text-gray-700 font-medium border border-gray-200"
                                   >
                                     #{tag}
                                   </Badge>
                                 ))}
+                              </div>
+                            )}
+
+                            {/* Agent Reactions */}
+                            {post.agentReactions && post.agentReactions.length > 0 && (
+                              <div className="bg-white bg-opacity-60 backdrop-blur-sm p-3 rounded-lg mb-3 border border-purple-200">
+                                <div className="flex items-start gap-2 flex-wrap">
+                                  <span className="text-xs font-semibold text-purple-700">AI Team:</span>
+                                  {post.agentReactions.map((reaction, idx) => (
+                                    <div key={idx} className="flex items-center gap-1.5 bg-purple-50 px-2 py-1 rounded-md">
+                                      <span className="text-sm">{reaction.agentEmoji}</span>
+                                      <span className="text-xs font-medium text-gray-800">"{reaction.reaction}"</span>
+                                    </div>
+                                  ))}
+                                </div>
                               </div>
                             )}
 
@@ -709,7 +808,7 @@ export const FamilySocialFeatures: React.FC<FamilySocialFeaturesProps> = ({
               <h3 className="text-lg font-bold text-gray-900">Active Challenges</h3>
               <Button
                 onClick={() => setShowCreateChallenge(true)}
-                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold"
+                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold shadow-md hover:shadow-lg transition-all"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Create Challenge
@@ -779,15 +878,15 @@ export const FamilySocialFeatures: React.FC<FamilySocialFeaturesProps> = ({
                         Created by {getMemberName(challenge.createdBy)}
                       </div>
                       <div className="space-x-2">
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           className="border-2 border-green-400 bg-white text-green-700 hover:bg-green-50 font-semibold"
                         >
                           <CheckCircle className="w-4 h-4 mr-1" />
                           Log Progress
                         </Button>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold"
                         >
                           <MessageCircle className="w-4 h-4 mr-1" />
@@ -822,6 +921,129 @@ export const FamilySocialFeatures: React.FC<FamilySocialFeaturesProps> = ({
               </Button>
             </div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Create Challenge Modal */}
+      <AnimatePresence>
+        {showCreateChallenge && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden"
+            >
+              <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-green-50 to-emerald-50">
+                <h3 className="text-xl font-bold text-gray-900 flex items-center">
+                  <Trophy className="w-5 h-5 mr-2 text-green-600" />
+                  Create Family Challenge
+                </h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowCreateChallenge(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </Button>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Challenge Title</label>
+                  <Input
+                    placeholder="e.g., Daily Gratitude, No Screen Sunday"
+                    value={newChallenge.title}
+                    onChange={(e) => setNewChallenge({ ...newChallenge, title: e.target.value })}
+                    className="border-gray-200 focus:ring-green-500 focus:border-green-500"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Description</label>
+                  <Textarea
+                    placeholder="What's the goal? How do we track it?"
+                    value={newChallenge.description}
+                    onChange={(e) => setNewChallenge({ ...newChallenge, description: e.target.value })}
+                    className="border-gray-200 focus:ring-green-500 focus:border-green-500 min-h-[80px]"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Duration (Days)</label>
+                    <Input
+                      type="number"
+                      placeholder="7"
+                      value={newChallenge.duration}
+                      onChange={(e) => setNewChallenge({ ...newChallenge, duration: e.target.value })}
+                      className="border-gray-200 focus:ring-green-500 focus:border-green-500"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Target Count</label>
+                    <Input
+                      type="number"
+                      placeholder="e.g., 7"
+                      value={newChallenge.target}
+                      onChange={(e) => setNewChallenge({ ...newChallenge, target: parseInt(e.target.value) || 0 })}
+                      className="border-gray-200 focus:ring-green-500 focus:border-green-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Category</label>
+                  <div className="flex flex-wrap gap-2">
+                    {["bonding", "health", "learning", "kindness"].map((cat) => (
+                      <button
+                        key={cat}
+                        onClick={() => setNewChallenge({ ...newChallenge, category: cat })}
+                        className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
+                          newChallenge.category === cat
+                            ? "bg-green-100 text-green-800 border-2 border-green-200"
+                            : "bg-gray-100 text-gray-600 border border-transparent hover:bg-gray-200"
+                        }`}
+                      >
+                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Reward (Optional)</label>
+                  <div className="relative">
+                    <Gift className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                    <Input
+                      placeholder="e.g., Pizza Night, Movie Choice"
+                      value={newChallenge.reward}
+                      onChange={(e) => setNewChallenge({ ...newChallenge, reward: e.target.value })}
+                      className="pl-9 border-gray-200 focus:ring-green-500 focus:border-green-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end space-x-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowCreateChallenge(false)}
+                  className="text-gray-600 hover:text-gray-800"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleCreateChallenge}
+                  disabled={!newChallenge.title || !newChallenge.description}
+                  className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-md hover:shadow-lg transition-all"
+                >
+                  Create Challenge
+                </Button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>

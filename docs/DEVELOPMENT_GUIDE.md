@@ -41,51 +41,6 @@ Required environment variables:
 - Hedera testnet credentials
 - Optional: Discord, Telegram, Twitter tokens
 
-### Venice AI Model Configuration
-
-The platform uses specialized Venice AI models for each agent type:
-
-| Agent       | Model              | Purpose                          | Context |
-| ----------- | ------------------ | -------------------------------- | ------- |
-| 🧠 Wisdom   | llama-3.3-70b      | Complex emotional reasoning      | 128k    |
-| 💑 Intimacy | llama-3.3-70b      | Relationship intelligence        | 128k    |
-| 👵👦 Bridge | llama-3.3-70b      | Cross-generational understanding | 128k    |
-| 🧘 Presence | llama-3.2-3b       | Quick mindfulness responses      | 32k     |
-| 🚀 Growth   | qwen-2.5-coder-32b | Goal-oriented, structured tasks  | 64k     |
-
-**Available Venice AI Models:**
-
-#### Large Models (High Reasoning)
-
-- `llama-3.3-70b` - Extensive context, versatile
-- `qwen-2.5-72b` - Advanced reasoning capabilities
-- `qwen-3-235b-a22b` - Multimodal, in-depth reasoning
-
-#### Fast Models (Quick Responses)
-
-- `llama-3.2-3b` - Lightweight, fast
-- `qwen-2.5-14b` - Balanced speed/quality
-
-#### Specialized Models
-
-- `qwen-2.5-coder-32b` - Code generation, technical tasks
-- `qwen-2.5-vl` - Vision capabilities
-- `mistral-31-24b` - Vision, function calling, web search
-
-**Fallback Strategy:**
-
-1. Primary model fails → `llama-3.2-3b` (fast fallback)
-2. Still failing → `qwen-2.5-32b` (alternative reasoning)
-3. Last resort → `mistral-31-24b` (full features)
-
-Venice AI ensures privacy through:
-
-- ✅ **No data storage** - Conversations never stored on servers
-- ✅ **Encrypted local storage** - Data stays in your browser
-- ✅ **Decentralized processing** - Distributed GPU providers
-- ✅ **No conversation logging** - Zero persistent tracking
-- ✅ **Proxy routing** - Requests processed via secure proxy
-
 ## 🏗️ Project Structure
 
 ```
@@ -115,7 +70,7 @@ familexyz/
 │   └── clients/               # Platform clients
 ├── config/                     # Configuration files
 ├── environments/               # Environment templates
-├── docs-consolidated/          # Documentation
+├── docs/                       # Documentation
 └── tests/                      # Integration tests
 ```
 
@@ -163,24 +118,6 @@ pnpm --filter "@elizaos/client-direct" start
 
 This provides a direct terminal interface to interact with the family agents.
 
-### Individual Package Development
-
-```bash
-# Develop specific packages
-cd packages/family/plugin-wisdom && pnpm dev
-cd packages/blockchain/hedera-core && pnpm dev
-cd client && pnpm dev
-```
-
-### Backend Development Only
-
-```bash
-# Start all family agents with various options
-pnpm --filter agent start          # Normal mode
-pnpm --filter agent start:debug    # Debug logging
-pnpm --filter agent run cleanstart # Reset database & start
-```
-
 ## 🧪 Testing
 
 ### Unit Tests
@@ -201,14 +138,6 @@ pnpm test:integration
 
 # Test specific components
 node tests/test-chat.js
-```
-
-### HCS-10 Compliance Testing
-
-```bash
-# Test HCS-10 message formats
-cd packages/blockchain/hedera-core
-node test/hcs10-test.cjs
 ```
 
 ## 🐳 Docker Deployment
@@ -234,14 +163,6 @@ docker-compose logs -f
 
 # Stop services
 docker-compose down
-```
-
-### Docker Environment Configuration
-
-```bash
-# Create environment file for Docker
-cp environments/docker/.env.docker.template .env.docker
-# Edit with production credentials
 ```
 
 ## ☁️ Cloud Deployment
@@ -297,25 +218,6 @@ The system automatically creates HCS topics on first run:
 - Automatic topic registration with HCS-10 compliance
 - Memo field describing topic purpose
 
-### Token Setup
-
-```bash
-# Family health tokens are created automatically
-# Configure in environment:
-HEDERA_FAMILY_TOKEN_ID=0.0.999888777
-HEDERA_TREASURY_ACCOUNT_ID=0.0.1111111
-```
-
-### Hedera Feature Flags
-
-```bash
-# Enable/disable consensus service
-HEDERA_ENABLE_CONSENSUS=true
-
-# Submit startup test message
-HEDERA_SUBMIT_STARTUP_TEST=true
-```
-
 ## 📊 Monitoring & Maintenance
 
 ### Health Checks
@@ -341,13 +243,6 @@ DEBUG=eliza:* pnpm start
 DEFAULT_LOG_LEVEL=debug pnpm start
 ```
 
-### Performance Monitoring
-
-- Track message processing latency
-- Monitor Hedera transaction success rates
-- Watch for batch processing efficiency
-- Monitor memory and CPU usage
-
 ## 🔒 Security Best Practices
 
 ### Credential Management
@@ -363,13 +258,6 @@ DEFAULT_LOG_LEVEL=debug pnpm start
 - Implement proper access controls
 - Regular security audits
 - GDPR compliance measures
-
-### Network Security
-
-- Use HTTPS in production
-- Implement rate limiting
-- Validate all inputs
-- Regular dependency updates
 
 ## 🆘 Troubleshooting
 
@@ -422,62 +310,3 @@ docker-compose build --no-cache
 3. Verify environment variables are loaded
 4. Test network connectivity to Hedera
 5. Monitor browser console for frontend errors
-
-## 📈 Performance Optimization
-
-### Caching Strategies
-
-- Message cache with 30-second TTL
-- Account balance caching
-- Topic info caching
-- Performance metrics aggregation
-
-### Batch Processing
-
-- Family interaction batching (10 messages)
-- 5-second batch intervals
-- Automatic flush on queue full
-- Retry logic for failed batches
-
-### Resource Management
-
-- Connection pooling for Hedera client
-- Memory-efficient message processing
-- Garbage collection optimization
-- Database connection management
-
-## 🔄 CI/CD Pipeline
-
-### GitHub Actions
-
-- Automated testing on pull requests
-- Build verification
-- Security scanning
-- Deployment automation
-
-### Version Management
-
-```bash
-# Bump version
-pnpm version patch  # or minor/major
-
-# Tag releases
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-### Release Process
-
-1. Update version numbers
-2. Run full test suite
-3. Create GitHub release
-4. Deploy to production
-5. Update documentation
-
-## 📄 License & Contributing
-
-### MIT License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-See [Platform Overview](./platform-overview.md) for contributing guidelines.

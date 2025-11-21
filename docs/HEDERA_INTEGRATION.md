@@ -1,9 +1,5 @@
 # Hedera Blockchain Integration & HCS-10 Compliance
 
-## 🚀 Hedera Africa Hackathon 2025 - Track 4 (AI & DePIN)
-
-This documentation details the Family-Connection AI Agents implementation for the Hedera Africa Hackathon 2025 Track 4 submission. Our architecture is deeply aligned with the principles of the **Hedera AI Agent Kit**, using a modular, tool-based approach for all on-chain interactions.
-
 ## ⛓️ HCS-10 Compliant Messaging
 
 ### Standard Implementation
@@ -127,30 +123,6 @@ Manages tokenomics and rewards:
 - Balance tracking and reporting
 - Custom token management
 
-### Hedera Agent Kit: Plugins
-
-Our integration layers act as "Plugins" that adapt the core Tools for the specific context of our family agents.
-
-#### FamilyHederaIntegration Plugin
-
-Primary integration point for family agents:
-
-- Processes family interactions with HCS-10 compliance using the Consensus Service Tool.
-- Submits family milestones to consensus.
-- Distributes token rewards automatically via the Token Service Tool.
-- Maintains conversation context.
-
-#### FamilyHederaMetricsLogger Plugin
-
-Metrics tracking and logging:
-
-- Logs sentiment analysis to HCS.
-- Calculates and records family health scores on-chain.
-- Triggers reward calculations and distribution.
-- Collects and logs performance metrics.
-
-##  executionModes
-
 ### Execution Modes
 
 Our system supports dual execution modes, a key feature of the Hedera AI Agent Kit:
@@ -212,87 +184,93 @@ const wisdomAgentConfig = {
 - Conflict peacefully resolved: 1200 tinybars
 - New family member welcomed: 2000 tinybars
 
-### Health Scoring
+## 🚀 Quick Start Example
 
-Family interactions are scored based on:
+Here's a minimal example to send and retrieve HCS-10 messages:
 
-- Sentiment analysis (40%)
-- Engagement quality (30%)
-- Duration and depth (20%)
-- Consistency over time (10%)
+```ts
+import { HederaService } from '@elizaos/hedera-core/services';
+import { HederaStandardsService } from '@elizaos/hedera-core/services';
+import { HCS10FamilyInteraction } from '@elizaos/hedera-core/types';
 
-## 🔍 Monitoring & Analytics
+async function run() {
+  const hederaService = HederaService.getInstance({
+    accountId: process.env.HEDERA_ACCOUNT_ID!,
+    privateKey: process.env.HEDERA_PRIVATE_KEY!,
+    network: (process.env.HEDERA_NETWORK || 'testnet') as 'testnet' | 'mainnet'
+  });
+  await hederaService.initialize();
 
-### Real-time Tracking
+  // Create a topic for your family/app
+  const topicRes = await hederaService.consensus.createFamilyTopic(
+    'quickstart-family',
+    'Quick Start Topic'
+  );
+  if (!topicRes.success || !topicRes.data) throw new Error('Topic creation failed');
+  const topicId = topicRes.data;
 
-- Family health dashboard with metrics
-- Token balance monitoring
-- Interaction history and trends
-- Reward distribution reports
+  // Submit an HCS-10 message
+  const msg: HCS10FamilyInteraction = {
+    standard: 'HCS-10',
+    version: '1.0',
+    timestamp: Date.now(),
+    messageId: `quickstart-${Date.now()}`,
+    sender: process.env.HEDERA_ACCOUNT_ID!,
+    topicId,
+    type: 'family_interaction',
+    payload: {
+      familyId: 'quickstart-family',
+      agentType: 'coordinator',
+      interactionType: 'daily_checkin',
+      contentHash: 'hash-abc',
+      participants: ['alice','bob'],
+      sentiment: { polarity: 0.7, familyTone: 'positive', healthScore: 80 },
+      metadata: { mood: 'positive' }
+    }
+  };
+  const submitRes = await hederaService.consensus.submitHCS10Message(topicId, msg);
+  if (!submitRes.success) throw new Error(`Submit failed: ${submitRes.error}`);
 
-### Performance Metrics
+  // Retrieve from Mirror Node
+  const mirrorRes = await hederaService.mirror.getTopicMessages(topicId, { limit: 10 });
+  if (!mirrorRes.success || !mirrorRes.data?.length) throw new Error('No messages retrieved');
 
-- Message submission latency
-- Transaction success rates
-- Batch processing efficiency
-- Network connectivity health
+  console.log('HCS-10 quickstart completed:', topicId);
+}
 
-## 🛡️ Security & Compliance
+run().catch(err => {
+  console.error(err);
+  process.exit(1);
+});
+```
 
-### Data Protection
+## ✅ Hedera Integration Proof
 
-- All sensitive data encrypted before consensus submission
-- Content hashing for integrity verification
-- Participant privacy through account ID obfuscation
-- Optional local data storage modes
+### Account Details
+- **Account ID:** `0.0.6511978`
+- **Network:** Hedera Testnet
+- **Balance:** 1,100.00 HBAR ($160.75)
+- **Key Type:** ECDSA_SECP256K1
 
-### Access Control
+### Transaction Proof
+- **Topic Created:** `0.0.7296068`
+- **Transaction ID:** `0.0.6511978@1763637529.750457705`
+- **Status:** SUCCESS
+- **Timestamp:** 2025-11-20 (Unix: 1763637529)
 
-- Operator key authentication
-- Account permission validation
-- Topic access control lists
-- Transaction signing and verification
+### Verification Links
+- **Transaction on HashScan:** https://hashscan.io/testnet/transaction/0-0.6511978-1763637529.750457705
+- **Topic on HashScan:** https://hashscan.io/testnet/topic/0.0.7296068
+- **Account on HashScan:** https://hashscan.io/testnet/account/0.0.6511978
 
-## 🚀 Deployment
+### Message Submitted
+```json
+{
+  "project": "Famile",
+  "agent": "Wisdom",
+  "timestamp": 1763637529750,
+  "proof": "Hedera Integration Working"
+}
+```
 
-### Testnet Development
-
-1. Obtain Hedera testnet credentials
-2. Configure environment variables
-3. Deploy family agents with Hedera integration
-4. Test HCS-10 message submission and retrieval
-
-### Mainnet Production
-
-1. Migrate to Hedera mainnet credentials
-2. Create production topics and tokens
-3. Configure treasury accounts
-4. Enable full tokenomics system
-
-## 📈 Future Enhancements
-
-### Mirror Node Integration
-
-- Real-time consensus message streaming
-- Advanced analytics and reporting
-- Cross-platform data synchronization
-- Historical data analysis
-
-### Smart Contract Extensions
-
-- Automated reward distribution contracts
-- Family governance mechanisms
-- Multi-signature family wallets
-- Conditional milestone achievements
-
-### DePIN Network Expansion
-
-- Distributed family data storage
-- Peer-to-peer family communication
-- Decentralized family reputation system
-- Community-driven family support networks
-
-### Hedera AI Agent Kit Adoption
-
-- **Direct Integration**: Adapt our architecture to use the official `Hedera AI Agent Kit` tools and plugins directly, potentially replacing our custom `HederaService` with the official kit's adaptors.
-- **LangChain Integration**: Leverage the kit's compatibility with LangChain to enhance our agents' conversational and decision-making capabilities.
+This proof demonstrates that FamilyXYZ has working, verifiable blockchain integration - a key differentiator for the hackathon! 🚀

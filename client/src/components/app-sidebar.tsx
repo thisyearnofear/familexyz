@@ -16,7 +16,7 @@ import {
 import { apiClient } from "@/lib/api";
 import { NavLink, useLocation } from "react-router";
 import type { UUID } from "@elizaos/core";
-import { Book, Cog, User, Home } from "lucide-react";
+import { Book, Cog, Home } from "lucide-react";
 import ConnectionStatus from "./connection-status";
 
 export function AppSidebar() {
@@ -82,24 +82,54 @@ export function AppSidebar() {
                             ) : (
                                 <div>
                                     {agents?.map(
-                                        (agent: { id: UUID; name: string }) => (
-                                            <SidebarMenuItem key={agent.id}>
-                                                <NavLink
-                                                    to={`/chat/${agent.id}`}
-                                                >
-                                                    <SidebarMenuButton
-                                                        isActive={location.pathname.includes(
-                                                            agent.id,
-                                                        )}
+                                        (agent: { id: UUID; name: string }) => {
+                                            // Map agent names to emojis
+                                            const agentEmojis: { [key: string]: string } = {
+                                                "wisdom": "🧠",
+                                                "intimacy": "💖",
+                                                "presence": "🧘",
+                                                "bridge": "👵👦",
+                                                "growth": "🌱"
+                                            };
+
+                                            const agentName = agent.name.toLowerCase();
+                                            const emoji = agentEmojis[agentName] || "🤖";
+
+                                            // Simulate notification status (in real app, this would come from API)
+                                            const hasNotification = ["wisdom", "intimacy", "presence"].includes(agentName);
+
+                                            return (
+                                                <SidebarMenuItem key={agent.id} className="mb-3">
+                                                    <NavLink
+                                                        to={`/chat/${agent.id}`}
                                                     >
-                                                        <User className="h-4 w-4" />
-                                                        <span>
-                                                            {agent.name}
-                                                        </span>
-                                                    </SidebarMenuButton>
-                                                </NavLink>
-                                            </SidebarMenuItem>
-                                        ),
+                                                        <SidebarMenuButton
+                                                            isActive={location.pathname.includes(
+                                                                agent.id,
+                                                            )}
+                                                            className="relative py-3 h-auto"
+                                                        >
+                                                            <div className="relative flex-shrink-0">
+                                                                <span className="text-lg">{emoji}</span>
+                                                                {hasNotification && (
+                                                                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-purple-600 rounded-full border border-white animate-pulse" />
+                                                                )}
+                                                            </div>
+                                                            <span className="flex-1">
+                                                                {agent.name}
+                                                            </span>
+                                                            {hasNotification && (
+                                                                <span className="ml-auto flex-shrink-0">
+                                                                    <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-purple-600 rounded-full">
+                                                                        {agentName === "wisdom" ? "2" : "1"}
+                                                                    </span>
+                                                                </span>
+                                                            )}
+                                                        </SidebarMenuButton>
+                                                    </NavLink>
+                                                </SidebarMenuItem>
+                                            );
+                                        },
                                     )}
                                 </div>
                             )}

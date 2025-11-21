@@ -10,11 +10,6 @@ import {
     Activity,
     Target,
     Zap,
-    Brain,
-    Heart,
-    Users,
-    Leaf,
-    Rocket,
 } from "lucide-react";
 import {
     predictHealthScore,
@@ -23,6 +18,7 @@ import {
     calculateVolatility,
 } from "@/lib/predictiveAnalytics";
 import type { FamilyStats, FamilyHistory } from "@/types/family";
+import { AgentContribution, AskAgentButton } from "@/components/agents";
 
 interface EnhancedAnalyticsProps {
     stats: FamilyStats | undefined;
@@ -130,6 +126,46 @@ export const EnhancedAnalytics: React.FC<EnhancedAnalyticsProps> = ({
                             <div className="text-sm text-gray-600">Trend</div>
                         </div>
                     </div>
+
+                    <AgentContribution
+                        agents={[
+                            { id: "wisdom", name: "Wisdom", emoji: "🧠", contribution: "Emotional clarity insights" },
+                            { id: "intimacy", name: "Intimacy", emoji: "💖", contribution: "Relationship strength analysis" },
+                        ]}
+                    />
+                </CardContent>
+            </Card>
+
+            {/* Multi-Agent Collaborative Insight */}
+            <Card className="border-0 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+                <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                        <Zap className="w-5 h-5 text-indigo-600" />
+                        <span>Team Consensus</span>
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="bg-white bg-opacity-70 backdrop-blur-sm p-4 rounded-xl border-2 border-indigo-300">
+                        <div className="flex items-start gap-3 mb-3">
+                            <div className="flex -space-x-2">
+                                <span className="inline-flex items-center justify-center w-8 h-8 text-xl bg-purple-100 rounded-full border-2 border-white">🧠</span>
+                                <span className="inline-flex items-center justify-center w-8 h-8 text-xl bg-purple-100 rounded-full border-2 border-white">💖</span>
+                                <span className="inline-flex items-center justify-center w-8 h-8 text-xl bg-purple-100 rounded-full border-2 border-white">🧘</span>
+                            </div>
+                            <div className="flex-1">
+                                <p className="text-sm font-bold text-indigo-900 mb-1">
+                                    Wisdom, Intimacy & Presence agree:
+                                </p>
+                                <p className="text-sm text-gray-800 font-medium">
+                                    "Your family is ready for deeper emotional connection. The combination of improved communication, quality time, and mindfulness creates the perfect foundation for growth."
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex gap-2">
+                            <AskAgentButton agentId="wisdom" agentName="Wisdom" agentEmoji="🧠" context="this insight" />
+                            <AskAgentButton agentId="intimacy" agentName="Intimacy" agentEmoji="💖" context="this insight" />
+                        </div>
+                    </div>
                 </CardContent>
             </Card>
 
@@ -200,6 +236,12 @@ export const EnhancedAnalytics: React.FC<EnhancedAnalyticsProps> = ({
                               ? "Moderate stability. Some consistency improvements could help."
                               : "Excellent stability in family interactions."}
                     </div>
+
+                    <AgentContribution
+                        agents={[
+                            { id: "presence", name: "Presence", emoji: "🧘", contribution: "Mindfulness & consistency tracking" },
+                        ]}
+                    />
                 </CardContent>
             </Card>
 
@@ -207,57 +249,67 @@ export const EnhancedAnalytics: React.FC<EnhancedAnalyticsProps> = ({
             {stats && (
                 <Card className="border-0 bg-gradient-to-br from-green-50 to-emerald-50">
                     <CardHeader>
-                        <CardTitle className="flex items-center space-x-2">
-                            <Zap className="w-5 h-5 text-green-600" />
-                            <span>Agent Insights</span>
+                        <CardTitle className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                                <Zap className="w-5 h-5 text-green-600" />
+                                <span>Agent Insights</span>
+                            </div>
+                            <div className="flex gap-2">
+                                <AskAgentButton agentId="wisdom" agentName="Wisdom" agentEmoji="🧠" context="these metrics" />
+                            </div>
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                            <div className="text-center p-3 bg-white rounded-lg border border-green-200">
-                                <Brain className="w-6 h-6 text-purple-500 mx-auto mb-1" />
+                            <div className="text-center p-3 bg-white rounded-lg border border-green-200 hover:border-purple-300 transition-all cursor-pointer">
+                                <div className="text-3xl mb-1">💖</div>
                                 <div className="text-lg font-bold text-gray-900">
                                     {stats.intimacy?.affection ?? 0}
                                 </div>
                                 <div className="text-xs text-gray-600">
                                     Affection
                                 </div>
+                                <div className="text-[10px] text-purple-600 mt-1">Intimacy</div>
                             </div>
-                            <div className="text-center p-3 bg-white rounded-lg border border-green-200">
-                                <Heart className="w-6 h-6 text-pink-500 mx-auto mb-1" />
+                            <div className="text-center p-3 bg-white rounded-lg border border-green-200 hover:border-purple-300 transition-all cursor-pointer">
+                                <div className="text-3xl mb-1">🧘</div>
                                 <div className="text-lg font-bold text-gray-900">
                                     {stats.presence?.attention ?? 0}
                                 </div>
                                 <div className="text-xs text-gray-600">
                                     Attention
                                 </div>
+                                <div className="text-[10px] text-purple-600 mt-1">Presence</div>
                             </div>
-                            <div className="text-center p-3 bg-white rounded-lg border border-green-200">
-                                <Users className="w-6 h-6 text-blue-500 mx-auto mb-1" />
+                            <div className="text-center p-3 bg-white rounded-lg border border-green-200 hover:border-purple-300 transition-all cursor-pointer">
+                                <div className="text-3xl mb-1">👵👦</div>
                                 <div className="text-lg font-bold text-gray-900">
                                     {stats.generational?.bridge ?? 0}
                                 </div>
                                 <div className="text-xs text-gray-600">
                                     Bridge
                                 </div>
+                                <div className="text-[10px] text-purple-600 mt-1">Bridge</div>
                             </div>
-                            <div className="text-center p-3 bg-white rounded-lg border border-green-200">
-                                <Leaf className="w-6 h-6 text-green-500 mx-auto mb-1" />
+                            <div className="text-center p-3 bg-white rounded-lg border border-green-200 hover:border-purple-300 transition-all cursor-pointer">
+                                <div className="text-3xl mb-1">🧘</div>
                                 <div className="text-lg font-bold text-gray-900">
                                     {stats.presence?.distraction ?? 0}
                                 </div>
                                 <div className="text-xs text-gray-600">
                                     Distraction
                                 </div>
+                                <div className="text-[10px] text-purple-600 mt-1">Presence</div>
                             </div>
-                            <div className="text-center p-3 bg-white rounded-lg border border-green-200">
-                                <Rocket className="w-6 h-6 text-orange-500 mx-auto mb-1" />
+                            <div className="text-center p-3 bg-white rounded-lg border border-green-200 hover:border-purple-300 transition-all cursor-pointer">
+                                <div className="text-3xl mb-1">🌱</div>
                                 <div className="text-lg font-bold text-gray-900">
                                     {stats.growth?.growth ?? 0}
                                 </div>
                                 <div className="text-xs text-gray-600">
                                     Growth
                                 </div>
+                                <div className="text-[10px] text-purple-600 mt-1">Growth</div>
                             </div>
                         </div>
                     </CardContent>

@@ -19,8 +19,11 @@ import {
   Lightbulb,
   Zap,
   HelpCircle,
-  BookOpen
+  BookOpen,
+  Wallet,
+  Coins
 } from "lucide-react";
+import { useWalletConnection } from "@elizaos/hedera-wallet/react";
 
 interface OnboardingStep {
   id: string;
@@ -213,6 +216,25 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
           preferences={familyProfile.preferences}
           onPreferencesChange={(prefs) => setFamilyProfile(prev => ({...prev, preferences: prefs}))}
         />
+      )
+    },
+    {
+      id: "wallet",
+      title: "Setup Family Treasury",
+      subtitle: "Power your AI with Hedera",
+      description: "Connect a wallet to fund your Family Agent's intelligence and enable rewards.",
+      icon: <Wallet className="w-8 h-8 text-indigo-500" />,
+      helpContent: {
+        title: "Family Treasury",
+        description: "The Family Treasury uses HBAR to pay for AI inference and reward family members.",
+        tips: [
+          "You can skip this step and set it up later in Settings",
+          "HashPack is the recommended wallet for the best experience",
+          "Funds are used for AI processing and family rewards"
+        ]
+      },
+      component: (
+        <WalletSetupStep />
       )
     },
     {
@@ -769,6 +791,106 @@ const PreferencesStep: React.FC<{
               </div>
             </div>
           ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const WalletSetupStep: React.FC = () => {
+  const { isConnected, isConnecting, connectWallet, connection } = useWalletConnection();
+  const [balance, setBalance] = useState<string>("0");
+
+  useEffect(() => {
+    if (isConnected && connection?.accountId) {
+      fetch(
+        `https://testnet.mirrornode.hedera.com/api/v1/accounts/${connection.accountId}`
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.balance) {
+            setBalance(
+              (data.balance.balance / 100_000_000).toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })
+            );
+          }
+        })
+        .catch((err) => console.error("Failed to fetch balance:", err));
+    }
+  }, [isConnected, connection?.accountId]);
+
+  const handleConnect = async () => {
+    try {
+      await connectWallet("hashpack");
+    } catch (error) {
+      console.error("Wallet connection failed:", error);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-xl border border-indigo-100 text-center">
+        <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+          <Wallet className="w-8 h-8 text-indigo-600" />
+        </div>
+
+        <h3 className="text-xl font-bold text-indigo-900 mb-2">
+          {isConnected ? "Wallet Connected!" : "Connect Family Wallet"}
+        </h3>
+
+        <p className="text-gray-600 max-w-md mx-auto mb-6">
+          {isConnected
+            ? "Your family treasury is ready to go. You can manage funds and rewards from the dashboard."
+            : "Link a Hedera wallet to unlock advanced AI features and create a reward system for your family."}
+        </p>
+
+        {!isConnected ? (
+          <div className="space-y-3">
+            <Button
+              onClick={handleConnect}
+              disabled={isConnecting}
+              size="lg"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-8 py-6 rounded-xl shadow-lg hover:shadow-xl transition-all"
+            >
+              {isConnecting ? "Connecting..." : "Connect HashPack"}
+            </Button>
+            <p className="text-xs text-gray-500">
+              Don't have a wallet? <a href="https://www.hashpack.app/" target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline">Get HashPack</a>
+            </p>
+          </div>
+        ) : (
+          <div className="bg-white p-4 rounded-lg border border-indigo-100 max-w-xs mx-auto shadow-sm">
+             <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Balance</p>
+             <div className="flex items-center justify-center gap-2">
+                <Coins className="w-5 h-5 text-yellow-500" />
+                <span className="text-2xl font-bold text-gray-900">{balance}</span>
+                <span className="text-sm text-gray-500 font-medium">HBAR</span>
+             </div>
+             <div className="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-400 font-mono truncate">
+               {connection?.accountId}
+             </div>
+          </div>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+          <h4 className="font-bold text-gray-900 mb-2 flex items-center gap-2">
+            <span className="text-xl">🧠</span> AI Intelligence
+          </h4>
+          <p className="text-sm text-gray-600">
+            HBAR powers the advanced reasoning capabilities of your Family Agents.
+          </p>
+        </div>
+        <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+          <h4 className="font-bold text-gray-900 mb-2 flex items-center gap-2">
+            <span className="text-xl">🏆</span> Family Rewards
+          </h4>
+          <p className="text-sm text-gray-600">
+            Create challenges and reward family members with tokens for achieving goals.
+          </p>
         </div>
       </div>
     </div>

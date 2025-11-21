@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Bell } from "lucide-react";
+import { Heart, Bell, Wallet } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FamilyLogo } from "@/components/FamilyLogo";
@@ -16,14 +17,22 @@ import { ActivitiesTab } from "./dashboard/tabs/ActivitiesTab";
 import { SocialTab } from "./dashboard/tabs/SocialTab";
 import { MembersTab } from "./dashboard/tabs/MembersTab";
 import { SettingsTab } from "./dashboard/tabs/SettingsTab";
+import { FamilyTreasuryModal } from "./dashboard/FamilyTreasuryModal";
 
 interface EnhancedFamilyDashboardProps {}
 
 export const EnhancedFamilyDashboard: React.FC<EnhancedFamilyDashboardProps> = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<
     "overview" | "insights" | "activities" | "social" | "members" | "settings"
-  >("overview");
+  >((searchParams.get("tab") as any) || "overview");
+
+  // Sync tab change to URL
+  useEffect(() => {
+    setSearchParams({ tab: activeTab });
+  }, [activeTab, setSearchParams]);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [showTreasuryModal, setShowTreasuryModal] = useState(false);
 
   // Custom hooks for data and state management
   const { data: familyStats, isLoading: isFamilyStatsLoading } = useFamilyStats();
@@ -118,6 +127,15 @@ export const EnhancedFamilyDashboard: React.FC<EnhancedFamilyDashboardProps> = (
                 <Bell className="w-4 h-4" />
               </Button>
 
+              <Button
+                onClick={() => setShowTreasuryModal(true)}
+                className="bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-sm shadow-sm"
+                size="sm"
+              >
+                <Wallet className="w-4 h-4 mr-2" />
+                <span>Treasury</span>
+              </Button>
+
               {familyStats?.latestTransactionId && (
                 <Button
                   variant="outline"
@@ -138,6 +156,11 @@ export const EnhancedFamilyDashboard: React.FC<EnhancedFamilyDashboardProps> = (
           </div>
         </div>
       </div>
+
+      <FamilyTreasuryModal
+        isOpen={showTreasuryModal}
+        onClose={() => setShowTreasuryModal(false)}
+      />
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">

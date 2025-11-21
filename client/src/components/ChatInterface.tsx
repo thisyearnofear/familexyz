@@ -14,13 +14,15 @@ import {
     Users,
     Leaf,
     Rocket,
+    ExternalLink,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { apiClient } from "@/lib/api";
 
 interface Message {
     id: string;
     content: string;
-    sender: "user" | "agent";
+    sender: "user" | "agent" | "system";
     agentName?: string;
     timestamp: Date;
 }
@@ -68,10 +70,9 @@ const agentConfigs: Record<
 const MessageItem = React.memo(
     ({
         message,
-        selectedAgent,
     }: {
         message: Message;
-        selectedAgent: Agent | null;
+        selectedAgent?: Agent | null;
     }) => {
         return (
             <div
@@ -111,6 +112,52 @@ const MessageItem = React.memo(
     },
 );
 
+const SystemMessageItem = ({ message, onAction }: { message: Message; onAction: (path: string) => void }) => {
+    const isAction = message.content.startsWith("ACTION:");
+    const path = isAction ? message.content.replace("ACTION:", "") : "";
+
+    // Helper to get readable label from path
+    const getLabel = (p: string) => {
+        if (p.includes("activities")) return "View Activities Calendar";
+        if (p.includes("social")) return "View Family Feed";
+        if (p.includes("treasury")) return "Manage Family Treasury";
+        if (p.includes("members")) return "View Family Members";
+        if (p.includes("insights")) return "View Family Insights";
+        return "View Suggested Page";
+    };
+
+    if (isAction) {
+        return (
+            <div className="flex justify-center my-4">
+                <button
+                    onClick={() => onAction(path)}
+                    className="bg-white border border-purple-200 shadow-sm rounded-xl px-4 py-3 flex items-center space-x-3 hover:bg-purple-50 transition-colors group"
+                >
+                    <div className="bg-purple-100 p-2 rounded-full group-hover:bg-purple-200 transition-colors">
+                        <Rocket className="w-4 h-4 text-purple-600" />
+                    </div>
+                    <div className="text-left">
+                        <span className="block text-xs text-gray-500 font-medium uppercase tracking-wider">Suggested Action</span>
+                        <span className="block text-sm font-semibold text-purple-900 flex items-center gap-1">
+                            {getLabel(path)}
+                            <ExternalLink className="w-3 h-3 opacity-50" />
+                        </span>
+                    </div>
+                </button>
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex justify-center my-2">
+            <div className="bg-gray-50 border border-gray-200 rounded-full px-4 py-1 flex items-center space-x-2 text-xs text-gray-500">
+                <Bot className="w-3 h-3" />
+                <span>{message.content}</span>
+            </div>
+        </div>
+    );
+};
+
 interface ChatInterfaceProps {
     initialAgentId?: string;
 }
@@ -118,6 +165,7 @@ interface ChatInterfaceProps {
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     initialAgentId,
 }) => {
+    const navigate = useNavigate();
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputMessage, setInputMessage] = useState("");
     const [agents, setAgents] = useState<Agent[]>([]);
@@ -192,6 +240,35 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         scrollToBottom();
     }, [messages, scrollToBottom]);
 
+    // Load messages from localStorage
+    useEffect(() => {
+        if (selectedAgent) {
+            const savedMessages = localStorage.getItem(`chat_history_${selectedAgent.id}`);
+            if (savedMessages) {
+                try {
+                    const parsed = JSON.parse(savedMessages);
+                    // Convert string timestamps back to Date objects
+                    const hydrated = parsed.map((m: any) => ({
+                        ...m,
+                        timestamp: new Date(m.timestamp)
+                    }));
+                    setMessages(hydrated);
+                } catch (e) {
+                    console.error("Failed to load chat history", e);
+                }
+            } else {
+                setMessages([]);
+            }
+        }
+    }, [selectedAgent?.id]);
+
+    // Save messages to localStorage
+    useEffect(() => {
+        if (selectedAgent && messages.length > 0) {
+            localStorage.setItem(`chat_history_${selectedAgent.id}`, JSON.stringify(messages));
+        }
+    }, [messages, selectedAgent?.id]);
+
     // Memoize messages to prevent unnecessary re-renders
     const memoizedMessages = useMemo(() => messages, [messages]);
 
@@ -218,17 +295,39 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
             // Handle both array and object responses
             const responseData = Array.isArray(data) ? data[0] : data;
+            let responseText = responseData.text ||
+                responseData.response ||
+                "I understand your message. How can I help you further?";
+            // Check for navigation commands [NAVIGATE: /path]
+            const navigateMatch = responseText.match(/\[NAVIGATE:\s*([^\]]+)\]/);
+            let actionPath = null;
+
+            if (navigateMatch) {
+                actionPath = navigateMatch[1].trim();
+                responseText = responseText.replace(navigateMatch[0], "").trim();
+            }
+
             const agentMessage: Message = {
                 id: (Date.now() + 1).toString(),
-                content:
-                    responseData.text ||
-                    responseData.response ||
-                    "I understand your message. How can I help you further?",
+                content: responseText,
                 sender: "agent",
                 agentName: selectedAgent.name,
                 timestamp: new Date(),
             };
             setMessages((prev) => [...prev, agentMessage]);
+
+            // If there was a navigation command, add a system action message
+            if (actionPath) {
+                setTimeout(() => {
+                    const systemMsg: Message = {
+                        id: (Date.now() + 2).toString(),
+                        content: `ACTION:${actionPath}`,
+                        sender: "system",
+                        timestamp: new Date()
+                    };
+                    setMessages(prev => [...prev, systemMsg]);
+                }, 500);
+            }
         } catch (error) {
             console.error("Error sending message:", error);
 
@@ -377,11 +476,19 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 )}
 
                 {memoizedMessages.map((message) => (
-                    <MessageItem
-                        key={message.id}
-                        message={message}
-                        selectedAgent={selectedAgent}
-                    />
+                    message.sender === "system" ? (
+                        <SystemMessageItem
+                            key={message.id}
+                            message={message}
+                            onAction={(path) => navigate(path)}
+                        />
+                    ) : (
+                        <MessageItem
+                            key={message.id}
+                            message={message}
+                            selectedAgent={selectedAgent}
+                        />
+                    )
                 ))}
 
                 {isLoading && (

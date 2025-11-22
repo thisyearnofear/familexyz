@@ -244,33 +244,32 @@ run().catch(err => {
 });
 ```
 
+## 🌐 Active Testnet Deployment
+
+**Last Updated:** 2025-11-22
+
+| Resource | ID | Description |
+|----------|----|-------------|
+| **Network** | Testnet | Hedera Testnet Environment |
+| **Operator** | `0.0.6511978` | Main account for deployment |
+| **Wisdom Topic** | `0.0.7304500` | HCS Topic for Wisdom Agent logs |
+| **Family Token** | `0.0.7304501` | $FAM Token for rewards |
+| **Mirror Node** | `https://testnet.mirrornode.hedera.com` | Public Mirror Node |
+
 ## ✅ Hedera Integration Proof
 
 ### Account Details
 - **Account ID:** `0.0.6511978`
 - **Network:** Hedera Testnet
-- **Balance:** 1,100.00 HBAR ($160.75)
 - **Key Type:** ECDSA_SECP256K1
 
-### Transaction Proof
-- **Topic Created:** `0.0.7296068`
-- **Transaction ID:** `0.0.6511978@1763637529.750457705`
-- **Status:** SUCCESS
-- **Timestamp:** 2025-11-20 (Unix: 1763637529)
+### Transaction Proofs
+- **Wisdom Topic Created:** `0.0.7304500`
+- **Family Token Created:** `0.0.7304501`
 
 ### Verification Links
-- **Transaction on HashScan:** https://hashscan.io/testnet/transaction/0-0.6511978-1763637529.750457705
-- **Topic on HashScan:** https://hashscan.io/testnet/topic/0.0.7296068
-- **Account on HashScan:** https://hashscan.io/testnet/account/0.0.6511978
-
-### Message Submitted
-```json
-{
-  "project": "Famile",
-  "agent": "Wisdom",
-  "timestamp": 1763637529750,
-  "proof": "Hedera Integration Working"
-}
-```
+- **Wisdom Topic:** [HashScan Link](https://hashscan.io/testnet/topic/0.0.7304500)
+- **Family Token:** [HashScan Link](https://hashscan.io/testnet/token/0.0.7304501)
+- **Operator Account:** [HashScan Link](https://hashscan.io/testnet/account/0.0.6511978)
 
 This proof demonstrates that FamilyXYZ has working, verifiable blockchain integration - a key differentiator for the hackathon! 🚀

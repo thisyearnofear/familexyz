@@ -358,10 +358,41 @@ export const HederaAuthProvider: React.FC<HederaAuthProviderProps> = ({
 
   // Initialize auth service
   useEffect(() => {
-    const service = HederaAuthService.getInstance(config);
-    setAuthService(service);
+    let isMounted = true;
 
-    // Setup event listeners
+    const initializeAuthService = async () => {
+      try {
+        const service = HederaAuthService.getInstance(config);
+        await service.initialize();
+        if (isMounted) {
+          setAuthService(service);
+          // Sync store with service state after initialization
+          const authState = service.getAuthState();
+          useHederaAuthStore.setState((state) => {
+            state.isInitialized = authState.isInitialized;
+            state.availableWallets = authState.availableWallets;
+            state.isConnected = authState.isConnected;
+            state.currentConnection = authState.currentConnection;
+            state.currentFamily = authState.currentFamily;
+            state.session = authState.session;
+          });
+        }
+      } catch (error) {
+        console.error("Failed to initialize auth service:", error);
+      }
+    };
+
+    initializeAuthService();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [config]);
+
+  // Setup event listeners
+  useEffect(() => {
+    if (!authService) return;
+
     const handleWalletConnected = (connection: HederaWalletConnection) => {
       store.setConnection(connection);
       onWalletConnected?.(connection);
@@ -387,20 +418,20 @@ export const HederaAuthProvider: React.FC<HederaAuthProviderProps> = ({
       onError?.(error);
     };
 
-    service.on("wallet:connected", handleWalletConnected);
-    service.on("wallet:disconnected", handleWalletDisconnected);
-    service.on("family:joined", handleFamilyJoined);
-    service.on("session:created", handleSessionCreated);
-    service.on("wallet:error", handleError);
+    authService.on("wallet:connected", handleWalletConnected);
+    authService.on("wallet:disconnected", handleWalletDisconnected);
+    authService.on("family:joined", handleFamilyJoined);
+    authService.on("session:created", handleSessionCreated);
+    authService.on("wallet:error", handleError);
 
     return () => {
-      service.off("wallet:connected", handleWalletConnected);
-      service.off("wallet:disconnected", handleWalletDisconnected);
-      service.off("family:joined", handleFamilyJoined);
-      service.off("session:created", handleSessionCreated);
-      service.off("wallet:error", handleError);
+      authService.off("wallet:connected", handleWalletConnected);
+      authService.off("wallet:disconnected", handleWalletDisconnected);
+      authService.off("family:joined", handleFamilyJoined);
+      authService.off("session:created", handleSessionCreated);
+      authService.off("wallet:error", handleError);
     };
-  }, [config, onError, onWalletConnected, onFamilyJoined, store]);
+  }, [authService, onError, onWalletConnected, onFamilyJoined, store]);
 
   // Event subscription methods
   const addEventListener = useCallback(

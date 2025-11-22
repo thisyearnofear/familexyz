@@ -1,3 +1,6 @@
+import { Buffer } from "buffer";
+globalThis.Buffer = Buffer;
+
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
@@ -8,13 +11,15 @@ import { HederaAuthConfig } from "@elizaos/hedera-wallet/types";
 
 const hederaConfig: HederaAuthConfig = {
     wallet: {
-        projectId: "c6660228265188725917408308678361", // Demo Project ID
+        // Use WalletConnect v2 projectId (required for HashConnect v3)
+        // Get from https://cloud.walletconnect.com/
+        projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || "",
         name: "FamilyXYZ",
         description: "Family Connection Dashboard",
-        url: "http://localhost:5173",
+        url: import.meta.env.VITE_URL || "http://localhost:5173",
         icons: ["https://avatars.githubusercontent.com/u/37784886"],
-        network: "testnet",
-        debug: true
+        network: (import.meta.env.VITE_HEDERA_NETWORK || "testnet") as "testnet" | "mainnet" | "previewnet",
+        debug: import.meta.env.DEV
     },
     session: {
         ttl: 86400,

@@ -1,4 +1,5 @@
-# Family-Connection AI Agents
+# FamilyXYZ: AI Agents for Family Thriving
+### 🏆 Built for Hedera Hello Future: Ascension (Theme 1: AI & Agents)
 
 <div align="center">
   <img src="./client/public/banner.jpg" alt="Family-Connection AI Agents Banner" width="100%" />
@@ -6,13 +7,20 @@
 
 <div align="center">
 
-📑 [Technical Paper](https://arxiv.org/pdf/2501.06781) | 📖 [Platform Overview](./docs/PLATFORM_OVERVIEW.md) | ⛓️ [Hedera Integration](./docs/HEDERA_INTEGRATION.md) | 🚀 [Development Guide](./docs/DEVELOPMENT_GUIDE.md)
+**[🎥 Watch Demo Video](#)** | **[📄 Technical Paper](https://arxiv.org/pdf/2501.06781)** | **[⛓️ Hedera Proofs](./docs/HEDERA_INTEGRATION.md)**
 
 </div>
 
 ## 🚩 Overview
+**FamileXYZ** is a privacy-first suite of autonomous AI agents designed to strengthen family bonds. Built on **Hedera**, it combines advanced LLMs with the **Hedera Consensus Service (HCS)** to create a verifiable, immutable log of family milestones ("Wisdom Blocks").
 
-Familexyz is a privacy-first suite of specialized AI agents designed to strengthen family bonds. Each agent brings expertise in emotional intelligence, relationship skills, generational connection, mindfulness, and shared growth—offering families practical support and tools for deeper, healthier relationships.
+Unlike passive chatbots, our agents—**Wisdom, Intimacy, GenerationalBridge, Presence, and Growth**—are proactive family coaches. They use **Hedera Token Service (HTS)** to reward positive interactions, effectively creating an on-chain economy of emotional wealth.
+
+### 🔑 Key Features
+*   **Verifiable Agent Actions:** Agent decisions are logged to HCS Topic `0.0.7304500`.
+*   **Tokenized Incentives:** Families earn $FAM tokens (`0.0.7304501`) for completing connection challenges.
+*   **Privacy-First:** Powered by Venice.ai for secure, private inference.
+
 
 ## ✨ Five Family Agents
 

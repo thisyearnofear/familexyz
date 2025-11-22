@@ -31,12 +31,24 @@ import type { HederaConfig, HederaFamilyMetrics } from "@elizaos/hedera-core";
 import { config, ModelProviderName } from "@elizaos/config";
 import { getEnabledPlugins } from "./pluginLoader.js";
 
+// Phase 4a: Bond Scoring System
+import { runMigrations } from "./migrations/runner.js";
+import { initializeWeeklyScheduler } from "./jobs/BondScoreScheduler.js";
+
+// Phase 4b: Agent Payout & Reward Distribution
+// Imported dynamically in HTTP server initialization
+
 // NEW: Platform integrations
 // Telegram integration is loaded dynamically via DirectClient patching
 // See implementation in the family stats endpoint patch below
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
+
+// Phase 4b: Global handler for API (lazy-initialized)
+declare global {
+    var payoutApiHandler: any | undefined;
+}
 
 export const wait = (minTime = 1000, maxTime = 3000) => {
     const waitTime =
@@ -1030,6 +1042,13 @@ async function startAgent(
 
         await db.init();
 
+        // Phase 4a: Run database migrations (bond scoring schema)
+        try {
+            await runMigrations(db);
+        } catch (migrationError) {
+            elizaLogger.warn("Database migrations encountered an issue (continuing anyway):", migrationError);
+        }
+
         const cache = await initializeCache(
             process.env.CACHE_STORE ?? CacheStore.DATABASE,
             character,
@@ -1226,12 +1245,32 @@ const startAgents = async () => {
         }),
     );
 
+    // Keep reference to first agent runtime for bond score scheduler
+    let primaryRuntime: AgentRuntime | null = null;
+    let primaryDb: IDatabaseAdapter | null = null;
+
     try {
         for (const character of characters) {
-            await startAgent(character, directClient);
+            const runtime = await startAgent(character, directClient);
+            if (!primaryRuntime) {
+                primaryRuntime = runtime;
+                // Get database adapter from first runtime
+                if ((runtime as any).databaseAdapter) {
+                    primaryDb = (runtime as any).databaseAdapter;
+                }
+            }
         }
     } catch (error) {
         elizaLogger.error("Error starting agents:", error);
+    }
+
+    // Phase 4a: Initialize weekly bond score scheduler
+    if (primaryDb) {
+        try {
+            initializeWeeklyScheduler(primaryDb, primaryRuntime || undefined);
+        } catch (error) {
+            elizaLogger.warn("Failed to initialize bond score scheduler:", error);
+        }
     }
 
     // Find available port
@@ -1256,9 +1295,11 @@ const startAgents = async () => {
 
     directClient.start(serverPort);
 
-    // Minimal HTTP health server with CORS support
+    // HTTP server with health checks + bond score API
     const http = await import("http");
+    const url = await import("url");
     const healthPort = Number.parseInt(process.env.HEALTH_PORT || "3001");
+    
     const server = http.createServer(async (req, res) => {
         // Add CORS headers to all responses
         const origin = req.headers.origin || "*";
@@ -1273,13 +1314,377 @@ const startAgents = async () => {
             return;
         }
         
+        const parsedUrl = url.parse(req.url || "", true);
+        const pathname = parsedUrl.pathname || "";
+        
+        // Bond Score API: GET /api/families/:familyId/bond-score
+        if (req.method === "GET" && pathname.startsWith("/api/families/") && pathname.endsWith("/bond-score")) {
+            const pathParts = pathname.split("/");
+            const familyId = pathParts[3];
+            
+            if (!familyId) {
+                res.statusCode = 400;
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ error: "Missing familyId" }));
+                return;
+            }
+            
+            try {
+                // Query bond scores from primary database
+                if (!primaryDb || !('query' in primaryDb)) {
+                    res.statusCode = 503;
+                    res.setHeader("Content-Type", "application/json");
+                    res.end(JSON.stringify({ error: "Database not available" }));
+                    return;
+                }
+                
+                // Get current score + 12-week history
+                const scoresQuery = `
+                    SELECT 
+                        id,
+                        family_id,
+                        week_number,
+                        timestamp,
+                        generational_interaction_score,
+                        response_reciprocity_score,
+                        sentiment_trajectory_score,
+                        challenge_completion_score,
+                        presence_consistency_score,
+                        network_topology_score,
+                        hedera_consensus_score,
+                        bond_score,
+                        trend,
+                        week_over_week_delta
+                    FROM family_bond_scores
+                    WHERE family_id = ?
+                    ORDER BY week_number DESC
+                    LIMIT 12
+                `;
+                
+                const scores = await (primaryDb as any).query(scoresQuery, [familyId]);
+                
+                if (!scores || scores.length === 0) {
+                    res.statusCode = 404;
+                    res.setHeader("Content-Type", "application/json");
+                    res.end(JSON.stringify({ 
+                        error: "No bond scores found for family",
+                        familyId 
+                    }));
+                    return;
+                }
+                
+                // Sort by week (ascending for history)
+                const sortedScores = scores.sort((a: any, b: any) => a.week_number - b.week_number);
+                const currentScore = scores[0]; // First result is most recent
+                
+                // Build response
+                const response = {
+                    familyId,
+                    current: {
+                        bondScore: currentScore.bond_score,
+                        trend: currentScore.trend,
+                        delta: currentScore.week_over_week_delta,
+                        timestamp: currentScore.timestamp,
+                    },
+                    history: sortedScores.map((s: any) => ({
+                        week: s.week_number,
+                        bondScore: s.bond_score,
+                        trend: s.trend,
+                        delta: s.week_over_week_delta,
+                        timestamp: s.timestamp,
+                    })),
+                    signals: {
+                        generational: currentScore.generational_interaction_score || 0,
+                        reciprocity: currentScore.response_reciprocity_score || 0,
+                        sentiment: currentScore.sentiment_trajectory_score || 0,
+                        challenges: currentScore.challenge_completion_score || 0,
+                        presence: currentScore.presence_consistency_score || 0,
+                        topology: currentScore.network_topology_score || 0,
+                        consensus: currentScore.hedera_consensus_score || 0,
+                    },
+                };
+                
+                res.statusCode = 200;
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify(response));
+                return;
+            } catch (error) {
+                elizaLogger.error("Error fetching bond scores:", error);
+                res.statusCode = 500;
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ error: "Internal server error" }));
+                return;
+            }
+        }
+        
+        // --- Phase 4b: Payout & Reward Distribution API Endpoints ---
+        
+        // Initialize payout services (lazy-loaded on first request)
+        if (!global.payoutApiHandler) {
+            try {
+                const { PayoutService: PSvc } = await import("@familexyz/agent/services/PayoutService.js");
+                const { AnomalyDetectionService: ADSvc } = await import("@familexyz/agent/services/AnomalyDetectionService.js");
+                const { HederaPayoutLogger: HPL } = await import("@familexyz/agent/integrations/HederaPayoutLogger.js");
+                const { HederaTokenService: HTS } = await import("@familexyz/agent/integrations/HederaTokenService.js");
+                const { PayoutApiHandler } = await import("./api/index.js");
+                
+                const payoutService = new PSvc();
+                const anomalyService = new ADSvc();
+                const hcsLogger = new HPL("0.0.0.0"); // Placeholder HCS topic ID
+                const tokenService = new HTS("0.0.0.0", "0.0.0.0", []); // Placeholder token and treasury IDs
+                global.payoutApiHandler = new PayoutApiHandler(
+                    payoutService,
+                    anomalyService,
+                    hcsLogger,
+                    tokenService,
+                );
+            } catch (err) {
+                elizaLogger.warn("Payout services not available:", err);
+                global.payoutApiHandler = null; // Mark as unavailable
+            }
+        }
+        const handler = global.payoutApiHandler;
+        
+        // GET /api/agents/:agentId/payouts - Agent payout history
+        if (
+            req.method === "GET" &&
+            pathname.startsWith("/api/agents/") &&
+            pathname.endsWith("/payouts")
+        ) {
+            if (!handler) {
+                res.statusCode = 503;
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ error: "Payout services not initialized" }));
+                return;
+            }
+            try {
+                const pathParts = pathname.split("/");
+                const agentId = pathParts[3];
+                const weeks = parsedUrl.query.weeks
+                    ? Number.parseInt(parsedUrl.query.weeks as string)
+                    : undefined;
+                
+                const result = await handler.getAgentPayoutHistory(agentId, weeks);
+                res.statusCode = 200;
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify(result));
+                return;
+            } catch (err: any) {
+                elizaLogger.error("Error fetching agent payouts:", err);
+                res.statusCode = 500;
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ error: err.message }));
+                return;
+            }
+        }
+        
+        // GET /api/agents/:agentId/performance - Agent performance metrics
+        if (
+            req.method === "GET" &&
+            pathname.startsWith("/api/agents/") &&
+            pathname.endsWith("/performance")
+        ) {
+            try {
+                const pathParts = pathname.split("/");
+                const agentId = pathParts[3];
+                
+                const result = await handler.getAgentPerformance(agentId);
+                res.statusCode = 200;
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify(result));
+                return;
+            } catch (err: any) {
+                elizaLogger.error("Error fetching agent performance:", err);
+                res.statusCode = 500;
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ error: err.message }));
+                return;
+            }
+        }
+        
+        // GET /api/families/:familyId/payouts - Family payout history
+        if (
+            req.method === "GET" &&
+            pathname.startsWith("/api/families/") &&
+            pathname.endsWith("/payouts")
+        ) {
+            try {
+                const pathParts = pathname.split("/");
+                const familyId = pathParts[3];
+                const weeks = parsedUrl.query.weeks
+                    ? Number.parseInt(parsedUrl.query.weeks as string)
+                    : undefined;
+                
+                const result = await handler.getFamilyPayoutHistory(familyId, weeks);
+                res.statusCode = 200;
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify(result));
+                return;
+            } catch (err: any) {
+                elizaLogger.error("Error fetching family payouts:", err);
+                res.statusCode = 500;
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ error: err.message }));
+                return;
+            }
+        }
+        
+        // GET /api/payouts/pending - Pending payouts awaiting execution
+        if (req.method === "GET" && pathname === "/api/payouts/pending") {
+            try {
+                const result = await handler.getPendingPayouts();
+                res.statusCode = 200;
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify(result));
+                return;
+            } catch (err: any) {
+                elizaLogger.error("Error fetching pending payouts:", err);
+                res.statusCode = 500;
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ error: err.message }));
+                return;
+            }
+        }
+        
+        // POST /api/payouts/calculate - Manual payout calculation (dry-run)
+        if (req.method === "POST" && pathname === "/api/payouts/calculate") {
+            try {
+                let body = "";
+                req.on("data", (chunk) => {
+                    body += chunk.toString();
+                });
+                req.on("end", async () => {
+                    try {
+                        const { agentId, familyId, previousScore, currentScore } =
+                            JSON.parse(body);
+                        
+                        if (!agentId || !familyId || previousScore === undefined || currentScore === undefined) {
+                            res.statusCode = 400;
+                            res.setHeader("Content-Type", "application/json");
+                            res.end(
+                                JSON.stringify({
+                                    error: "Missing required fields: agentId, familyId, previousScore, currentScore",
+                                }),
+                            );
+                            return;
+                        }
+                        
+                        const result = await handler.calculatePayoutDryRun(
+                            agentId,
+                            familyId,
+                            previousScore,
+                            currentScore,
+                        );
+                        res.statusCode = 200;
+                        res.setHeader("Content-Type", "application/json");
+                        res.end(JSON.stringify(result));
+                    } catch (err: any) {
+                        elizaLogger.error("Error parsing payout calculation request:", err);
+                        res.statusCode = 400;
+                        res.setHeader("Content-Type", "application/json");
+                        res.end(JSON.stringify({ error: "Invalid request body" }));
+                    }
+                });
+                return;
+            } catch (err: any) {
+                elizaLogger.error("Error in payout calculation endpoint:", err);
+                res.statusCode = 500;
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ error: err.message }));
+                return;
+            }
+        }
+        
+        // GET /api/payouts/anomalies - Review anomalies across all agents
+        if (req.method === "GET" && pathname === "/api/payouts/anomalies") {
+            try {
+                const limit = parsedUrl.query.limit
+                    ? Number.parseInt(parsedUrl.query.limit as string)
+                    : 50;
+                const offset = parsedUrl.query.offset
+                    ? Number.parseInt(parsedUrl.query.offset as string)
+                    : 0;
+                
+                const result = await handler.getAnomalyReview(limit, offset);
+                res.statusCode = 200;
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify(result));
+                return;
+            } catch (err: any) {
+                elizaLogger.error("Error fetching anomalies:", err);
+                res.statusCode = 500;
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ error: err.message }));
+                return;
+            }
+        }
+        
+        // POST /api/payouts/dispute - File a dispute for a payout
+        if (req.method === "POST" && pathname === "/api/payouts/dispute") {
+            try {
+                let body = "";
+                req.on("data", (chunk) => {
+                    body += chunk.toString();
+                });
+                req.on("end", async () => {
+                    try {
+                        const { payoutRecordId, reason, evidence } = JSON.parse(body);
+                        
+                        if (!payoutRecordId || !reason) {
+                            res.statusCode = 400;
+                            res.setHeader("Content-Type", "application/json");
+                            res.end(
+                                JSON.stringify({
+                                    error: "Missing required fields: payoutRecordId, reason",
+                                }),
+                            );
+                            return;
+                        }
+                        
+                        const result = await handler.filePayoutDispute(
+                            payoutRecordId,
+                            reason,
+                            evidence || "",
+                        );
+                        res.statusCode = result.success ? 200 : 400;
+                        res.setHeader("Content-Type", "application/json");
+                        res.end(JSON.stringify(result));
+                    } catch (err: any) {
+                        elizaLogger.error("Error parsing dispute request:", err);
+                        res.statusCode = 400;
+                        res.setHeader("Content-Type", "application/json");
+                        res.end(JSON.stringify({ error: "Invalid request body" }));
+                    }
+                });
+                return;
+            } catch (err: any) {
+                elizaLogger.error("Error in dispute endpoint:", err);
+                res.statusCode = 500;
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ error: err.message }));
+                return;
+            }
+        }
+        
+        // Default: Health check endpoint
         res.statusCode = 200;
         res.setHeader("Content-Type", "application/json");
         const ready = await readinessCheck();
         res.end(JSON.stringify({ status: "ok", ready }));
     });
+    
     server.listen(healthPort, "0.0.0.0", () => {
-        elizaLogger.success(`Health server listening on :${healthPort}`);
+        elizaLogger.success(`Health and API server listening on :${healthPort}`);
+        elizaLogger.success(`  Health check: http://localhost:${healthPort}/health`);
+        elizaLogger.success(`  Bond scores: http://localhost:${healthPort}/api/families/:familyId/bond-score`);
+        elizaLogger.success(`  Payout API:`);
+        elizaLogger.success(`    Payouts: GET /api/agents/:agentId/payouts`);
+        elizaLogger.success(`    Performance: GET /api/agents/:agentId/performance`);
+        elizaLogger.success(`    Family payouts: GET /api/families/:familyId/payouts`);
+        elizaLogger.success(`    Pending: GET /api/payouts/pending`);
+        elizaLogger.success(`    Calculate: POST /api/payouts/calculate`);
+        elizaLogger.success(`    Anomalies: GET /api/payouts/anomalies`);
+        elizaLogger.success(`    Dispute: POST /api/payouts/dispute`);
     });
 
     if (serverPort !== Number.parseInt(settings.SERVER_PORT || "3000")) {

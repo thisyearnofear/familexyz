@@ -117,6 +117,25 @@ export const apiClient = {
   getFamilyStats: (): Promise<FamilyStats> => fetcher({ url: "/family/stats" }),
   getFamilyHistory: (url?: string): Promise<FamilyHistory> =>
     fetcher({ url: url || "/family/stats/history" }),
+  // --- Bond Score API (Phase 4a) ---
+  getFamilyBondScore: (familyId: string) => {
+    // Bond score API runs on health port (3001 by default)
+    const healthPort = import.meta.env.VITE_HEALTH_PORT || 
+      (import.meta.env.MODE === 'production' ? '3001' : '3001');
+    const healthUrl = import.meta.env.VITE_HEALTH_BASE_URL || 
+      (import.meta.env.MODE === 'production' 
+        ? `http://157.180.36.156:${healthPort}` 
+        : `http://localhost:${healthPort}`);
+    
+    return fetch(`${healthUrl}/api/families/${familyId}/bond-score`)
+      .then(async (resp) => {
+        if (resp.ok) {
+          return resp.json();
+        }
+        const errorText = await resp.text();
+        throw new Error(errorText || "Failed to fetch bond score");
+      });
+  },
   // --- GoodDollar endpoints ---
   getGDBalance: (address: string) =>
     fetcher({ url: `/gooddollar/wallet/${address}` }),

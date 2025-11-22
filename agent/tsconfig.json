@@ -31,6 +31,12 @@
             "@elizaos/family-nlp-utils": [
                 "packages/family-nlp-utils/dist/index.js"
             ],
+            "@familexyz/agent/services/*": [
+                "packages/agent/src/services/*"
+            ],
+            "@familexyz/agent/integrations/*": [
+                "packages/agent/src/integrations/*"
+            ],
             "@elizaos/adapter-*": [
                 "packages/adapter-*/dist/index.js"
             ],

@@ -7,7 +7,7 @@
 
 <div align="center">
 
-**[🎥 Watch Demo Video](#)** | **[📄 Technical Paper](https://arxiv.org/pdf/2501.06781)** | **[⛓️ Hedera Proofs](./docs/HEDERA_INTEGRATION.md)**
+**[🎥 Watch Demo Video](#)** | **[📄 Technical Paper](https://arxiv.org/pdf/2501.06781)** | **[⛓️ Hedera Proofs](./docs/AGENTS.md)**
 
 </div>
 
@@ -81,7 +81,7 @@ pnpm --filter agent start
 pnpm --filter "@elizaos/client-direct" start
 ```
 
-See [Development Guide](./docs/DEVELOPMENT_GUIDE.md) for detailed setup instructions.
+See [Development Guide](./docs/DEVELOPMENT.md) for detailed setup instructions.
 
 ### 🎬 Running the Demo
 
@@ -102,12 +102,13 @@ This will:
 
 ## 📚 Documentation
 
-See our consolidated documentation:
+Complete documentation in 5 consolidated guides:
 
-- **[Platform Overview](./docs/PLATFORM_OVERVIEW.md)** - Complete platform features and architecture
-- **[Hedera Integration](./docs/HEDERA_INTEGRATION.md)** - HCS-10 compliance and blockchain features
-- **[Development Guide](./docs/DEVELOPMENT_GUIDE.md)** - Setup, deployment, and maintenance
-- **[Agent Guide](./docs/AGENT_GUIDE.md)** - Agent integration and testing
+- **[Architecture & Technical Reference](./docs/ARCHITECTURE.md)** - System design, services, data flows
+- **[Agents & Incentives](./docs/AGENTS.md)** - AI agents, HCS-10, FAM token, Payouts
+- **[Development Guide](./docs/DEVELOPMENT.md)** - Local setup, testing, cloud deployment
+- **[Roadmap](./docs/ROADMAP.md)** - Current status and future plans
+- **[Submission Details](./docs/SUBMISSION.md)** - Hackathon submission info
 
 ## 🛡️ Privacy & Safety First
 
@@ -139,4 +140,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Ready to strengthen your family connections?** See our [documentation](./docs/platform-overview.md) to get started.
+**Ready to strengthen your family connections?** See our [documentation](./docs/ARCHITECTURE.md) to get started.

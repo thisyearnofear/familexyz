@@ -17,6 +17,7 @@ import { ActivitiesTab } from "./dashboard/tabs/ActivitiesTab";
 import { SocialTab } from "./dashboard/tabs/SocialTab";
 import { MembersTab } from "./dashboard/tabs/MembersTab";
 import { SettingsTab } from "./dashboard/tabs/SettingsTab";
+import { BondScoreTab } from "./dashboard/tabs/BondScoreTab";
 import { FamilyTreasuryModal } from "./dashboard/FamilyTreasuryModal";
 
 interface EnhancedFamilyDashboardProps {}
@@ -24,7 +25,7 @@ interface EnhancedFamilyDashboardProps {}
 export const EnhancedFamilyDashboard: React.FC<EnhancedFamilyDashboardProps> = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<
-    "overview" | "insights" | "activities" | "social" | "members" | "settings"
+    "overview" | "insights" | "activities" | "social" | "members" | "bond-score" | "settings"
   >((searchParams.get("tab") as any) || "overview");
 
   // Sync tab change to URL
@@ -196,6 +197,8 @@ export const EnhancedFamilyDashboard: React.FC<EnhancedFamilyDashboardProps> = (
               currentUserId={currentUserId}
             />
           )}
+
+          {activeTab === "bond-score" && <BondScoreTab />}
 
           {activeTab === "settings" && <SettingsTab />}
         </AnimatePresence>

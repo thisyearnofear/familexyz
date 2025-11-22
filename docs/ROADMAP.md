@@ -7,6 +7,18 @@
 - Agent character system with plugins
 - Hedera wallet authentication setup (HashConnect v3)
 - Family treasury modal with balance display
+- **Phase 4a: Objective Family Bond Scoring System**
+  - Behavioral signal aggregation (7 metrics)
+  - Composite Family Bond Score (0-100)
+  - Weekly scheduler (Sundays 00:00 UTC)
+  - Dashboard visualization
+  - API endpoint: `GET /api/families/:familyId/bond-score`
+- **Phase 4b: Agent Payout & Reward Distribution (Core Services)**
+  - Payout formula engine
+  - Anti-gaming anomaly detection
+  - HCS immutable audit trail
+  - Token distribution service
+  - 154 tests passing
 
 ---
 
@@ -66,11 +78,6 @@ Environment Variable: VITE_WALLETCONNECT_PROJECT_ID
 // Phase 4: Remove HashConnect dependency (2025-2026)
 ```
 
-**Files to Refactor:**
-- `HederaAuthService.ts` - Add WalletConnect v2 initialization
-- `connectHashPack()` method - Create `connectWalletConnect()` alternative
-- Type definitions - Support both SDK types
-
 ### 3. Enhanced Wallet Features
 - Token swapping and DEX integration
 - Multi-wallet account management
@@ -81,25 +88,39 @@ Environment Variable: VITE_WALLETCONNECT_PROJECT_ID
 
 ## Long-Term Roadmap (2025+)
 
-### 4. Hedera Token Service (HTS) Integration
+### 4. Agent Incentivization & Multi-Agent Marketplace (PRIORITY Q1 2025)
+**Vision:** Agents autonomously compete to improve verifiable family bond metrics and earn FAM tokens for successful outcomes—creating aligned, outcome-based incentives.
+
+**Phase 4c: A2A Protocol & Agent-to-Agent Trading** (Planned)
+- Enable agents to trade resources autonomously:
+  - Tool licensing: Intimacy Agent → Wisdom Agent (conflict frameworks)
+  - Insight trading: Aggregated, privacy-preserved patterns ("Families with profile X respond to intervention Y")
+  - Compute resources: Hedera consensus proof generation trades
+  - Capability augmentation: Agents combine strengths
+- Create on-chain A2A transaction log (immutable audit trail)
+- Multi-agent collaboration improves overall family outcomes
+
+### 5. Hedera Token Service (HTS) Integration
 - Create and manage family tokens
-- Token-based reward distribution
-- NFT-based family member badges
+- Token-based reward distribution (agent payouts + family incentives)
+- NFT-based family member badges (milestones, engagement)
 - Token governance for family decisions
 
-### 5. Hedera Consensus Service (HCS)
+### 6. Hedera Consensus Service (HCS)
 - Family activity logging on-chain
 - Immutable family records
 - Distributed decision-making logs
 - Cross-family consensus protocols
+- Agent performance & payout verification logs
 
-### 6. Smart Contract Services
+### 7. Smart Contract Services
 - Family treasury smart contracts
-- Automated reward distribution
+- Automated agent reward distribution (based on bond score)
 - Multi-signature wallet contracts
 - Governance DAOs per family
+- Agent performance escrow (verify outcomes before releasing payments)
 
-### 7. Scaling & Performance
+### 8. Scaling & Performance
 - Optimize Mirror Node queries
 - Implement caching layer for account data
 - Batch transaction processing
@@ -174,16 +195,6 @@ VITE_URL=http://localhost:5173
 
 ---
 
-## Notes for Contributors
-
-When working on wallet-related features:
-1. Check if changes affect both HashConnect and WalletConnect paths
-2. Add appropriate deprecation warnings for HashConnect code
-3. Update this roadmap when significant progress is made
-4. Test with actual wallet extensions, not just mocks
-5. Refer to official Hedera and WalletConnect documentation
-
----
-
 **Last Updated:** November 22, 2025
+**Next Milestone:** Phase 4b Agent Payouts (UI & API Integration)
 **Next Review:** December 2025

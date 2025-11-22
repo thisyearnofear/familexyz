@@ -3,3 +3,6 @@ export interface IAttachment {
     contentType: string;
     title: string;
 }
+
+export * from './bondScoring';
+export * from './family';

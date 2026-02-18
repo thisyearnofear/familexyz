@@ -1,3 +1,17 @@
+/**
+ * Main Entry Point
+ * 
+ * Orchestrates agent initialization and server startup.
+ * Follows ORGANIZED principle: predictable, clear flow.
+ * 
+ * Refactored to use modular components:
+ * - character/loader.ts - Character loading
+ * - database/initializer.ts - Database setup
+ * - services/token-provider.ts - Token management
+ * - server/http-server.ts - HTTP API server
+ * - server/direct-client-routes.ts - DirectClient routes
+ */
+
 import { DirectClient } from "@elizaos/client-direct";
 import {
     AgentRuntime,
@@ -12,904 +26,70 @@ import {
     type IDatabaseCacheAdapter,
     settings,
     stringToUuid,
-    validateCharacterConfig,
 } from "@elizaos/core";
-// Essential imports for file path handling and modules
 import { fileURLToPath } from "url";
-import { createRequire } from "module";
 import path from "path";
 import fs from "fs";
 import net from "net";
-import yargs from "yargs";
-import { hideBin } from "yargs/helpers";
-import { healthCheck, readinessCheck } from "./health.js";
-import { GoodDollarService } from "./integrations/gooddollar.js";
 import { HederaService } from "@elizaos/hedera-core";
 import type { HederaConfig, HederaFamilyMetrics } from "@elizaos/hedera-core";
 
-// NEW: Central config and plugin loader
-import { config, ModelProviderName } from "@elizaos/config";
-import { getEnabledPlugins } from "./pluginLoader.js";
+// Modular imports
+import { parseArguments, loadCharacters, loadCharacterFromOnchain, loadCharacterTryPath, jsonToCharacter } from "./character/loader.js";
+import { initializeDatabase } from "./database/initializer.js";
+import { getTokenForProvider, getSecret } from "./services/token-provider.js";
+import { createHttpServer } from "./server/http-server.js";
+import { patchDirectClientRoutes } from "./server/direct-client-routes.js";
 
 // Phase 4a: Bond Scoring System
 import { runMigrations } from "./migrations/runner.js";
 import { initializeWeeklyScheduler } from "./jobs/BondScoreScheduler.js";
 
-// Phase 4b: Agent Payout & Reward Distribution
-// Imported dynamically in HTTP server initialization
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// NEW: Platform integrations
-// Telegram integration is loaded dynamically via DirectClient patching
-// See implementation in the family stats endpoint patch below
+// Apply DirectClient route patches
+patchDirectClientRoutes();
 
-const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
-const __dirname = path.dirname(__filename); // get the name of the directory
-
-// Phase 4b: Global handler for API (lazy-initialized)
-declare global {
-    var payoutApiHandler: any | undefined;
-}
-
+/**
+ * Utility: Wait for random time
+ */
 export const wait = (minTime = 1000, maxTime = 3000) => {
-    const waitTime =
-        Math.floor(Math.random() * (maxTime - minTime + 1)) + minTime;
+    const waitTime = Math.floor(Math.random() * (maxTime - minTime + 1)) + minTime;
     return new Promise((resolve) => setTimeout(resolve, waitTime));
 };
 
+/**
+ * Logging fetch wrapper
+ */
 const logFetch = async (url: string, options: any) => {
     elizaLogger.debug(`Fetching ${url}`);
-    // Disabled to avoid disclosure of sensitive information such as API keys
-    // elizaLogger.debug(JSON.stringify(options, null, 2));
     return fetch(url, options);
 };
 
-export function parseArguments(): {
-    character?: string;
-    characters?: string;
-} {
-    try {
-        return yargs(hideBin(process.argv))
-            .option("character", {
-                type: "string",
-                description: "Path to the character JSON file",
-            })
-            .option("characters", {
-                type: "string",
-                description:
-                    "Comma separated list of paths to character JSON files",
-            })
-            .parseSync();
-    } catch (error) {
-        elizaLogger.error("Error parsing arguments:", error);
-        return {};
-    }
-}
-
-function tryLoadFile(filePath: string): string | null {
-    try {
-        return fs.readFileSync(filePath, "utf8");
-    } catch (e) {
-        return null;
-    }
-}
-function mergeCharacters(base: Character, child: Character): Character {
-    const mergeObjects = (baseObj: any, childObj: any) => {
-        const result: any = {};
-        const keys = new Set([
-            ...Object.keys(baseObj || {}),
-            ...Object.keys(childObj || {}),
-        ]);
-        keys.forEach((key) => {
-            if (
-                typeof baseObj[key] === "object" &&
-                typeof childObj[key] === "object" &&
-                !Array.isArray(baseObj[key]) &&
-                !Array.isArray(childObj[key])
-            ) {
-                result[key] = mergeObjects(baseObj[key], childObj[key]);
-            } else if (
-                Array.isArray(baseObj[key]) ||
-                Array.isArray(childObj[key])
-            ) {
-                result[key] = [
-                    ...(baseObj[key] || []),
-                    ...(childObj[key] || []),
-                ];
-            } else {
-                result[key] =
-                    childObj[key] !== undefined ? childObj[key] : baseObj[key];
-            }
-        });
-        return result;
-    };
-    return mergeObjects(base, child);
-}
-function isAllStrings(arr: unknown[]): boolean {
-    return Array.isArray(arr) && arr.every((item) => typeof item === "string");
-}
-export async function loadCharacterFromOnchain(): Promise<Character[]> {
-    const onchainJson = process.env.ONCHAIN_JSON || null;
-    const jsonText = onchainJson;
-
-    console.log("JSON:", jsonText);
-    if (!jsonText) return [];
-    const loadedCharacters = [];
-
-    try {
-        const character = JSON.parse(jsonText);
-        validateCharacterConfig(character);
-
-        // Generate UUID from character name if no ID provided
-        if (!character.id) {
-            character.id = stringToUuid(character.name.toLowerCase());
-        }
-        const characterId = character.id;
-        const characterPrefix = `CHARACTER.${characterId
-            .toUpperCase()
-            .replace(/ /g, "_")}.`;
-
-        const characterSettings = Object.entries(process.env)
-            .filter(([key]) => key.startsWith(characterPrefix))
-            .reduce((settings, [key, value]) => {
-                const settingKey = key.slice(characterPrefix.length);
-                settings[settingKey] = value;
-                return settings;
-            }, {});
-
-        if (Object.keys(characterSettings).length > 0) {
-            character.settings = character.settings || {};
-            character.settings.secrets = {
-                ...characterSettings,
-                ...character.settings.secrets,
-            };
-        }
-
-        // Handle plugins
-        if (isAllStrings(character.plugins)) {
-            elizaLogger.info("Plugins are: ", character.plugins);
-            const importedPlugins = await Promise.all(
-                character.plugins.map(async (plugin) => {
-                    const importedPlugin = await import(plugin);
-                    return importedPlugin.default;
-                }),
-            );
-            character.plugins = importedPlugins;
-        }
-
-        loadedCharacters.push(character);
-        elizaLogger.info(
-            `Successfully loaded character from: ${process.env.IQ_WALLET_ADDRESS}`,
-        );
-        return loadedCharacters;
-    } catch (e) {
-        elizaLogger.error(
-            `Error parsing character from ${process.env.IQ_WALLET_ADDRESS}: ${e}`,
-        );
-        process.exit(1);
-    }
-}
-
-async function loadCharactersFromUrl(url: string): Promise<Character[]> {
-    try {
-        const response = await fetch(url);
-        const responseJson = await response.json();
-
-        let characters: Character[] = [];
-        if (Array.isArray(responseJson)) {
-            characters = await Promise.all(
-                responseJson.map((character) =>
-                    jsonToCharacter(url, character),
-                ),
-            );
-        } else {
-            const character = await jsonToCharacter(url, responseJson);
-            characters.push(character);
-        }
-        return characters;
-    } catch (e) {
-        elizaLogger.error(`Error loading character(s) from ${url}: ${e}`);
-        process.exit(1);
-    }
-}
-
-async function jsonToCharacter(
-    filePath: string,
-    character: any,
-): Promise<Character> {
-    // Generate UUID from character name if no ID provided
-    if (!character.id) {
-        character.id = stringToUuid(character.name.toLowerCase());
-    }
-
-    validateCharacterConfig(character);
-
-    const characterId = character.id;
-    const characterPrefix = `CHARACTER.${characterId
-        .toUpperCase()
-        .replace(/ /g, "_")}.`;
-    const characterSettings = Object.entries(process.env)
-        .filter(([key]) => key.startsWith(characterPrefix))
-        .reduce((settings, [key, value]) => {
-            const settingKey = key.slice(characterPrefix.length);
-            return { ...settings, [settingKey]: value };
-        }, {});
-    if (Object.keys(characterSettings).length > 0) {
-        character.settings = character.settings || {};
-        character.settings.secrets = {
-            ...characterSettings,
-            ...character.settings.secrets,
-        };
-    }
-    // Handle plugins
-    character.plugins = await handlePluginImporting(character.plugins);
-    if (character.extends) {
-        elizaLogger.info(
-            `Merging  ${character.name} character with parent characters`,
-        );
-        for (const extendPath of character.extends) {
-            const baseCharacter = await loadCharacter(
-                path.resolve(path.dirname(filePath), extendPath),
-            );
-            character = mergeCharacters(baseCharacter, character);
-            elizaLogger.info(
-                `Merged ${character.name} with ${baseCharacter.name}`,
-            );
-        }
-    }
-    return character;
-}
-
-async function loadCharacter(filePath: string): Promise<Character> {
-    const content = tryLoadFile(filePath);
-    if (!content) {
-        throw new Error(`Character file not found: ${filePath}`);
-    }
-    const character = JSON.parse(content);
-    return jsonToCharacter(filePath, character);
-}
-
-async function loadCharacterTryPath(characterPath: string): Promise<Character> {
-    let content: string | null = null;
-    let resolvedPath = "";
-
-    // Try different path resolutions in order
-    const pathsToTry = [
-        characterPath, // exact path as specified
-        path.resolve(process.cwd(), characterPath), // relative to cwd
-        path.resolve(process.cwd(), "agent", characterPath), // Add this
-        path.resolve(__dirname, characterPath), // relative to current script
-        path.resolve(__dirname, "characters", path.basename(characterPath)), // relative to agent/characters
-        path.resolve(__dirname, "../characters", path.basename(characterPath)), // relative to characters dir from agent
-        path.resolve(
-            __dirname,
-            "../../characters",
-            path.basename(characterPath),
-        ), // relative to project root characters dir
-    ];
-
-    elizaLogger.info(
-        "Trying paths:",
-        pathsToTry.map((p) => ({
-            path: p,
-            exists: fs.existsSync(p),
-        })),
-    );
-
-    for (const tryPath of pathsToTry) {
-        content = tryLoadFile(tryPath);
-        if (content !== null) {
-            resolvedPath = tryPath;
-            break;
-        }
-    }
-
-    if (content === null) {
-        elizaLogger.error(
-            `Error loading character from ${characterPath}: File not found in any of the expected locations`,
-        );
-        elizaLogger.error("Tried the following paths:");
-        pathsToTry.forEach((p) => elizaLogger.error(` - ${p}`));
-        throw new Error(
-            `Error loading character from ${characterPath}: File not found in any of the expected locations`,
-        );
-    }
-    try {
-        const character: Character = await loadCharacter(resolvedPath);
-        elizaLogger.info(`Successfully loaded character from: ${resolvedPath}`);
-        return character;
-    } catch (e) {
-        elizaLogger.error(`Error parsing character from ${resolvedPath}: ${e}`);
-        throw new Error(`Error parsing character from ${resolvedPath}: ${e}`);
-    }
-}
-
-function commaSeparatedStringToArray(commaSeparated: string): string[] {
-    return commaSeparated?.split(",").map((value) => value.trim());
-}
-
-async function readCharactersFromStorage(
-    characterPaths: string[],
-): Promise<string[]> {
-    try {
-        const uploadDir = path.join(process.cwd(), "data", "characters");
-        await fs.promises.mkdir(uploadDir, { recursive: true });
-        const fileNames = await fs.promises.readdir(uploadDir);
-        fileNames.forEach((fileName) => {
-            characterPaths.push(path.join(uploadDir, fileName));
-        });
-    } catch (err) {
-        elizaLogger.error(`Error reading directory: ${err.message}`);
-    }
-
-    return characterPaths;
-}
-
-export async function loadCharacters(
-    charactersArg: string,
-): Promise<Character[]> {
-    let characterPaths = commaSeparatedStringToArray(charactersArg);
-
-    if (process.env.USE_CHARACTER_STORAGE === "true") {
-        characterPaths = await readCharactersFromStorage(characterPaths);
-    }
-
-    const loadedCharacters: Character[] = [];
-
-    if (characterPaths?.length > 0) {
-        for (const characterPath of characterPaths) {
-            try {
-                const character: Character =
-                    await loadCharacterTryPath(characterPath);
-                loadedCharacters.push(character);
-            } catch (e) {
-                process.exit(1);
-            }
-        }
-    }
-
-    if (hasValidRemoteUrls()) {
-        elizaLogger.info("Loading characters from remote URLs");
-        const characterUrls = commaSeparatedStringToArray(
-            process.env.REMOTE_CHARACTER_URLS,
-        );
-        for (const characterUrl of characterUrls) {
-            const characters = await loadCharactersFromUrl(characterUrl);
-            loadedCharacters.push(...characters);
-        }
-    }
-
-    if (loadedCharacters.length === 0) {
-        elizaLogger.info("No characters found, using default character");
-        loadedCharacters.push(defaultCharacter);
-    }
-
-    return loadedCharacters;
-}
-
-async function handlePluginImporting(plugins: string[]) {
-    if (plugins.length > 0) {
-        elizaLogger.info("Plugins are: ", plugins);
-        const importedPlugins = await Promise.all(
-            plugins.map(async (plugin) => {
-                try {
-                    const importedPlugin = await import(plugin);
-                    const functionName =
-                        plugin
-                            .replace("@elizaos/plugin-", "")
-                            .replace(/-./g, (x) => x[1].toUpperCase()) +
-                        "Plugin"; // Assumes plugin function is camelCased with Plugin suffix
-                    return (
-                        importedPlugin.default || importedPlugin[functionName]
-                    );
-                } catch (importError) {
-                    elizaLogger.error(
-                        `Failed to import plugin: ${plugin}`,
-                        importError,
-                    );
-                    return []; // Return null for failed imports
-                }
-            }),
-        );
-        return importedPlugins;
-    } else {
-        return [];
-    }
-}
-
-export function getTokenForProvider(
-    provider: ModelProviderName | string,
-    character: Character,
-): string | undefined {
-    // Normalize string providers
-    if (typeof provider === "string") {
-        const p = provider.toLowerCase();
-        if (p === "llama_local" || p === "llamalocal") return "";
-        if (p === "ollama") return "";
-        if (p === "gaianet") return "";
-        if (p === "openai")
-            return (
-                character.settings?.secrets?.OPENAI_API_KEY ||
-                settings.OPENAI_API_KEY
-            );
-        // fall through to enum-based switch for others
-    }
-    switch (provider) {
-        // no key needed for llama_local or gaianet
-        case ModelProviderName.LLAMALOCAL:
-            return "";
-        case ModelProviderName.OLLAMA:
-            return "";
-        case ModelProviderName.GAIANET:
-            return "";
-        case ModelProviderName.OPENAI:
-            return (
-                character.settings?.secrets?.OPENAI_API_KEY ||
-                settings.OPENAI_API_KEY
-            );
-        case ModelProviderName.ETERNALAI:
-            return (
-                character.settings?.secrets?.ETERNALAI_API_KEY ||
-                settings.ETERNALAI_API_KEY
-            );
-        case ModelProviderName.NINETEEN_AI:
-            return (
-                character.settings?.secrets?.NINETEEN_AI_API_KEY ||
-                settings.NINETEEN_AI_API_KEY
-            );
-        case ModelProviderName.LLAMACLOUD:
-        case ModelProviderName.TOGETHER:
-            return (
-                character.settings?.secrets?.LLAMACLOUD_API_KEY ||
-                settings.LLAMACLOUD_API_KEY ||
-                character.settings?.secrets?.TOGETHER_API_KEY ||
-                settings.TOGETHER_API_KEY ||
-                character.settings?.secrets?.OPENAI_API_KEY ||
-                settings.OPENAI_API_KEY
-            );
-        case ModelProviderName.CLAUDE_VERTEX:
-        case ModelProviderName.ANTHROPIC:
-            return (
-                character.settings?.secrets?.ANTHROPIC_API_KEY ||
-                character.settings?.secrets?.CLAUDE_API_KEY ||
-                settings.ANTHROPIC_API_KEY ||
-                settings.CLAUDE_API_KEY
-            );
-        case ModelProviderName.REDPILL:
-            return (
-                character.settings?.secrets?.REDPILL_API_KEY ||
-                settings.REDPILL_API_KEY
-            );
-        case ModelProviderName.OPENROUTER:
-            return (
-                character.settings?.secrets?.OPENROUTER_API_KEY ||
-                settings.OPENROUTER_API_KEY
-            );
-        case ModelProviderName.GROK:
-            return (
-                character.settings?.secrets?.GROK_API_KEY ||
-                settings.GROK_API_KEY
-            );
-        case ModelProviderName.HEURIST:
-            return (
-                character.settings?.secrets?.HEURIST_API_KEY ||
-                settings.HEURIST_API_KEY
-            );
-        case ModelProviderName.GROQ:
-            return (
-                character.settings?.secrets?.GROQ_API_KEY ||
-                settings.GROQ_API_KEY
-            );
-        case ModelProviderName.GALADRIEL:
-            return (
-                character.settings?.secrets?.GALADRIEL_API_KEY ||
-                settings.GALADRIEL_API_KEY
-            );
-        case ModelProviderName.FAL:
-            return (
-                character.settings?.secrets?.FAL_API_KEY || settings.FAL_API_KEY
-            );
-        case ModelProviderName.ALI_BAILIAN:
-            return (
-                character.settings?.secrets?.ALI_BAILIAN_API_KEY ||
-                settings.ALI_BAILIAN_API_KEY
-            );
-        case ModelProviderName.VOLENGINE:
-            return (
-                character.settings?.secrets?.VOLENGINE_API_KEY ||
-                settings.VOLENGINE_API_KEY
-            );
-        case ModelProviderName.NANOGPT:
-            return (
-                character.settings?.secrets?.NANOGPT_API_KEY ||
-                settings.NANOGPT_API_KEY
-            );
-        case ModelProviderName.HYPERBOLIC:
-            return (
-                character.settings?.secrets?.HYPERBOLIC_API_KEY ||
-                settings.HYPERBOLIC_API_KEY
-            );
-
-        case ModelProviderName.VENICE:
-            return (
-                character.settings?.secrets?.VENICE_API_KEY ||
-                settings.VENICE_API_KEY
-            );
-        case ModelProviderName.ATOMA:
-            return (
-                character.settings?.secrets?.ATOMASDK_BEARER_AUTH ||
-                settings.ATOMASDK_BEARER_AUTH
-            );
-        case ModelProviderName.NVIDIA:
-            return (
-                character.settings?.secrets?.NVIDIA_API_KEY ||
-                settings.NVIDIA_API_KEY
-            );
-        case ModelProviderName.NVIDIA:
-            return (
-                character.settings?.secrets?.NVIDIA_API_KEY ||
-                settings.NVIDIA_API_KEY
-            );
-        case ModelProviderName.AKASH_CHAT_API:
-            return (
-                character.settings?.secrets?.AKASH_CHAT_API_KEY ||
-                settings.AKASH_CHAT_API_KEY
-            );
-        case ModelProviderName.GOOGLE:
-            return (
-                character.settings?.secrets?.GOOGLE_GENERATIVE_AI_API_KEY ||
-                settings.GOOGLE_GENERATIVE_AI_API_KEY
-            );
-        case ModelProviderName.MISTRAL:
-            return (
-                character.settings?.secrets?.MISTRAL_API_KEY ||
-                settings.MISTRAL_API_KEY
-            );
-        case ModelProviderName.LETZAI:
-            return (
-                character.settings?.secrets?.LETZAI_API_KEY ||
-                settings.LETZAI_API_KEY
-            );
-        case ModelProviderName.INFERA:
-            return (
-                character.settings?.secrets?.INFERA_API_KEY ||
-                settings.INFERA_API_KEY
-            );
-        case ModelProviderName.DEEPSEEK:
-            return (
-                character.settings?.secrets?.DEEPSEEK_API_KEY ||
-                settings.DEEPSEEK_API_KEY
-            );
-        case ModelProviderName.LIVEPEER:
-            return (
-                character.settings?.secrets?.LIVEPEER_GATEWAY_URL ||
-                settings.LIVEPEER_GATEWAY_URL
-            );
-        default:
-            const errorMessage = `Failed to get token - unsupported model provider: ${provider}`;
-            elizaLogger.error(errorMessage);
-            throw new Error(errorMessage);
-    }
-}
-
-async function initializeDatabase(dataDir: string) {
-    if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
-        elizaLogger.info("Initializing Supabase connection...");
-        const { SupabaseDatabaseAdapter } = await import(
-            "@elizaos/adapter-supabase"
-        );
-        const db = new SupabaseDatabaseAdapter(
-            process.env.SUPABASE_URL,
-            process.env.SUPABASE_ANON_KEY,
-        );
-
-        // Test the connection
-        db.init()
-            .then(() => {
-                elizaLogger.success(
-                    "Successfully connected to Supabase database",
-                );
-            })
-            .catch((error) => {
-                elizaLogger.error("Failed to connect to Supabase:", error);
-            });
-
-        return db;
-    } else if (process.env.POSTGRES_URL) {
-        elizaLogger.info("Initializing PostgreSQL connection...");
-        const { PostgresDatabaseAdapter } = await import(
-            "@elizaos/adapter-postgres"
-        );
-        const db = new PostgresDatabaseAdapter({
-            connectionString: process.env.POSTGRES_URL,
-            parseInputs: true,
-        });
-
-        // Test the connection
-        db.init()
-            .then(() => {
-                elizaLogger.success(
-                    "Successfully connected to PostgreSQL database",
-                );
-            })
-            .catch((error) => {
-                elizaLogger.error("Failed to connect to PostgreSQL:", error);
-            });
-
-        return db;
-    } else if (process.env.PGLITE_DATA_DIR) {
-        elizaLogger.info("Initializing PgLite adapter...");
-        // `dataDir: memory://` for in memory pg
-        const { PGLiteDatabaseAdapter } = await import(
-            "@elizaos/adapter-pglite"
-        );
-        const db = new PGLiteDatabaseAdapter({
-            dataDir: process.env.PGLITE_DATA_DIR,
-        });
-        return db;
-    } else if (
-        process.env.QDRANT_URL &&
-        process.env.QDRANT_KEY &&
-        process.env.QDRANT_PORT &&
-        process.env.QDRANT_VECTOR_SIZE
-    ) {
-        elizaLogger.info("Initializing Qdrant adapter...");
-        const { QdrantDatabaseAdapter } = await import(
-            "@elizaos/adapter-qdrant"
-        );
-        const db = new QdrantDatabaseAdapter(
-            process.env.QDRANT_URL,
-            process.env.QDRANT_KEY,
-            Number(process.env.QDRANT_PORT),
-            Number(process.env.QDRANT_VECTOR_SIZE),
-        );
-        return db;
-    } else {
-        const filePath =
-            process.env.SQLITE_FILE ?? path.resolve(dataDir, "db.sqlite");
-        elizaLogger.info(`Initializing SQLite database at ${filePath}...`);
-        const req = createRequire(import.meta.url);
-        const BetterSqlite3 = req("better-sqlite3");
-        const { SqliteDatabaseAdapter } = await import(
-            "@elizaos/adapter-sqlite"
-        );
-        const db = new SqliteDatabaseAdapter(new BetterSqlite3(filePath));
-
-        // Test the connection
-        db.init()
-            .then(() => {
-                elizaLogger.success(
-                    "Successfully connected to SQLite database",
-                );
-            })
-            .catch((error) => {
-                elizaLogger.error("Failed to connect to SQLite:", error);
-            });
-
-        return db;
-    }
-}
-
-// also adds plugins from character file into the runtime
-export async function initializeClients(
-    character: Character,
-    runtime: AgentRuntime,
-) {
-    // each client can only register once
-    // and if we want two we can explicitly support it
+/**
+ * Initialize clients for a character runtime
+ */
+export async function initializeClients(character: Character, runtime: AgentRuntime) {
     const clients: Record<string, any> = {};
-    const clientTypes: string[] =
-        character.clients?.map((str) => str.toLowerCase()) || [];
+    const clientTypes: string[] = character.clients?.map((str) => str.toLowerCase()) || [];
+    
     elizaLogger.log("initializeClients", clientTypes, "for", character.name);
-
-    // (Client setup unchanged...)
-
+    
     if (character.plugins?.length > 0) {
         for (const plugin of character.plugins) {
-            // Plugin may want to initialize stats/meta/etc.
-            if (
-                plugin &&
-                typeof plugin === "object" &&
-                "init" in plugin &&
-                typeof plugin.init === "function"
-            ) {
+            if (plugin && typeof plugin === "object" && "init" in plugin && typeof plugin.init === "function") {
                 plugin.init(runtime);
             }
         }
     }
-
+    
     return clients;
 }
 
-// --- Add family stats endpoint to DirectClient ---
-
-const oldStart = DirectClient.prototype.start;
-DirectClient.prototype.start = function (...args: any[]) {
-    // Add health check endpoints
-    this.app.get("/health", healthCheck);
-    this.app.get("/ready", readinessCheck);
-
-    // --- GoodDollar P0 endpoints ---
-    const gd = new GoodDollarService();
-    // Balance endpoint (privacy-aware)
-    this.app.get("/gooddollar/wallet/:address", async (req, res) => {
-        try {
-            if (!gd.enabled) return res.status(503).json({ error: "GoodDollar disabled" });
-            const { address } = req.params as { address: string };
-            if (!address || typeof address !== "string") {
-                return res.status(400).json({ error: "Address required" });
-            }
-            const result = await gd.getBalance(address);
-            return res.json(result);
-        } catch (err: any) {
-            console.error("GoodDollar wallet error:", err);
-            return res.status(500).json({ error: "Failed to fetch wallet balance" });
-        }
-    });
-
-    // Claim status endpoint
-    this.app.get("/gooddollar/status/:address", async (req, res) => {
-        try {
-            if (!gd.enabled) return res.status(503).json({ error: "GoodDollar disabled" });
-            const { address } = req.params as { address: string };
-            if (!address || typeof address !== "string") {
-                return res.status(400).json({ error: "Address required" });
-            }
-            const result = await gd.getClaimStatus(address);
-            return res.json(result);
-        } catch (err: any) {
-            console.error("GoodDollar status error:", err);
-            return res.status(500).json({ error: "Failed to fetch claim status" });
-        }
-    });
-
-    // Claim endpoint (stubbed)
-    this.app.post("/gooddollar/claim", async (req, res) => {
-        try {
-            if (!gd.enabled) return res.status(503).json({ error: "GoodDollar disabled" });
-            const address = (req.body?.address as string) || "";
-            if (!address) return res.status(400).json({ error: "Address required" });
-            const result = await gd.claim(address);
-            return res.status(result.success ? 200 : 400).json(result);
-        } catch (err: any) {
-            console.error("GoodDollar claim error:", err);
-            return res.status(500).json({ error: "Failed to process claim" });
-        }
-    });
-
-    // Add family stats endpoint
-    this.app.get("/family/stats", (req, res) => {
-        let total = 0,
-            positive = 0,
-            negative = 0;
-        let intimacy = { affection: 0, tension: 0 };
-        let presence = { attention: 0, distraction: 0 };
-        let generational = { bridge: 0, gap: 0 };
-        let growth = { growth: 0, fixed: 0 };
-
-        for (const agent of this.agents.values()) {
-            if (!agent || !agent.runtime) continue;
-            const meta = agent.runtime.meta || {};
-            const fam = meta.familyMetrics || {};
-            total += fam.total || 0;
-            positive += fam.positive || 0;
-            negative += fam.negative || 0;
-            const im = meta.intimacyMetrics || {};
-            intimacy.affection += im.affection || 0;
-            intimacy.tension += im.tension || 0;
-            const pm = meta.presenceMetrics || {};
-            presence.attention += pm.attention || 0;
-            presence.distraction += pm.distraction || 0;
-            const gm = meta.generationalMetrics || {};
-            generational.bridge += gm.bridge || 0;
-            generational.gap += gm.gap || 0;
-            const gr = meta.growthMetrics || {};
-            growth.growth += gr.growth || 0;
-            growth.fixed += gr.fixed || 0;
-        }
-        const healthScore = ((positive + 1) / (positive + negative + 1)) * 100;
-        res.json({
-            total,
-            positive,
-            negative,
-            healthScore,
-            intimacy,
-            presence,
-            generational,
-            growth,
-        });
-    });
-
-    // --- NEW: metric history endpoint ---
-    this.app.get("/family/stats/history", (req, res) => {
-        // aggregate timeline across all agents, by ts
-        const all = [];
-        for (const agent of this.agents.values()) {
-            if (!agent || !agent.runtime) continue;
-            const meta = agent.runtime.meta || {};
-            const hist = meta.metricHistory || [];
-            all.push(...hist);
-        }
-        // group by ts bucket (nearest 10s for smoothing)
-        const byBucket: {
-            [bucket: number]: { ts: number; health: number; n: number };
-        } = {};
-        for (const entry of all) {
-            const bucket = Math.floor(entry.ts / 10000) * 10000;
-            if (!byBucket[bucket]) {
-                byBucket[bucket] = { ts: bucket, health: 0, n: 0 };
-            }
-            byBucket[bucket].health += entry.health;
-            byBucket[bucket].n += 1;
-        }
-        const timeline = Object.values(byBucket)
-            .sort((a, b) => a.ts - b.ts)
-            .map(({ ts, health, n }) => ({
-                ts,
-                health: n ? health / n : 0,
-            }));
-        res.json({ timeline });
-    });
-
-    // --- NEW: metric history from SQLite ---
-    this.app.get("/family/stats/history/db", (req, res) => {
-        try {
-            const dbPath = path.resolve(
-                process.cwd(),
-                "data",
-                "db.sqlite", // Use the main database that actually exists
-            );
-
-            // Check if database file exists
-            if (!fs.existsSync(dbPath)) {
-                return res.status(404).json({
-                    error: "Database not found",
-                    detail: `Database file not found at ${dbPath}`,
-                });
-            }
-
-            const reqr = createRequire(import.meta.url);
-            const BetterSqlite3 = reqr("better-sqlite3");
-            const db = new BetterSqlite3(dbPath);
-
-            // Query the actual database structure with correct column name
-            const stmt = db.prepare(`
-        SELECT
-          createdAt as ts,
-          content,
-          type
-        FROM memories
-        WHERE createdAt > datetime('now', '-7 days')
-        ORDER BY createdAt DESC
-        LIMIT 50
-      `);
-
-            const rows = stmt.all();
-
-            // Create a simple timeline with mock health scores for now
-            const timeline = rows.map((row: any, index: number) => ({
-                ts: new Date(row.ts).getTime(),
-                health: 75 + Math.random() * 25, // Mock health score between 75-100
-            }));
-
-            db.close();
-            res.json({ timeline });
-        } catch (err) {
-            console.error("Database error:", err);
-            res.status(500).json({
-                error: "Database query failed",
-                detail: err.message,
-            });
-        }
-    });
-    return oldStart.apply(this, args);
-};
-
-function getSecret(character: Character, secret: string) {
-    return character.settings?.secrets?.[secret] || process.env[secret];
-}
-
-let nodePlugin: any | undefined;
-
+/**
+ * Create agent runtime
+ */
 export async function createAgent(
     character: Character,
     db: IDatabaseAdapter,
@@ -917,60 +97,32 @@ export async function createAgent(
     token: string,
 ): Promise<AgentRuntime> {
     elizaLogger.log(`Creating runtime for character ${character.name}`);
-
-    // Initialize node plugin if available
+    
+    let nodePlugin: any;
     try {
         const nodePluginModule = await import("@elizaos/plugin-node");
         nodePlugin = nodePluginModule.createNodePlugin();
     } catch (error) {
         elizaLogger.warn("Node plugin not available:", error);
     }
-
-    // Removed TEE and GOAT plugin configuration for cleaner foundation
-
-    // Removed complex verification adapters for cleaner foundation
-    let verifiableInferenceAdapter;
-
+    
     return new AgentRuntime({
         databaseAdapter: db,
         token,
         modelProvider: character.modelProvider,
         evaluators: [],
         character,
-        plugins: [
-            ...(character.plugins ?? []),
-            ...(nodePlugin ? [nodePlugin] : []),
-        ],
+        plugins: [...(character.plugins ?? []), ...(nodePlugin ? [nodePlugin] : [])],
         providers: [],
         managers: [],
         cacheManager: cache,
         fetch: logFetch,
-        verifiableInferenceAdapter,
     });
 }
 
-function initializeFsCache(baseDir: string, character: Character) {
-    if (!character?.id) {
-        throw new Error(
-            "initializeFsCache requires id to be set in character definition",
-        );
-    }
-    const cacheDir = path.resolve(baseDir, character.id, "cache");
-
-    const cache = new CacheManager(new FsCacheAdapter(cacheDir));
-    return cache;
-}
-
-function initializeDbCache(character: Character, db: IDatabaseCacheAdapter) {
-    if (!character?.id) {
-        throw new Error(
-            "initializeFsCache requires id to be set in character definition",
-        );
-    }
-    const cache = new CacheManager(new DbCacheAdapter(db, character.id));
-    return cache;
-}
-
+/**
+ * Initialize cache for character
+ */
 async function initializeCache(
     cacheStore: string,
     character: Character,
@@ -984,201 +136,85 @@ async function initializeCache(
                 const { RedisClient } = await import("@elizaos/adapter-redis");
                 const redisClient = new RedisClient(process.env.REDIS_URL);
                 if (!character?.id) {
-                    throw new Error(
-                        "CacheStore.REDIS requires id to be set in character definition",
-                    );
+                    throw new Error("CacheStore.REDIS requires id to be set in character definition");
                 }
-                return new CacheManager(
-                    new DbCacheAdapter(redisClient, character.id), // Using DbCacheAdapter since RedisClient also implements IDatabaseCacheAdapter
-                );
-            } else {
-                throw new Error("REDIS_URL environment variable is not set.");
+                return new CacheManager(new DbCacheAdapter(redisClient, character.id));
             }
-
+            throw new Error("REDIS_URL environment variable is not set.");
+            
         case CacheStore.DATABASE:
             if (db) {
                 elizaLogger.info("Using Database Cache...");
-                return initializeDbCache(character, db);
-            } else {
-                throw new Error(
-                    "Database adapter is not provided for CacheStore.Database.",
-                );
+                return new CacheManager(new DbCacheAdapter(db, character.id!));
             }
-
+            throw new Error("Database adapter is not provided for CacheStore.Database.");
+            
         case CacheStore.FILESYSTEM:
             elizaLogger.info("Using File System Cache...");
             if (!baseDir) {
-                throw new Error(
-                    "baseDir must be provided for CacheStore.FILESYSTEM.",
-                );
+                throw new Error("baseDir must be provided for CacheStore.FILESYSTEM.");
             }
-            return initializeFsCache(baseDir, character);
-
+            const cacheDir = path.resolve(baseDir, character.id!, "cache");
+            return new CacheManager(new FsCacheAdapter(cacheDir));
+            
         default:
-            throw new Error(
-                `Invalid cache store: ${cacheStore} or required configuration missing.`,
-            );
+            throw new Error(`Invalid cache store: ${cacheStore}`);
     }
 }
 
-async function startAgent(
-    character: Character,
-    directClient: DirectClient,
-): Promise<AgentRuntime> {
+/**
+ * Start an agent
+ */
+async function startAgent(character: Character, directClient: DirectClient): Promise<AgentRuntime> {
     let db: IDatabaseAdapter & IDatabaseCacheAdapter;
+    
     try {
         character.id ??= stringToUuid(character.name);
         character.username ??= character.name;
-
+        
         const token = getTokenForProvider(character.modelProvider, character);
         const dataDir = path.join(__dirname, "../data");
-
+        
         if (!fs.existsSync(dataDir)) {
             fs.mkdirSync(dataDir, { recursive: true });
         }
-
-        db = (await initializeDatabase(dataDir)) as IDatabaseAdapter &
-            IDatabaseCacheAdapter;
-
+        
+        db = (await initializeDatabase(dataDir)) as IDatabaseAdapter & IDatabaseCacheAdapter;
         await db.init();
-
-        // Phase 4a: Run database migrations (bond scoring schema)
+        
+        // Run database migrations
         try {
             await runMigrations(db);
         } catch (migrationError) {
             elizaLogger.warn("Database migrations encountered an issue (continuing anyway):", migrationError);
         }
-
+        
         const cache = await initializeCache(
             process.env.CACHE_STORE ?? CacheStore.DATABASE,
             character,
             "",
-            db,
-        ); // "" should be replaced with dir for file system caching. THOUGHTS: might probably make this into an env
-        const runtime: AgentRuntime = await createAgent(
-            character,
-            db,
-            cache,
-            token,
+            db
         );
-
-        // Initialize Hedera service if env configuration is present
-        try {
-            const hasOperatorCreds =
-                !!process.env.HEDERA_OPERATOR_ID &&
-                !!process.env.HEDERA_OPERATOR_KEY;
-            if (hasOperatorCreds) {
-                const hederaConfig: HederaConfig = {
-                    network:
-                        (process.env.HEDERA_NETWORK as any) || "testnet",
-                    accountId: process.env.HEDERA_OPERATOR_ID!,
-                    privateKey: process.env.HEDERA_OPERATOR_KEY!,
-                    familyTopicId: process.env.HEDERA_WISDOM_TOPIC_ID,
-                    familyHealthTokenId: process.env.HEDERA_FAMILY_TOKEN_ID,
-                    treasuryAccountId: process.env.HEDERA_TREASURY_ACCOUNT_ID,
-                };
-
-                const hederaService = HederaService.getInstance(hederaConfig);
-                const init = await hederaService.initialize();
-                if (!init.success) {
-                    elizaLogger.warn(
-                        "HederaService initialization failed:",
-                        init.error,
-                    );
-                } else {
-                    (runtime as any).hederaService = hederaService;
-                    elizaLogger.info("HederaService initialized and attached");
-
-                    // Ensure consensus topic exists when enabled
-                    const consensusEnabled =
-                        process.env.HEDERA_ENABLE_CONSENSUS === "true";
-                    const hasTopicId = !!process.env.HEDERA_WISDOM_TOPIC_ID;
-                    if (consensusEnabled && !hasTopicId) {
-                        const memo =
-                            process.env.HEDERA_TOPIC_MEMO_DEFAULT ||
-                            `Family interactions consensus log for ${character.name}`;
-                        const topicResp =
-                            await hederaService.consensus.createFamilyTopic(
-                                character.id ?? character.name,
-                                memo,
-                            );
-                        if (topicResp.success && topicResp.data) {
-                            process.env.HEDERA_WISDOM_TOPIC_ID = topicResp.data;
-                            elizaLogger.info(
-                                `Created HCS topic: ${topicResp.data} and set HEDERA_WISDOM_TOPIC_ID`,
-                            );
-                        } else {
-                            elizaLogger.warn(
-                                "Failed to create HCS topic:",
-                                topicResp.error,
-                            );
-                        }
-                    }
-
-                    // Optional: submit a startup test message to verify HCS flow
-                    const submitStartupTest =
-                        process.env.HEDERA_SUBMIT_STARTUP_TEST === "true";
-                    if (
-                        submitStartupTest &&
-                        process.env.HEDERA_WISDOM_TOPIC_ID
-                    ) {
-                        const metrics: HederaFamilyMetrics = {
-                            familyId: character.id ?? character.name,
-                            agentId: runtime.agentId,
-                            timestamp: Date.now(),
-                            sentiment: { positive: 1, negative: 0, neutral: 0 },
-                            healthScore: 1,
-                            messageHash: `${runtime.agentId}-${Date.now()}`,
-                            interactionType: "wisdom",
-                        };
-                        const submitResp =
-                            await hederaService.consensus.submitInteractionDirect(
-                                process.env.HEDERA_WISDOM_TOPIC_ID,
-                                metrics,
-                            );
-                        if (submitResp.success) {
-                            elizaLogger.info(
-                                `Submitted startup HCS test message: ${submitResp.transactionId}`,
-                            );
-                        } else {
-                            elizaLogger.warn(
-                                "Failed to submit startup HCS test message:",
-                                submitResp.error,
-                            );
-                        }
-                    }
-                }
-            } else {
-                elizaLogger.info(
-                    "Hedera env not found; skipping HederaService initialization",
-                );
-            }
-        } catch (hederaError) {
-            elizaLogger.warn(
-                "Error initializing HederaService; continuing without it:",
-                hederaError,
-            );
-        }
-
-    // start services/plugins/process knowledge
-    await runtime.initialize();
-
-        // start assigned clients
+        
+        const runtime: AgentRuntime = await createAgent(character, db, cache, token);
+        
+        // Initialize Hedera service if configured
+        await initializeHederaService(character, runtime);
+        
+        // Start services/plugins/process knowledge
+        await runtime.initialize();
+        
+        // Start assigned clients
         runtime.clients = await initializeClients(character, runtime);
-
-        // add to container
+        
+        // Add to container
         directClient.registerAgent(runtime);
-
-        // report to console
+        
         elizaLogger.debug(`Started ${character.name} as ${runtime.agentId}`);
-
+        
         return runtime;
     } catch (error) {
-        elizaLogger.error(
-            `Error starting agent for character ${character.name}:`,
-            error,
-        );
-        elizaLogger.error(error);
+        elizaLogger.error(`Error starting agent for character ${character.name}:`, error);
         if (db) {
             await db.close();
         }
@@ -1186,75 +222,172 @@ async function startAgent(
     }
 }
 
+/**
+ * Initialize Hedera service if configured
+ */
+async function initializeHederaService(character: Character, runtime: AgentRuntime): Promise<void> {
+    const hasOperatorCreds = !!process.env.HEDERA_OPERATOR_ID && !!process.env.HEDERA_OPERATOR_KEY;
+    
+    if (!hasOperatorCreds) {
+        elizaLogger.info("Hedera env not found; skipping HederaService initialization");
+        return;
+    }
+    
+    try {
+        const hederaConfig: HederaConfig = {
+            network: (process.env.HEDERA_NETWORK as any) || "testnet",
+            accountId: process.env.HEDERA_OPERATOR_ID!,
+            privateKey: process.env.HEDERA_OPERATOR_KEY!,
+            familyTopicId: process.env.HEDERA_WISDOM_TOPIC_ID,
+            familyHealthTokenId: process.env.HEDERA_FAMILY_TOKEN_ID,
+            treasuryAccountId: process.env.HEDERA_TREASURY_ACCOUNT_ID,
+        };
+        
+        const hederaService = HederaService.getInstance(hederaConfig);
+        const init = await hederaService.initialize();
+        
+        if (!init.success) {
+            elizaLogger.warn("HederaService initialization failed:", init.error);
+            return;
+        }
+        
+        (runtime as any).hederaService = hederaService;
+        elizaLogger.info("HederaService initialized and attached");
+        
+        // Create consensus topic if needed
+        await createConsensusTopicIfNeeded(character, hederaService);
+        
+        // Submit startup test if configured
+        await submitStartupTestIfNeeded(character, runtime, hederaService);
+        
+    } catch (hederaError) {
+        elizaLogger.warn("Error initializing HederaService; continuing without it:", hederaError);
+    }
+}
+
+/**
+ * Create consensus topic if enabled and not exists
+ */
+async function createConsensusTopicIfNeeded(character: Character, hederaService: HederaService): Promise<void> {
+    const consensusEnabled = process.env.HEDERA_ENABLE_CONSENSUS === "true";
+    const hasTopicId = !!process.env.HEDERA_WISDOM_TOPIC_ID;
+    
+    if (consensusEnabled && !hasTopicId) {
+        const memo = process.env.HEDERA_TOPIC_MEMO_DEFAULT || 
+            `Family interactions consensus log for ${character.name}`;
+        
+        const topicResp = await hederaService.consensus.createFamilyTopic(
+            character.id ?? character.name,
+            memo
+        );
+        
+        if (topicResp.success && topicResp.data) {
+            process.env.HEDERA_WISDOM_TOPIC_ID = topicResp.data;
+            elizaLogger.info(`Created HCS topic: ${topicResp.data}`);
+        } else {
+            elizaLogger.warn("Failed to create HCS topic:", topicResp.error);
+        }
+    }
+}
+
+/**
+ * Submit startup test message if configured
+ */
+async function submitStartupTestIfNeeded(
+    character: Character,
+    runtime: AgentRuntime,
+    hederaService: HederaService
+): Promise<void> {
+    const submitStartupTest = process.env.HEDERA_SUBMIT_STARTUP_TEST === "true";
+    
+    if (submitStartupTest && process.env.HEDERA_WISDOM_TOPIC_ID) {
+        const metrics: HederaFamilyMetrics = {
+            familyId: character.id ?? character.name,
+            agentId: runtime.agentId,
+            timestamp: Date.now(),
+            sentiment: { positive: 1, negative: 0, neutral: 0 },
+            healthScore: 1,
+            messageHash: `${runtime.agentId}-${Date.now()}`,
+            interactionType: "wisdom",
+        };
+        
+        const submitResp = await hederaService.consensus.submitInteractionDirect(
+            process.env.HEDERA_WISDOM_TOPIC_ID,
+            metrics
+        );
+        
+        if (submitResp.success) {
+            elizaLogger.info(`Submitted startup HCS test message: ${submitResp.transactionId}`);
+        } else {
+            elizaLogger.warn("Failed to submit startup HCS test message:", submitResp.error);
+        }
+    }
+}
+
+/**
+ * Check if a port is available
+ */
 const checkPortAvailable = (port: number): Promise<boolean> => {
     return new Promise((resolve) => {
         const server = net.createServer();
-
         server.once("error", (err: NodeJS.ErrnoException) => {
-            if (err.code === "EADDRINUSE") {
-                resolve(false);
-            }
+            if (err.code === "EADDRINUSE") resolve(false);
         });
-
         server.once("listening", () => {
             server.close();
             resolve(true);
         });
-
         server.listen(port);
     });
 };
 
+/**
+ * Check for valid remote URLs
+ */
 const hasValidRemoteUrls = () =>
     process.env.REMOTE_CHARACTER_URLS &&
     process.env.REMOTE_CHARACTER_URLS !== "" &&
     process.env.REMOTE_CHARACTER_URLS.startsWith("http");
 
+/**
+ * Main agent startup
+ */
 const startAgents = async () => {
     const directClient = new DirectClient();
     let serverPort = Number.parseInt(settings.SERVER_PORT || "3000");
-    const args = parseArguments();
+    const args = await parseArguments();
     const charactersArg = args.characters || args.character;
     let characters = [defaultCharacter];
-
+    
+    // Load characters from various sources
     if (process.env.IQ_WALLET_ADDRESS && process.env.IQSOlRPC) {
         characters = await loadCharacterFromOnchain();
     }
-
+    
     const onchainJson = process.env.ONCHAIN_JSON || null;
     const notOnchainJson = !onchainJson || onchainJson == "null";
-
+    
     if ((notOnchainJson && charactersArg) || hasValidRemoteUrls()) {
         characters = await loadCharacters(charactersArg);
     }
-
-    // Normalize characters for injectable plugins
-    // Normalize characters for injectable plugins
-    characters = await Promise.all(
-        characters.map((char) => {
-            // Basic normalization - ensure required fields exist
-            return {
-                ...char,
-                id: (char.id ||
-                    stringToUuid(
-                        char.name,
-                    )) as `${string}-${string}-${string}-${string}-${string}`,
-                username: char.username || char.name,
-                plugins: char.plugins || [],
-            };
-        }),
-    );
-
-    // Keep reference to first agent runtime for bond score scheduler
+    
+    // Normalize characters
+    characters = characters.map((char) => ({
+        ...char,
+        id: (char.id || stringToUuid(char.name)) as `${string}-${string}-${string}-${string}-${string}`,
+        username: char.username || char.name,
+        plugins: char.plugins || [],
+    }));
+    
+    // Start agents
     let primaryRuntime: AgentRuntime | null = null;
     let primaryDb: IDatabaseAdapter | null = null;
-
+    
     try {
         for (const character of characters) {
             const runtime = await startAgent(character, directClient);
             if (!primaryRuntime) {
                 primaryRuntime = runtime;
-                // Get database adapter from first runtime
                 if ((runtime as any).databaseAdapter) {
                     primaryDb = (runtime as any).databaseAdapter;
                 }
@@ -1263,8 +396,8 @@ const startAgents = async () => {
     } catch (error) {
         elizaLogger.error("Error starting agents:", error);
     }
-
-    // Phase 4a: Initialize weekly bond score scheduler
+    
+    // Initialize weekly bond score scheduler
     if (primaryDb) {
         try {
             initializeWeeklyScheduler(primaryDb, primaryRuntime || undefined);
@@ -1272,430 +405,38 @@ const startAgents = async () => {
             elizaLogger.warn("Failed to initialize bond score scheduler:", error);
         }
     }
-
+    
     // Find available port
     while (!(await checkPortAvailable(serverPort))) {
-        elizaLogger.warn(
-            `Port ${serverPort} is in use, trying ${serverPort + 1}`,
-        );
+        elizaLogger.warn(`Port ${serverPort} is in use, trying ${serverPort + 1}`);
         serverPort++;
     }
-
-    // upload some agent functionality into directClient
+    
+    // Setup DirectClient methods
     directClient.startAgent = async (character) => {
-        // Handle plugins
+        const { handlePluginImporting } = await import("./character/loader.js");
         character.plugins = await handlePluginImporting(character.plugins);
-
-        // wrap it so we don't have to inject directClient later
         return startAgent(character, directClient);
     };
-
     directClient.loadCharacterTryPath = loadCharacterTryPath;
     directClient.jsonToCharacter = jsonToCharacter;
-
+    
     directClient.start(serverPort);
-
-    // HTTP server with health checks + bond score API
-    const http = await import("http");
-    const url = await import("url");
+    
+    // Start HTTP API server
     const healthPort = Number.parseInt(process.env.HEALTH_PORT || "3001");
+    await createHttpServer({ port: healthPort, primaryDb });
     
-    const server = http.createServer(async (req, res) => {
-        // Add CORS headers to all responses
-        const origin = req.headers.origin || "*";
-        res.setHeader("Access-Control-Allow-Origin", origin);
-        res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-        res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-        
-        // Handle preflight requests
-        if (req.method === "OPTIONS") {
-            res.statusCode = 200;
-            res.end();
-            return;
-        }
-        
-        const parsedUrl = url.parse(req.url || "", true);
-        const pathname = parsedUrl.pathname || "";
-        
-        // Bond Score API: GET /api/families/:familyId/bond-score
-        if (req.method === "GET" && pathname.startsWith("/api/families/") && pathname.endsWith("/bond-score")) {
-            const pathParts = pathname.split("/");
-            const familyId = pathParts[3];
-            
-            if (!familyId) {
-                res.statusCode = 400;
-                res.setHeader("Content-Type", "application/json");
-                res.end(JSON.stringify({ error: "Missing familyId" }));
-                return;
-            }
-            
-            try {
-                // Query bond scores from primary database
-                if (!primaryDb || !('query' in primaryDb)) {
-                    res.statusCode = 503;
-                    res.setHeader("Content-Type", "application/json");
-                    res.end(JSON.stringify({ error: "Database not available" }));
-                    return;
-                }
-                
-                // Get current score + 12-week history
-                const scoresQuery = `
-                    SELECT 
-                        id,
-                        family_id,
-                        week_number,
-                        timestamp,
-                        generational_interaction_score,
-                        response_reciprocity_score,
-                        sentiment_trajectory_score,
-                        challenge_completion_score,
-                        presence_consistency_score,
-                        network_topology_score,
-                        hedera_consensus_score,
-                        bond_score,
-                        trend,
-                        week_over_week_delta
-                    FROM family_bond_scores
-                    WHERE family_id = ?
-                    ORDER BY week_number DESC
-                    LIMIT 12
-                `;
-                
-                const scores = await (primaryDb as any).query(scoresQuery, [familyId]);
-                
-                if (!scores || scores.length === 0) {
-                    res.statusCode = 404;
-                    res.setHeader("Content-Type", "application/json");
-                    res.end(JSON.stringify({ 
-                        error: "No bond scores found for family",
-                        familyId 
-                    }));
-                    return;
-                }
-                
-                // Sort by week (ascending for history)
-                const sortedScores = scores.sort((a: any, b: any) => a.week_number - b.week_number);
-                const currentScore = scores[0]; // First result is most recent
-                
-                // Build response
-                const response = {
-                    familyId,
-                    current: {
-                        bondScore: currentScore.bond_score,
-                        trend: currentScore.trend,
-                        delta: currentScore.week_over_week_delta,
-                        timestamp: currentScore.timestamp,
-                    },
-                    history: sortedScores.map((s: any) => ({
-                        week: s.week_number,
-                        bondScore: s.bond_score,
-                        trend: s.trend,
-                        delta: s.week_over_week_delta,
-                        timestamp: s.timestamp,
-                    })),
-                    signals: {
-                        generational: currentScore.generational_interaction_score || 0,
-                        reciprocity: currentScore.response_reciprocity_score || 0,
-                        sentiment: currentScore.sentiment_trajectory_score || 0,
-                        challenges: currentScore.challenge_completion_score || 0,
-                        presence: currentScore.presence_consistency_score || 0,
-                        topology: currentScore.network_topology_score || 0,
-                        consensus: currentScore.hedera_consensus_score || 0,
-                    },
-                };
-                
-                res.statusCode = 200;
-                res.setHeader("Content-Type", "application/json");
-                res.end(JSON.stringify(response));
-                return;
-            } catch (error) {
-                elizaLogger.error("Error fetching bond scores:", error);
-                res.statusCode = 500;
-                res.setHeader("Content-Type", "application/json");
-                res.end(JSON.stringify({ error: "Internal server error" }));
-                return;
-            }
-        }
-        
-        // --- Phase 4b: Payout & Reward Distribution API Endpoints ---
-        
-        // Initialize payout services (lazy-loaded on first request)
-        if (!global.payoutApiHandler) {
-            try {
-                const { PayoutService: PSvc } = await import("@familexyz/agent/services/PayoutService.js");
-                const { AnomalyDetectionService: ADSvc } = await import("@familexyz/agent/services/AnomalyDetectionService.js");
-                const { HederaPayoutLogger: HPL } = await import("@familexyz/agent/integrations/HederaPayoutLogger.js");
-                const { HederaTokenService: HTS } = await import("@familexyz/agent/integrations/HederaTokenService.js");
-                const { PayoutApiHandler } = await import("./api/index.js");
-                
-                const payoutService = new PSvc();
-                const anomalyService = new ADSvc();
-                const hcsLogger = new HPL("0.0.0.0"); // Placeholder HCS topic ID
-                const tokenService = new HTS("0.0.0.0", "0.0.0.0", []); // Placeholder token and treasury IDs
-                global.payoutApiHandler = new PayoutApiHandler(
-                    payoutService,
-                    anomalyService,
-                    hcsLogger,
-                    tokenService,
-                );
-            } catch (err) {
-                elizaLogger.warn("Payout services not available:", err);
-                global.payoutApiHandler = null; // Mark as unavailable
-            }
-        }
-        const handler = global.payoutApiHandler;
-        
-        // GET /api/agents/:agentId/payouts - Agent payout history
-        if (
-            req.method === "GET" &&
-            pathname.startsWith("/api/agents/") &&
-            pathname.endsWith("/payouts")
-        ) {
-            if (!handler) {
-                res.statusCode = 503;
-                res.setHeader("Content-Type", "application/json");
-                res.end(JSON.stringify({ error: "Payout services not initialized" }));
-                return;
-            }
-            try {
-                const pathParts = pathname.split("/");
-                const agentId = pathParts[3];
-                const weeks = parsedUrl.query.weeks
-                    ? Number.parseInt(parsedUrl.query.weeks as string)
-                    : undefined;
-                
-                const result = await handler.getAgentPayoutHistory(agentId, weeks);
-                res.statusCode = 200;
-                res.setHeader("Content-Type", "application/json");
-                res.end(JSON.stringify(result));
-                return;
-            } catch (err: any) {
-                elizaLogger.error("Error fetching agent payouts:", err);
-                res.statusCode = 500;
-                res.setHeader("Content-Type", "application/json");
-                res.end(JSON.stringify({ error: err.message }));
-                return;
-            }
-        }
-        
-        // GET /api/agents/:agentId/performance - Agent performance metrics
-        if (
-            req.method === "GET" &&
-            pathname.startsWith("/api/agents/") &&
-            pathname.endsWith("/performance")
-        ) {
-            try {
-                const pathParts = pathname.split("/");
-                const agentId = pathParts[3];
-                
-                const result = await handler.getAgentPerformance(agentId);
-                res.statusCode = 200;
-                res.setHeader("Content-Type", "application/json");
-                res.end(JSON.stringify(result));
-                return;
-            } catch (err: any) {
-                elizaLogger.error("Error fetching agent performance:", err);
-                res.statusCode = 500;
-                res.setHeader("Content-Type", "application/json");
-                res.end(JSON.stringify({ error: err.message }));
-                return;
-            }
-        }
-        
-        // GET /api/families/:familyId/payouts - Family payout history
-        if (
-            req.method === "GET" &&
-            pathname.startsWith("/api/families/") &&
-            pathname.endsWith("/payouts")
-        ) {
-            try {
-                const pathParts = pathname.split("/");
-                const familyId = pathParts[3];
-                const weeks = parsedUrl.query.weeks
-                    ? Number.parseInt(parsedUrl.query.weeks as string)
-                    : undefined;
-                
-                const result = await handler.getFamilyPayoutHistory(familyId, weeks);
-                res.statusCode = 200;
-                res.setHeader("Content-Type", "application/json");
-                res.end(JSON.stringify(result));
-                return;
-            } catch (err: any) {
-                elizaLogger.error("Error fetching family payouts:", err);
-                res.statusCode = 500;
-                res.setHeader("Content-Type", "application/json");
-                res.end(JSON.stringify({ error: err.message }));
-                return;
-            }
-        }
-        
-        // GET /api/payouts/pending - Pending payouts awaiting execution
-        if (req.method === "GET" && pathname === "/api/payouts/pending") {
-            try {
-                const result = await handler.getPendingPayouts();
-                res.statusCode = 200;
-                res.setHeader("Content-Type", "application/json");
-                res.end(JSON.stringify(result));
-                return;
-            } catch (err: any) {
-                elizaLogger.error("Error fetching pending payouts:", err);
-                res.statusCode = 500;
-                res.setHeader("Content-Type", "application/json");
-                res.end(JSON.stringify({ error: err.message }));
-                return;
-            }
-        }
-        
-        // POST /api/payouts/calculate - Manual payout calculation (dry-run)
-        if (req.method === "POST" && pathname === "/api/payouts/calculate") {
-            try {
-                let body = "";
-                req.on("data", (chunk) => {
-                    body += chunk.toString();
-                });
-                req.on("end", async () => {
-                    try {
-                        const { agentId, familyId, previousScore, currentScore } =
-                            JSON.parse(body);
-                        
-                        if (!agentId || !familyId || previousScore === undefined || currentScore === undefined) {
-                            res.statusCode = 400;
-                            res.setHeader("Content-Type", "application/json");
-                            res.end(
-                                JSON.stringify({
-                                    error: "Missing required fields: agentId, familyId, previousScore, currentScore",
-                                }),
-                            );
-                            return;
-                        }
-                        
-                        const result = await handler.calculatePayoutDryRun(
-                            agentId,
-                            familyId,
-                            previousScore,
-                            currentScore,
-                        );
-                        res.statusCode = 200;
-                        res.setHeader("Content-Type", "application/json");
-                        res.end(JSON.stringify(result));
-                    } catch (err: any) {
-                        elizaLogger.error("Error parsing payout calculation request:", err);
-                        res.statusCode = 400;
-                        res.setHeader("Content-Type", "application/json");
-                        res.end(JSON.stringify({ error: "Invalid request body" }));
-                    }
-                });
-                return;
-            } catch (err: any) {
-                elizaLogger.error("Error in payout calculation endpoint:", err);
-                res.statusCode = 500;
-                res.setHeader("Content-Type", "application/json");
-                res.end(JSON.stringify({ error: err.message }));
-                return;
-            }
-        }
-        
-        // GET /api/payouts/anomalies - Review anomalies across all agents
-        if (req.method === "GET" && pathname === "/api/payouts/anomalies") {
-            try {
-                const limit = parsedUrl.query.limit
-                    ? Number.parseInt(parsedUrl.query.limit as string)
-                    : 50;
-                const offset = parsedUrl.query.offset
-                    ? Number.parseInt(parsedUrl.query.offset as string)
-                    : 0;
-                
-                const result = await handler.getAnomalyReview(limit, offset);
-                res.statusCode = 200;
-                res.setHeader("Content-Type", "application/json");
-                res.end(JSON.stringify(result));
-                return;
-            } catch (err: any) {
-                elizaLogger.error("Error fetching anomalies:", err);
-                res.statusCode = 500;
-                res.setHeader("Content-Type", "application/json");
-                res.end(JSON.stringify({ error: err.message }));
-                return;
-            }
-        }
-        
-        // POST /api/payouts/dispute - File a dispute for a payout
-        if (req.method === "POST" && pathname === "/api/payouts/dispute") {
-            try {
-                let body = "";
-                req.on("data", (chunk) => {
-                    body += chunk.toString();
-                });
-                req.on("end", async () => {
-                    try {
-                        const { payoutRecordId, reason, evidence } = JSON.parse(body);
-                        
-                        if (!payoutRecordId || !reason) {
-                            res.statusCode = 400;
-                            res.setHeader("Content-Type", "application/json");
-                            res.end(
-                                JSON.stringify({
-                                    error: "Missing required fields: payoutRecordId, reason",
-                                }),
-                            );
-                            return;
-                        }
-                        
-                        const result = await handler.filePayoutDispute(
-                            payoutRecordId,
-                            reason,
-                            evidence || "",
-                        );
-                        res.statusCode = result.success ? 200 : 400;
-                        res.setHeader("Content-Type", "application/json");
-                        res.end(JSON.stringify(result));
-                    } catch (err: any) {
-                        elizaLogger.error("Error parsing dispute request:", err);
-                        res.statusCode = 400;
-                        res.setHeader("Content-Type", "application/json");
-                        res.end(JSON.stringify({ error: "Invalid request body" }));
-                    }
-                });
-                return;
-            } catch (err: any) {
-                elizaLogger.error("Error in dispute endpoint:", err);
-                res.statusCode = 500;
-                res.setHeader("Content-Type", "application/json");
-                res.end(JSON.stringify({ error: err.message }));
-                return;
-            }
-        }
-        
-        // Default: Health check endpoint
-        res.statusCode = 200;
-        res.setHeader("Content-Type", "application/json");
-        const ready = await readinessCheck();
-        res.end(JSON.stringify({ status: "ok", ready }));
-    });
-    
-    server.listen(healthPort, "0.0.0.0", () => {
-        elizaLogger.success(`Health and API server listening on :${healthPort}`);
-        elizaLogger.success(`  Health check: http://localhost:${healthPort}/health`);
-        elizaLogger.success(`  Bond scores: http://localhost:${healthPort}/api/families/:familyId/bond-score`);
-        elizaLogger.success(`  Payout API:`);
-        elizaLogger.success(`    Payouts: GET /api/agents/:agentId/payouts`);
-        elizaLogger.success(`    Performance: GET /api/agents/:agentId/performance`);
-        elizaLogger.success(`    Family payouts: GET /api/families/:familyId/payouts`);
-        elizaLogger.success(`    Pending: GET /api/payouts/pending`);
-        elizaLogger.success(`    Calculate: POST /api/payouts/calculate`);
-        elizaLogger.success(`    Anomalies: GET /api/payouts/anomalies`);
-        elizaLogger.success(`    Dispute: POST /api/payouts/dispute`);
-    });
-
     if (serverPort !== Number.parseInt(settings.SERVER_PORT || "3000")) {
         elizaLogger.log(`Server started on alternate port ${serverPort}`);
     }
-
+    
     elizaLogger.log(
-        "Run `pnpm start:client` to start the client and visit the outputted URL (http://localhost:5173) to chat with your agents. When running multiple agents, use client with different port `SERVER_PORT=3001 pnpm start:client`",
+        "Run `pnpm start:client` to start the client and visit the outputted URL (http://localhost:5173) to chat with your agents."
     );
 };
 
+// Start agents
 startAgents().catch((error) => {
     elizaLogger.error("Unhandled error in startAgents:", error);
     elizaLogger.error("Error stack:", error.stack);
@@ -1703,23 +444,13 @@ startAgents().catch((error) => {
     process.exit(1);
 });
 
-// Prevent unhandled exceptions from crashing the process if desired
+// Handle uncaught exceptions if configured
 function parseBooleanFromText(value: string | undefined): boolean {
     if (!value) return false;
     return value.toLowerCase() === "true" || value === "1";
 }
 
-if (
-    process.env.PREVENT_UNHANDLED_EXIT &&
-    parseBooleanFromText(process.env.PREVENT_UNHANDLED_EXIT)
-) {
-    // Handle uncaught exceptions to prevent the process from crashing
-    process.on("uncaughtException", (err) => {
-        console.error("uncaughtException", err);
-    });
-
-    // Handle unhandled rejections to prevent the process from crashing
-    process.on("unhandledRejection", (err) => {
-        console.error("unhandledRejection", err);
-    });
+if (process.env.PREVENT_UNHANDLED_EXIT && parseBooleanFromText(process.env.PREVENT_UNHANDLED_EXIT)) {
+    process.on("uncaughtException", (err) => console.error("uncaughtException", err));
+    process.on("unhandledRejection", (err) => console.error("unhandledRejection", err));
 }

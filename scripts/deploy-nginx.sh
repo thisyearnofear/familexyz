@@ -1,19 +1,24 @@
 #!/bin/bash
 # FamilyXYZ - Deploy nginx config to existing api.famile.xyz
 # ENHANCEMENT: Updates existing config, does NOT create new services
+# SECURITY: Uses env variable for hostname (not hardcoded)
 
 set -e
 
+# Configuration (use env variable or default)
+VPS_HOST="${VPS_HOSTNAME:-snel-bot}"
+
 echo "=========================================="
 echo "FamilyXYZ - Nginx Config Deployment"
+echo "Target: ${VPS_HOST}"
 echo "=========================================="
 
 # Copy nginx config to VPS
 echo "[1/3] Copying nginx config to VPS..."
-scp docker/api.famile.xyz.nginx.conf snel-bot:/tmp/familyxyz-nginx.conf
+scp docker/api.famile.xyz.nginx.conf "${VPS_HOST}:/tmp/familyxyz-nginx.conf"
 
 # Deploy on VPS
-ssh snel-bot "
+ssh "${VPS_HOST}" "
 echo '[2/3] Backing up existing config...'
 sudo cp /etc/nginx/sites-available/api.famile.xyz /etc/nginx/sites-available/api.famile.xyz.backup.\$(date +%Y%m%d-%H%M%S)
 

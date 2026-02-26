@@ -4,7 +4,7 @@ node_modules
 # =============================================================================
 # ENVIRONMENT FILES & SECRETS (CRITICAL SECURITY)
 # =============================================================================
-# All environment files
+# All environment files (default ignore)
 .env
 .env.*
 .env.local
@@ -13,6 +13,14 @@ node_modules
 .env.production
 .env.test
 .env_main
+
+# EXCEPTION: Example/template files ARE committed (safe, no secrets)
+!.env.example
+!.env.local.example
+!.env.production.template
+!environments/.env.example
+!packages/**/.env.example
+!packages/**/.env.test
 
 # Environment directory files (for development)
 environments/**/.env*

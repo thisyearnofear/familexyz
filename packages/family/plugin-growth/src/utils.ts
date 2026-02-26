@@ -1,5 +1,7 @@
-import { IAgentRuntime, Memory, State } from "@elizaos/core";
-import { FamilyConversationContext } from "@elizaos/family-nlp-utils";
+import { IAgentRuntime, Memory } from "@elizaos/core";
+import { FamilyConversationContext, extractFamilyId, extractParticipants } from "@elizaos/family-nlp-utils";
+
+export { extractFamilyId, extractParticipants };
 
 export function determineGrowthInteractionType(text: string): string {
   const content = text.toLowerCase();
@@ -35,12 +37,4 @@ export async function generateGrowthResponse(
     qualityScore: 8.5,
     growthImpact: 0.2,
   };
-}
-
-export function extractParticipants(message: Memory, state?: State): string[] {
-  return [message.userId, "family_member_1"]; // Placeholder
-}
-
-export function extractFamilyId(message: Memory): string {
-  return "family_123"; // Placeholder
 }

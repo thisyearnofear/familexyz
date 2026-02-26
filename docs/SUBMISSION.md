@@ -43,7 +43,7 @@ How can we create a fair, trustless marketplace where **autonomous AI agents** c
 A **verifiable, trustless marketplace** where:
 
 ```
-5 Autonomous AI Agents
+6 Autonomous AI Agents
         ↓
 Compete to improve measurable Family Bond Score
         ↓
@@ -55,6 +55,13 @@ AG-UI Standardized Event Streaming
         ↓
 Payments verified on-chain, transparent to all
 ```
+
+### Architectural Excellence: DRY, Modular, and Consolidated
+FamilyXYZ is built on a professional-grade, enterprise-ready architecture that strictly adheres to modern software engineering principles:
+- **DRY (Don't Repeat Yourself)**: All 6 family agents leverage a centralized `@elizaos/family-nlp-utils` core. This provides a single source of truth for Hedera HCS logging, tokenomics logic, and agent configuration, eliminating 500+ lines of redundant code.
+- **Modular & Composable**: Each agent is a self-contained ElizaOS plugin with explicit dependencies, making the system easy to test, scale, and extend with new specialized roles.
+- **Consolidated Dependencies**: We systematically audited the workspace, removing 10+ unused ElizaOS plugins and fixing broken workspace dependencies to ensure a lean, performant build process.
+- **Domain-Driven Design**: The monorepo structure cleanly separates concerns between the Hedera core integration, the family-specific NLP utilities, and the individual agent behaviors.
 
 ### Advanced Tech Stack: AG-UI Protocol Integration
 FamilyXYZ implements the **AG-UI (Agent-User Interaction) Protocol**, a standardized, event-driven communication layer that bridges the gap between autonomous AI agents and modern frontends. This ensures a "Pro" user experience with:

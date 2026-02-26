@@ -2,47 +2,28 @@ import {
   Action, ActionExample, IAgentRuntime, Memory, State, HandlerCallback, Content,
 } from "@elizaos/core";
 import {
-  FamilyHederaIntegration, createFamilyHederaIntegration,
-  FamilyAgentConfig, FamilyTokenomics, DEFAULT_TOKENOMICS, HederaService,
+  FamilyHederaIntegration, getOrCreateFamilyHederaIntegration,
+  cacheFamilyInteraction,
 } from "@elizaos/family-nlp-utils";
 import { calculateFamilyMetrics, storeMetrics } from "@elizaos/family-metrics";
-import NodeCache from "node-cache";
 import { GENERATIONAL_BRIDGE_INTERACTIONS } from "./constants";
 import {
   determineGenerationalInteractionType, generateGenerationalResponse,
   extractParticipants, extractFamilyId,
 } from "./utils";
 
-const generationalCache = new NodeCache({ stdTTL: 3600 });
-
 let hederaIntegrationInstance: FamilyHederaIntegration | null = null;
 
 async function getOrCreateHederaIntegration(
   runtime: IAgentRuntime,
 ): Promise<FamilyHederaIntegration> {
-  if (hederaIntegrationInstance) return hederaIntegrationInstance;
-
-  const hederaService = (runtime as any).hederaService as HederaService;
-  if (!hederaService) throw new Error("Hedera service not available in runtime");
-
-  const config: FamilyAgentConfig = {
-    agentType: "generational",
-    consensusTopicId: process.env.HEDERA_WISDOM_TOPIC_ID || "0.0.123456",
-    rewardTokenId: process.env.HEDERA_FAMILY_TOKEN_ID,
-    specializations: GENERATIONAL_BRIDGE_INTERACTIONS,
-    rewardMultiplier: 1.3,
-    enableTokenomics: process.env.HEDERA_ENABLE_TOKENOMICS === "true",
-    enableConsensusLogging: process.env.HEDERA_ENABLE_CONSENSUS === "true",
-  };
-
-  const tokenomics: FamilyTokenomics = {
-    ...DEFAULT_TOKENOMICS,
-    enabled: process.env.HEDERA_ENABLE_TOKENOMICS === "true",
-    tokenId: process.env.HEDERA_FAMILY_TOKEN_ID,
-    treasuryAccountId: process.env.HEDERA_TREASURY_ACCOUNT_ID,
-  };
-
-  hederaIntegrationInstance = createFamilyHederaIntegration(hederaService, config, tokenomics);
+  if (!hederaIntegrationInstance) {
+    hederaIntegrationInstance = await getOrCreateFamilyHederaIntegration(
+      runtime,
+      "generational",
+      GENERATIONAL_BRIDGE_INTERACTIONS,
+    );
+  }
   return hederaIntegrationInstance;
 }
 
@@ -153,7 +134,7 @@ export const generationalBridgeAction: Action = {
       }
       (runtime as any).meta = meta;
 
-      generationalCache.set(`generational_${message.roomId}_${Date.now()}`, {
+      await cacheFamilyInteraction("generational", message.roomId, {
         message: result.message, context: conversationContext, response: enhancedResponse,
       });
 

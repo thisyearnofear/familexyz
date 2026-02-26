@@ -9,14 +9,10 @@ import {
 } from "@elizaos/core";
 import {
   FamilyHederaIntegration,
-  createFamilyHederaIntegration,
-  FamilyAgentConfig,
-  FamilyTokenomics,
-  DEFAULT_TOKENOMICS,
-  HederaService,
+  getOrCreateFamilyHederaIntegration,
+  cacheFamilyInteraction,
 } from "@elizaos/family-nlp-utils";
 import { calculateFamilyMetrics, storeMetrics } from "@elizaos/family-metrics";
-import NodeCache from "node-cache";
 import { GROWTH_INTERACTIONS } from "./constants";
 import {
   determineGrowthInteractionType,
@@ -25,56 +21,19 @@ import {
   extractFamilyId,
 } from "./utils";
 
-// Cache management
-const growthCache = new NodeCache({ stdTTL: 3600 });
-
-async function cacheGrowthInteraction(
-  runtime: IAgentRuntime,
-  roomId: string,
-  interaction: any,
-): Promise<void> {
-  const cacheKey = `growth_${roomId}_${Date.now()}`;
-  growthCache.set(cacheKey, interaction);
-}
-
 // Hedera integration management
 let hederaIntegrationInstance: FamilyHederaIntegration | null = null;
 
 async function getOrCreateHederaIntegration(
   runtime: IAgentRuntime,
 ): Promise<FamilyHederaIntegration> {
-  if (hederaIntegrationInstance) {
-    return hederaIntegrationInstance;
+  if (!hederaIntegrationInstance) {
+    hederaIntegrationInstance = await getOrCreateFamilyHederaIntegration(
+      runtime,
+      "growth",
+      GROWTH_INTERACTIONS,
+    );
   }
-
-  const hederaService = (runtime as any).hederaService as HederaService;
-  if (!hederaService) {
-    throw new Error("Hedera service not available in runtime");
-  }
-
-  const growthConfig: FamilyAgentConfig = {
-    agentType: "growth",
-    consensusTopicId: process.env.HEDERA_GROWTH_TOPIC_ID || "0.0.123456",
-    rewardTokenId: process.env.HEDERA_FAMILY_TOKEN_ID,
-    specializations: GROWTH_INTERACTIONS,
-    rewardMultiplier: 1.3,
-    enableTokenomics: process.env.HEDERA_ENABLE_TOKENOMICS === "true",
-    enableConsensusLogging: process.env.HEDERA_ENABLE_CONSENSUS === "true",
-  };
-
-  const tokenomics: FamilyTokenomics = {
-    ...DEFAULT_TOKENOMICS,
-    enabled: process.env.HEDERA_ENABLE_TOKENOMICS === "true",
-    tokenId: process.env.HEDERA_FAMILY_TOKEN_ID,
-    treasuryAccountId: process.env.HEDERA_TREASURY_ACCOUNT_ID,
-  };
-
-  hederaIntegrationInstance = createFamilyHederaIntegration(
-    hederaService,
-    growthConfig,
-    tokenomics,
-  );
-
   return hederaIntegrationInstance;
 }
 
@@ -201,7 +160,7 @@ export const growthAction: Action = {
 
       (runtime as any).meta = meta;
 
-      await cacheGrowthInteraction(runtime, message.roomId, {
+      await cacheFamilyInteraction("growth", message.roomId, {
         message: result.message,
         context: conversationContext,
         response: enhancedResponse,

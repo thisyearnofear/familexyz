@@ -28,7 +28,13 @@ export {
 // Factory functions for easy initialization
 export { createFamilyMetricsLogger } from "./metrics/FamilyHederaMetrics.js";
 
-export { createFamilyHederaIntegration } from "./integration/FamilyHederaIntegration.js";
+export {
+  createFamilyHederaIntegration,
+  getOrCreateFamilyHederaIntegration,
+  cacheFamilyInteraction,
+  extractFamilyId,
+  extractParticipants,
+} from "./integration/FamilyHederaIntegration.js";
 
 // Type exports for external consumption
 export type {

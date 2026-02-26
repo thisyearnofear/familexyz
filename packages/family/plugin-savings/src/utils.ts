@@ -1,5 +1,7 @@
-import { IAgentRuntime, Memory, State } from "@elizaos/core";
-import { FamilyConversationContext } from "@elizaos/family-nlp-utils";
+import { IAgentRuntime, Memory } from "@elizaos/core";
+import { FamilyConversationContext, extractFamilyId, extractParticipants } from "@elizaos/family-nlp-utils";
+
+export { extractFamilyId, extractParticipants };
 
 export function determineSavingsInteractionType(text: string): string {
   const content = text.toLowerCase();
@@ -37,12 +39,4 @@ export async function generateSavingsResponse(
     qualityScore: 9.0,
     savingsImpact: 0.5,
   };
-}
-
-export function extractParticipants(message: Memory, state?: State): string[] {
-  return [message.userId, "family_member_1"];
-}
-
-export function extractFamilyId(message: Memory): string {
-  return "family_123";
 }

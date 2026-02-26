@@ -9,14 +9,10 @@ import {
 } from "@elizaos/core";
 import {
   FamilyHederaIntegration,
-  createFamilyHederaIntegration,
-  FamilyAgentConfig,
-  FamilyTokenomics,
-  DEFAULT_TOKENOMICS,
-  HederaService,
+  getOrCreateFamilyHederaIntegration,
+  cacheFamilyInteraction,
 } from "@elizaos/family-nlp-utils";
 import { calculateFamilyMetrics, storeMetrics } from "@elizaos/family-metrics";
-import NodeCache from "node-cache";
 import { WISDOM_INTERACTIONS } from "./constants";
 import {
   determineWisdomInteractionType,
@@ -25,59 +21,19 @@ import {
   extractFamilyId,
 } from "./utils";
 
-// Cache management
-const wisdomCache = new NodeCache({ stdTTL: 3600 }); // 1 hour cache
-
-async function cacheWisdomInteraction(
-  runtime: IAgentRuntime,
-  roomId: string,
-  interaction: any,
-): Promise<void> {
-  const cacheKey = `wisdom_${roomId}_${Date.now()}`;
-  wisdomCache.set(cacheKey, interaction);
-}
-
 // Hedera integration management
 let hederaIntegrationInstance: FamilyHederaIntegration | null = null;
 
 async function getOrCreateHederaIntegration(
   runtime: IAgentRuntime,
 ): Promise<FamilyHederaIntegration> {
-  if (hederaIntegrationInstance) {
-    return hederaIntegrationInstance;
+  if (!hederaIntegrationInstance) {
+    hederaIntegrationInstance = await getOrCreateFamilyHederaIntegration(
+      runtime,
+      "wisdom",
+      WISDOM_INTERACTIONS,
+    );
   }
-
-  // Get Hedera service from runtime
-  const hederaService = (runtime as any).hederaService as HederaService;
-  if (!hederaService) {
-    throw new Error("Hedera service not available in runtime");
-  }
-
-  // Create wisdom agent configuration
-  const wisdomConfig: FamilyAgentConfig = {
-    agentType: "wisdom",
-    consensusTopicId: process.env.HEDERA_WISDOM_TOPIC_ID || "0.0.123456",
-    rewardTokenId: process.env.HEDERA_FAMILY_TOKEN_ID,
-    specializations: WISDOM_INTERACTIONS,
-    rewardMultiplier: 1.2, // 20% bonus for wisdom interactions
-    enableTokenomics: process.env.HEDERA_ENABLE_TOKENOMICS === "true",
-    enableConsensusLogging: process.env.HEDERA_ENABLE_CONSENSUS === "true",
-  };
-
-  // Create tokenomics configuration
-  const tokenomics: FamilyTokenomics = {
-    ...DEFAULT_TOKENOMICS,
-    enabled: process.env.HEDERA_ENABLE_TOKENOMICS === "true",
-    tokenId: process.env.HEDERA_FAMILY_TOKEN_ID,
-    treasuryAccountId: process.env.HEDERA_TREASURY_ACCOUNT_ID,
-  };
-
-  hederaIntegrationInstance = createFamilyHederaIntegration(
-    hederaService,
-    wisdomConfig,
-    tokenomics,
-  );
-
   return hederaIntegrationInstance;
 }
 
@@ -244,10 +200,9 @@ export const wisdomAction: Action = {
       (runtime as any).meta = meta;
 
       // Cache the interaction for follow-up
-      await cacheWisdomInteraction(runtime, message.roomId, {
+      await cacheFamilyInteraction("wisdom", message.roomId, {
         message: result.message,
         context: conversationContext,
-        response: enhancedResponse,
       });
 
       // Log success metrics

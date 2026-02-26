@@ -9,14 +9,10 @@ import {
 } from "@elizaos/core";
 import {
   FamilyHederaIntegration,
-  createFamilyHederaIntegration,
-  FamilyAgentConfig,
-  FamilyTokenomics,
-  DEFAULT_TOKENOMICS,
-  HederaService,
+  getOrCreateFamilyHederaIntegration,
+  cacheFamilyInteraction,
 } from "@elizaos/family-nlp-utils";
 import { calculateFamilyMetrics, storeMetrics } from "@elizaos/family-metrics";
-import NodeCache from "node-cache";
 import { SAVINGS_INTERACTIONS } from "./constants";
 import {
   determineSavingsInteractionType,
@@ -25,47 +21,19 @@ import {
   extractFamilyId,
 } from "./utils";
 
-// Cache management
-const savingsCache = new NodeCache({ stdTTL: 3600 });
-
 // Hedera integration management
 let hederaIntegrationInstance: FamilyHederaIntegration | null = null;
 
 async function getOrCreateHederaIntegration(
   runtime: IAgentRuntime,
 ): Promise<FamilyHederaIntegration> {
-  if (hederaIntegrationInstance) {
-    return hederaIntegrationInstance;
+  if (!hederaIntegrationInstance) {
+    hederaIntegrationInstance = await getOrCreateFamilyHederaIntegration(
+      runtime,
+      "savings",
+      SAVINGS_INTERACTIONS,
+    );
   }
-
-  const hederaService = (runtime as any).hederaService as HederaService;
-  if (!hederaService) {
-    throw new Error("Hedera service not available in runtime");
-  }
-
-  const savingsConfig: FamilyAgentConfig = {
-    agentType: "savings",
-    consensusTopicId: process.env.HEDERA_SAVINGS_TOPIC_ID || process.env.HEDERA_WISDOM_TOPIC_ID || "0.0.123456",
-    rewardTokenId: process.env.HEDERA_FAMILY_TOKEN_ID,
-    specializations: SAVINGS_INTERACTIONS,
-    rewardMultiplier: 2.0, // Higher reward for saving!
-    enableTokenomics: process.env.HEDERA_ENABLE_TOKENOMICS === "true",
-    enableConsensusLogging: process.env.HEDERA_ENABLE_CONSENSUS === "true",
-  };
-
-  const tokenomics: FamilyTokenomics = {
-    ...DEFAULT_TOKENOMICS,
-    enabled: process.env.HEDERA_ENABLE_TOKENOMICS === "true",
-    tokenId: process.env.HEDERA_FAMILY_TOKEN_ID,
-    treasuryAccountId: process.env.HEDERA_TREASURY_ACCOUNT_ID,
-  };
-
-  hederaIntegrationInstance = createFamilyHederaIntegration(
-    hederaService,
-    savingsConfig,
-    tokenomics,
-  );
-
   return hederaIntegrationInstance;
 }
 
@@ -173,6 +141,12 @@ export const savingsAction: Action = {
             qualityScore: savingsResponse.qualityScore / 10,
           },
         },
+      });
+
+      await cacheFamilyInteraction("savings", message.roomId, {
+        message: result.message,
+        context: conversationContext,
+        response: enhancedResponse,
       });
 
       callback?.(enhancedResponse);

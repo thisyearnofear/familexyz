@@ -1,6 +1,8 @@
-import { FamilyInteractionType, FamilyConversationContext } from "@elizaos/family-nlp-utils";
-import { IAgentRuntime, Memory, State, ModelClass } from "@elizaos/core";
+import { FamilyInteractionType, FamilyConversationContext, extractFamilyId, extractParticipants } from "@elizaos/family-nlp-utils";
+import { IAgentRuntime, Memory, ModelClass } from "@elizaos/core";
 import { INTIMACY_PROMPTS } from "./constants";
+
+export { extractFamilyId, extractParticipants };
 
 export function determineIntimacyInteractionType(
   content: string,
@@ -156,13 +158,4 @@ export function assessEmotionalVulnerability(text: string): number {
   });
 
   return Math.min(100, vulnerability);
-}
-
-export function extractParticipants(message: Memory, state?: State): string[] {
-  const participants = [message.userId];
-  return participants.filter(Boolean);
-}
-
-export function extractFamilyId(message: Memory): string | null {
-  return message.roomId || null;
 }

@@ -24,6 +24,7 @@
   "dependencies": {
     "@elizaos/core": "workspace:*",
     "@elizaos/family-metrics": "workspace:*",
+    "@elizaos/family-nlp-utils": "workspace:*",
     "bs58": "^6.0.0"
   },
   "devDependencies": {

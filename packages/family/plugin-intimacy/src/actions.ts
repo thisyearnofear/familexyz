@@ -9,14 +9,10 @@ import {
 } from "@elizaos/core";
 import {
   FamilyHederaIntegration,
-  createFamilyHederaIntegration,
-  FamilyAgentConfig,
-  FamilyTokenomics,
-  DEFAULT_TOKENOMICS,
-  HederaService,
+  getOrCreateFamilyHederaIntegration,
+  cacheFamilyInteraction,
 } from "@elizaos/family-nlp-utils";
 import { calculateFamilyMetrics, storeMetrics } from "@elizaos/family-metrics";
-import NodeCache from "node-cache";
 import { INTIMACY_INTERACTIONS } from "./constants";
 import {
   determineIntimacyInteractionType,
@@ -25,56 +21,19 @@ import {
   extractFamilyId,
 } from "./utils";
 
-// Cache management
-const intimacyCache = new NodeCache({ stdTTL: 3600 });
-
-async function cacheIntimacyInteraction(
-  runtime: IAgentRuntime,
-  roomId: string,
-  interaction: any,
-): Promise<void> {
-  const cacheKey = `intimacy_${roomId}_${Date.now()}`;
-  intimacyCache.set(cacheKey, interaction);
-}
-
 // Hedera integration management
 let hederaIntegrationInstance: FamilyHederaIntegration | null = null;
 
 async function getOrCreateHederaIntegration(
   runtime: IAgentRuntime,
 ): Promise<FamilyHederaIntegration> {
-  if (hederaIntegrationInstance) {
-    return hederaIntegrationInstance;
+  if (!hederaIntegrationInstance) {
+    hederaIntegrationInstance = await getOrCreateFamilyHederaIntegration(
+      runtime,
+      "intimacy",
+      INTIMACY_INTERACTIONS,
+    );
   }
-
-  const hederaService = (runtime as any).hederaService as HederaService;
-  if (!hederaService) {
-    throw new Error("Hedera service not available in runtime");
-  }
-
-  const intimacyConfig: FamilyAgentConfig = {
-    agentType: "intimacy",
-    consensusTopicId: process.env.HEDERA_WISDOM_TOPIC_ID || "0.0.123456",
-    rewardTokenId: process.env.HEDERA_FAMILY_TOKEN_ID,
-    specializations: INTIMACY_INTERACTIONS,
-    rewardMultiplier: 1.5,
-    enableTokenomics: process.env.HEDERA_ENABLE_TOKENOMICS === "true",
-    enableConsensusLogging: process.env.HEDERA_ENABLE_CONSENSUS === "true",
-  };
-
-  const tokenomics: FamilyTokenomics = {
-    ...DEFAULT_TOKENOMICS,
-    enabled: process.env.HEDERA_ENABLE_TOKENOMICS === "true",
-    tokenId: process.env.HEDERA_FAMILY_TOKEN_ID,
-    treasuryAccountId: process.env.HEDERA_TREASURY_ACCOUNT_ID,
-  };
-
-  hederaIntegrationInstance = createFamilyHederaIntegration(
-    hederaService,
-    intimacyConfig,
-    tokenomics,
-  );
-
   return hederaIntegrationInstance;
 }
 
@@ -206,7 +165,7 @@ export const intimacyAction: Action = {
 
       (runtime as any).meta = meta;
 
-      await cacheIntimacyInteraction(runtime, message.roomId, {
+      await cacheFamilyInteraction("intimacy", message.roomId, {
         message: result.message,
         context: conversationContext,
         response: enhancedResponse,

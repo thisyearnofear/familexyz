@@ -2,47 +2,28 @@ import {
   Action, ActionExample, IAgentRuntime, Memory, State, HandlerCallback, Content,
 } from "@elizaos/core";
 import {
-  FamilyHederaIntegration, createFamilyHederaIntegration,
-  FamilyAgentConfig, FamilyTokenomics, DEFAULT_TOKENOMICS, HederaService,
+  FamilyHederaIntegration, getOrCreateFamilyHederaIntegration,
+  cacheFamilyInteraction,
 } from "@elizaos/family-nlp-utils";
 import { calculateFamilyMetrics, storeMetrics } from "@elizaos/family-metrics";
-import NodeCache from "node-cache";
 import { PRESENCE_INTERACTIONS } from "./constants";
 import {
   determinePresenceInteractionType, generatePresenceResponse,
   extractParticipants, extractFamilyId,
 } from "./utils";
 
-const presenceCache = new NodeCache({ stdTTL: 3600 });
-
 let hederaIntegrationInstance: FamilyHederaIntegration | null = null;
 
 async function getOrCreateHederaIntegration(
   runtime: IAgentRuntime,
 ): Promise<FamilyHederaIntegration> {
-  if (hederaIntegrationInstance) return hederaIntegrationInstance;
-
-  const hederaService = (runtime as any).hederaService as HederaService;
-  if (!hederaService) throw new Error("Hedera service not available in runtime");
-
-  const config: FamilyAgentConfig = {
-    agentType: "presence",
-    consensusTopicId: process.env.HEDERA_WISDOM_TOPIC_ID || "0.0.123456",
-    rewardTokenId: process.env.HEDERA_FAMILY_TOKEN_ID,
-    specializations: PRESENCE_INTERACTIONS,
-    rewardMultiplier: 1.0,
-    enableTokenomics: process.env.HEDERA_ENABLE_TOKENOMICS === "true",
-    enableConsensusLogging: process.env.HEDERA_ENABLE_CONSENSUS === "true",
-  };
-
-  const tokenomics: FamilyTokenomics = {
-    ...DEFAULT_TOKENOMICS,
-    enabled: process.env.HEDERA_ENABLE_TOKENOMICS === "true",
-    tokenId: process.env.HEDERA_FAMILY_TOKEN_ID,
-    treasuryAccountId: process.env.HEDERA_TREASURY_ACCOUNT_ID,
-  };
-
-  hederaIntegrationInstance = createFamilyHederaIntegration(hederaService, config, tokenomics);
+  if (!hederaIntegrationInstance) {
+    hederaIntegrationInstance = await getOrCreateFamilyHederaIntegration(
+      runtime,
+      "presence",
+      PRESENCE_INTERACTIONS,
+    );
+  }
   return hederaIntegrationInstance;
 }
 
@@ -152,8 +133,8 @@ export const presenceAction: Action = {
         (meta as any).latestTransactionId = result.rewards.transactionId;
       }
       (runtime as any).meta = meta;
-
-      presenceCache.set(`presence_${message.roomId}_${Date.now()}`, {
+      
+      await cacheFamilyInteraction("presence", message.roomId, {
         message: result.message, context: conversationContext, response: enhancedResponse,
       });
 

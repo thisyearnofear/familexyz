@@ -1,4 +1,6 @@
 import { HederaService } from "@elizaos/hedera-core";
+import { IAgentRuntime, Memory } from "@elizaos/core";
+import NodeCache from "node-cache";
 import {
     FamilyHederaMetricsLogger,
     FamilyInteractionType,
@@ -766,6 +768,16 @@ export const DEFAULT_AGENT_CONFIGS: Record<
         specializations: ["growth_milestone", "conflict_resolved"],
         rewardMultiplier: 1.4,
     },
+    savings: {
+        specializations: [
+            "family_savings_deposit",
+            "family_savings_withdrawal",
+            "savings_goal_setting",
+            "interest_payout_check",
+            "bonzo_vault_status",
+        ],
+        rewardMultiplier: 2.0,
+    },
 };
 
 /**
@@ -787,3 +799,71 @@ export const DEFAULT_TOKENOMICS: FamilyTokenomics = {
         new_family_member_welcomed: 2000,
     },
 };
+
+// Global cache for all family interactions
+const familyInteractionCache = new NodeCache({ stdTTL: 3600 });
+
+/**
+ * Shared utility to get or create a family Hedera integration singleton for a plugin
+ */
+export async function getOrCreateFamilyHederaIntegration(
+    runtime: IAgentRuntime,
+    agentType: FamilyAgentConfig["agentType"],
+    specializations: FamilyInteractionType[],
+): Promise<FamilyHederaIntegration> {
+    const hederaService = (runtime as any).hederaService as HederaService;
+    if (!hederaService) {
+        throw new Error("Hedera service not available in runtime");
+    }
+
+    const defaultConfig = DEFAULT_AGENT_CONFIGS[agentType] || {};
+
+    const agentConfig: FamilyAgentConfig = {
+        agentType,
+        consensusTopicId:
+            process.env[`HEDERA_${agentType.toUpperCase()}_TOPIC_ID`] ||
+            process.env.HEDERA_WISDOM_TOPIC_ID ||
+            "0.0.123456",
+        rewardTokenId: process.env.HEDERA_FAMILY_TOKEN_ID,
+        specializations,
+        rewardMultiplier: defaultConfig.rewardMultiplier || 1.0,
+        enableTokenomics: process.env.HEDERA_ENABLE_TOKENOMICS === "true",
+        enableConsensusLogging: process.env.HEDERA_ENABLE_CONSENSUS === "true",
+    };
+
+    const tokenomics: FamilyTokenomics = {
+        ...DEFAULT_TOKENOMICS,
+        enabled: process.env.HEDERA_ENABLE_TOKENOMICS === "true",
+        tokenId: process.env.HEDERA_FAMILY_TOKEN_ID,
+        treasuryAccountId: process.env.HEDERA_TREASURY_ACCOUNT_ID,
+    };
+
+    return createFamilyHederaIntegration(hederaService, agentConfig, tokenomics);
+}
+
+/**
+ * Shared utility to cache family interactions across agents
+ */
+export async function cacheFamilyInteraction(
+    agentType: string,
+    roomId: string,
+    interaction: any,
+): Promise<void> {
+    const cacheKey = `${agentType}_${roomId}_${Date.now()}`;
+    familyInteractionCache.set(cacheKey, interaction);
+}
+
+/**
+ * Common utility to extract family ID from a message
+ */
+export function extractFamilyId(message: Memory): string {
+    return message.roomId || "family_default";
+}
+
+/**
+ * Common utility to extract participants from a message/state
+ */
+export function extractParticipants(message: Memory): string[] {
+    const participants = [message.userId];
+    return participants.filter(Boolean);
+}

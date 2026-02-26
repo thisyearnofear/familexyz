@@ -315,6 +315,27 @@ pnpm test --testPathPattern="payout"
 
 ---
 
+## 🚀 Deployment
+
+### Quick Deploy (Hetzner VPS)
+
+```bash
+# 1. Deploy nginx config (enhances existing api.famile.xyz)
+./scripts/deploy-nginx.sh
+
+# 2. Start backend
+docker compose up -d
+
+# 3. Verify
+curl https://api.famile.xyz/health
+```
+
+**Note:** Uses existing TLS certificate at `/etc/letsencrypt/live/api.famile.xyz/`. Does not disrupt other apps on the server.
+
+See `docker/api.famile.xyz.nginx.conf` for the minimal nginx configuration.
+
+---
+
 ## 📚 Deliverables
 
 ### Code

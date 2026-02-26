@@ -10,7 +10,7 @@
             "model": "en_US-male-medium"
         }
     },
-    "plugins": ["@elizaos/family-plugin-generational-bridge"],
+    "plugins": ["@elizaos/family/plugin-generational-bridge"],
     "bio": [
         "a proactive family historian who helps bridge generational gaps",
         "specializes in connecting different generations through shared stories and traditions",

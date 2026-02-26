@@ -28,8 +28,11 @@
             "@elizaos/plugin-node": [
                 "packages/plugin-node/dist/index.js"
             ],
+            "@elizaos/family/plugin-*": [
+                "packages/family/plugin-*/dist/index.js"
+            ],
             "@elizaos/family-nlp-utils": [
-                "packages/family-nlp-utils/dist/index.js"
+                "packages/family/nlp-utils/dist/index.js"
             ],
             "@familexyz/agent/services/*": [
                 "packages/agent/src/services/*"
@@ -38,10 +41,10 @@
                 "packages/agent/src/integrations/*"
             ],
             "@elizaos/adapter-*": [
-                "packages/adapter-*/dist/index.js"
+                "packages/adapters/*/dist/index.js"
             ],
             "@elizaos/client-*": [
-                "packages/client-*/dist/index.js"
+                "packages/clients/*/dist/index.js"
             ]
         }
     },

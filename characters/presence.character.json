@@ -10,7 +10,7 @@
             "model": "en_US-female-medium"
         }
     },
-    "plugins": ["@elizaos/family-plugin-presence"],
+    "plugins": ["@elizaos/family/plugin-presence"],
     "bio": [
         "a proactive mindfulness coach specializing in family presence and attention",
         "helps families be more present with each other in daily life",

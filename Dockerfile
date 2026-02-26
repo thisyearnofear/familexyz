@@ -30,9 +30,7 @@ COPY agent/package.json ./agent/package.json
 COPY packages/core ./packages/core
 COPY packages/config ./packages/config
 COPY packages/family ./packages/family
-COPY packages/plugin-gooddollar ./packages/plugin-gooddollar
 COPY packages/clients/direct ./packages/clients/direct
-COPY packages/clients/telegram ./packages/clients/telegram
 COPY packages/adapters/sqlite ./packages/adapters/sqlite
 COPY packages/blockchain/hedera-core ./packages/blockchain/hedera-core
 COPY characters ./characters
@@ -43,14 +41,12 @@ RUN pnpm install --frozen-lockfile --ignore-scripts
 RUN pnpm build --filter=@elizaos/core \
     --filter=@elizaos/config \
     --filter=@elizaos/family-nlp-utils \
-    --filter=@elizaos/family-plugin-intimacy \
-    --filter=@elizaos/family-plugin-wisdom \
-    --filter=@elizaos/family-plugin-presence \
-    --filter=@elizaos/family-plugin-growth \
-    --filter=@elizaos/family-plugin-generational-bridge \
-    --filter=@elizaos/plugin-gooddollar \
+    --filter=@elizaos/family/plugin-intimacy \
+    --filter=@elizaos/family/plugin-wisdom \
+    --filter=@elizaos/family/plugin-presence \
+    --filter=@elizaos/family/plugin-growth \
+    --filter=@elizaos/family/plugin-generational-bridge \
     --filter=@elizaos/client-direct \
-    --filter=@elizaos/client-telegram \
     --filter=@elizaos/adapter-sqlite \
     --filter=@elizaos/hedera-core
 
@@ -81,9 +77,7 @@ COPY --from=deps /app/agent/node_modules /app/agent/node_modules
 COPY --from=deps /app/packages/core /app/packages/core
 COPY --from=deps /app/packages/config /app/packages/config
 COPY --from=deps /app/packages/family /app/packages/family
-COPY --from=deps /app/packages/plugin-gooddollar /app/packages/plugin-gooddollar
 COPY --from=deps /app/packages/clients/direct /app/packages/clients/direct
-COPY --from=deps /app/packages/clients/telegram /app/packages/clients/telegram
 COPY --from=deps /app/packages/adapters/sqlite /app/packages/adapters/sqlite
 COPY --from=deps /app/packages/blockchain/hedera-core /app/packages/blockchain/hedera-core
 COPY --from=build /app/agent /app/agent

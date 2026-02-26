@@ -13,14 +13,16 @@ import {
     type Character,
 } from "@elizaos/core";
 
-import type { TeeLogQuery, TeeLogService } from "@elizaos/plugin-tee-log";
+// import type { TeeLogQuery, TeeLogService } from "@elizaos/plugin-tee-log";
 import type { DirectClient } from "./index.js";
 import { validateUuid } from "@elizaos/core";
+/*
 import {
     GoodDollarService,
     IdentityService,
     StreamingService,
 } from "@elizaos/plugin-gooddollar";
+*/
 
 // Standardized API response interfaces
 interface ApiResponse<T = any> {

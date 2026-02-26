@@ -3,10 +3,12 @@ import bodyParser from "body-parser";
 import cors from "cors";
 
 import { type AgentRuntime, elizaLogger, ServiceType } from "@elizaos/core";
+/*
 import type {
     VerifiableLogService,
     VerifiableLogQuery,
 } from "@elizaos/plugin-tee-verifiable-log";
+*/
 
 export function createVerifiableLogApiRouter(
     agents: Map<string, AgentRuntime>
@@ -45,11 +47,15 @@ export function createVerifiableLogApiRouter(
                 const agentRuntime: AgentRuntime | undefined = agents
                     .values()
                     .next().value;
-                const pageQuery = await agentRuntime
-                    .getService<VerifiableLogService>(
+                const service = agentRuntime
+                    .getService<any>(
                         ServiceType.VERIFIABLE_LOGGING
-                    )
-                    .listAgent();
+                    );
+                if (!service) {
+                    res.status(503).json({ error: "Verifiable logging service not available" });
+                    return;
+                }
+                const pageQuery = await service.listAgent();
 
                 res.json({
                     success: true,
@@ -79,11 +85,15 @@ export function createVerifiableLogApiRouter(
                 const agentRuntime: AgentRuntime | undefined = agents
                     .values()
                     .next().value;
-                const pageQuery = await agentRuntime
-                    .getService<VerifiableLogService>(
+                const service = agentRuntime
+                    .getService<any>(
                         ServiceType.VERIFIABLE_LOGGING
-                    )
-                    .generateAttestation(verifiableLogQuery);
+                    );
+                if (!service) {
+                    res.status(503).json({ error: "Verifiable logging service not available" });
+                    return;
+                }
+                const pageQuery = await service.generateAttestation(verifiableLogQuery);
 
                 res.json({
                     success: true,
@@ -108,7 +118,7 @@ export function createVerifiableLogApiRouter(
                 const page = Number.parseInt(req.body.page) || 1;
                 const pageSize = Number.parseInt(req.body.pageSize) || 10;
 
-                const verifiableLogQuery: VerifiableLogQuery = {
+                const verifiableLogQuery: any = {
                     idEq: query.idEq || "",
                     agentIdEq: query.agentIdEq || "",
                     roomIdEq: query.roomIdEq || "",
@@ -120,11 +130,15 @@ export function createVerifiableLogApiRouter(
                 const agentRuntime: AgentRuntime | undefined = agents
                     .values()
                     .next().value;
-                const pageQuery = await agentRuntime
-                    .getService<VerifiableLogService>(
+                const service = agentRuntime
+                    .getService<any>(
                         ServiceType.VERIFIABLE_LOGGING
-                    )
-                    .pageQueryLogs(verifiableLogQuery, page, pageSize);
+                    );
+                if (!service) {
+                    res.status(503).json({ error: "Verifiable logging service not available" });
+                    return;
+                }
+                const pageQuery = await service.pageQueryLogs(verifiableLogQuery, page, pageSize);
 
                 res.json({
                     success: true,

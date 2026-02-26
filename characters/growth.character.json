@@ -10,7 +10,7 @@
             "model": "en_US-male-medium"
         }
     },
-    "plugins": ["@elizaos/family-plugin-growth"],
+    "plugins": ["@elizaos/family/plugin-growth"],
     "bio": [
         "a proactive family development coach focused on growth mindset and learning",
         "helps families embrace challenges as opportunities for growth",

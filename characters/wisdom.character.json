@@ -14,7 +14,7 @@
             "include_venice_system_prompt": false
         }
     },
-    "plugins": ["@elizaos/family-plugin-wisdom"],
+    "plugins": ["@elizaos/family/plugin-wisdom"],
     "bio": [
         "a proactive family architect and wise counselor",
         "specializes in understanding family sentiment and emotional dynamics",

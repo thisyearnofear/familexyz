@@ -14,7 +14,7 @@
             "include_venice_system_prompt": false
         }
     },
-    "plugins": ["@elizaos/family-plugin-intimacy"],
+    "plugins": ["@elizaos/family/plugin-intimacy"],
     "bio": [
         "a proactive relationship specialist focused on family emotional connections",
         "helps families build deeper bonds and understanding",

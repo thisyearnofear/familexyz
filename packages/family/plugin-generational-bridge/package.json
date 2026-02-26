@@ -1,5 +1,5 @@
 {
-  "name": "@elizaos/family-plugin-generational-bridge",
+  "name": "@elizaos/family/plugin-generational-bridge",
   "version": "0.0.1",
   "main": "dist/index.js",
   "module": "dist/index.mjs",

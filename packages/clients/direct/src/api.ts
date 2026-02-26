@@ -137,6 +137,30 @@ interface AgUiToolCallEvent extends AgUiBaseEvent {
     type: "ToolCallStart" | "ToolCallEnd";
     toolCallId: string;
     toolName: string;
+    toolInput?: any;
+    toolOutput?: any;
+}
+
+interface AgUiReasoningEvent extends AgUiBaseEvent {
+    type: "Reasoning";
+    message: string;
+}
+
+interface AgUiStateDeltaEvent extends AgUiBaseEvent {
+    type: "StateDelta";
+    path: string;
+    value: any;
+}
+
+interface AgUiInterruptEvent extends AgUiBaseEvent {
+    type: "Interrupt";
+    interruptId: string;
+    prompt: string;
+}
+
+interface AgUiRunErrorEvent extends AgUiBaseEvent {
+    type: "RunError";
+    error: string;
 }
 
 interface AgUiCustomEvent extends AgUiBaseEvent {
@@ -149,8 +173,12 @@ const AgUiEventSchema = z.discriminatedUnion("type", [
     z.object({ type: z.literal("RunStarted"), runId: z.string(), timestamp: z.number().optional() }),
     z.object({ type: z.literal("RunFinished"), runId: z.string(), timestamp: z.number().optional() }),
     z.object({ type: z.literal("TextMessageContent"), messageId: z.string(), delta: z.string(), timestamp: z.number().optional() }),
-    z.object({ type: z.literal("ToolCallStart"), toolCallId: z.string(), toolName: z.string(), timestamp: z.number().optional() }),
-    z.object({ type: z.literal("ToolCallEnd"), toolCallId: z.string(), toolName: z.string(), timestamp: z.number().optional() }),
+    z.object({ type: z.literal("ToolCallStart"), toolCallId: z.string(), toolName: z.string(), toolInput: z.any().optional(), timestamp: z.number().optional() }),
+    z.object({ type: z.literal("ToolCallEnd"), toolCallId: z.string(), toolName: z.string(), toolOutput: z.any().optional(), timestamp: z.number().optional() }),
+    z.object({ type: z.literal("Reasoning"), message: z.string(), timestamp: z.number().optional() }),
+    z.object({ type: z.literal("StateDelta"), path: z.string(), value: z.any(), timestamp: z.number().optional() }),
+    z.object({ type: z.literal("Interrupt"), interruptId: z.string(), prompt: z.string(), timestamp: z.number().optional() }),
+    z.object({ type: z.literal("RunError"), error: z.string(), timestamp: z.number().optional() }),
     z.object({ type: z.literal("Custom"), customType: z.string(), payload: z.any(), timestamp: z.number().optional() }),
 ]);
 
@@ -1185,9 +1213,24 @@ export function createApiRouter(
             const content: Content = { text, attachments: [], source: "direct" };
             const userMessage = { content, userId, roomId, agentId: runtime.agentId };
 
+            // Emit Reasoning event for context preparation
+            sendEvent({ 
+                type: "Reasoning", 
+                message: `Synthesizing memory and preparing context for ${runtime.character.name}...` 
+            });
+
             const state = await runtime.composeState(userMessage, {
                 agentName: runtime.character.name,
             });
+
+            // Emit StateDelta if there are interesting state changes (simulated for demo)
+            if (state.recentMessagesData) {
+                sendEvent({
+                    type: "StateDelta",
+                    path: "session.messageCount",
+                    value: state.recentMessagesData.length
+                });
+            }
 
             const context = composeContext({
                 state,
@@ -1198,13 +1241,41 @@ export function createApiRouter(
             // Since we are wrapping the standard generateMessageResponse, we will simulate 
             // the text streaming events based on the final response for this protocol implementation.
             
+            // Emit ToolCallStart for the main reasoning engine
+            const toolCallId = stringToUuid(Date.now().toString());
+            sendEvent({
+                type: "ToolCallStart",
+                toolCallId,
+                toolName: "ElizaOS_Reasoning_Engine",
+                toolInput: { contextLength: context.length }
+            });
+
             const response = await generateMessageResponse({
                 runtime: runtime,
                 context,
                 modelClass: ModelClass.LARGE,
             });
 
+            sendEvent({
+                type: "ToolCallEnd",
+                toolCallId,
+                toolName: "ElizaOS_Reasoning_Engine",
+                toolOutput: { action: response?.action || "none" }
+            });
+
             if (response && response.text) {
+                // Check if an interrupt is needed for high-stakes actions (simulated)
+                if (response.action === "SEND_PAYOUT" || response.action === "EXECUTE_TRANSACTION") {
+                    sendEvent({
+                        type: "Interrupt",
+                        interruptId: stringToUuid("interrupt-" + Date.now()),
+                        prompt: `The agent ${runtime.character.name} is requesting to execute a high-stakes action: ${response.action}. Do you approve?`
+                    });
+                    // In a real app, we would pause here and wait for a resume event.
+                    // For the hackathon demo, we'll log it and continue.
+                    sendEvent({ type: "Reasoning", message: "User approval simulated for hackathon demo." });
+                }
+
                 // 3. Stream Text Content (AG-UI format)
                 const messageId = stringToUuid(Date.now().toString());
                 
@@ -1216,21 +1287,55 @@ export function createApiRouter(
                         messageId,
                         delta: words[i] + (i === words.length - 1 ? "" : " "),
                     });
-                    // Artificial delay for realistic streaming simulation if desired
-                    // await new Promise(resolve => setTimeout(resolve, 20));
+                    // Artificial delay for realistic streaming simulation
+                    await new Promise(resolve => setTimeout(resolve, 10));
                 }
 
                 // 4. Check for Hedera logging / Bond Score updates in response
                 // If the agent performed an action that updates metrics, signal it via Custom event
-                if (response.action && response.action.includes("WISDOM") || response.action.includes("GROWTH")) {
+                const isFamilyAction = response.action && (
+                    response.action.includes("WISDOM") || 
+                    response.action.includes("GROWTH") || 
+                    response.action.includes("INTIMACY") ||
+                    response.action.includes("PRESENCE") ||
+                    response.action.includes("SAVINGS")
+                );
+
+                if (isFamilyAction) {
+                    const actionToolId = stringToUuid("action-" + Date.now());
+                    sendEvent({
+                        type: "ToolCallStart",
+                        toolCallId: actionToolId,
+                        toolName: `Hedera_HCS_Logger_${response.action}`,
+                        toolInput: { agent: runtime.character.name, action: response.action }
+                    });
+
+                    // Simulate the logging delay
+                    await new Promise(resolve => setTimeout(resolve, 500));
+
+                    sendEvent({
+                        type: "ToolCallEnd",
+                        toolCallId: actionToolId,
+                        toolName: `Hedera_HCS_Logger_${response.action}`,
+                        toolOutput: { status: "success", topicId: "0.0.123456" }
+                    });
+
                     sendEvent({
                         type: "Custom",
                         customType: "family.bond_score_update",
                         payload: {
                             agent: runtime.character.name,
                             action: response.action,
-                            impact: "positive"
+                            impact: "positive",
+                            verifiableTrail: "https://hashscan.io/testnet/topic/0.0.123456"
                         }
+                    });
+
+                    // Update StateDelta with new "Bond Score"
+                    sendEvent({
+                        type: "StateDelta",
+                        path: "family.overallHealth",
+                        value: Math.floor(Math.random() * 20) + 70 // Simulated real-time update
                     });
                 }
             }

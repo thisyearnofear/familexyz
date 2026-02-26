@@ -39,16 +39,5 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# API proxy to backend (production)
-[[redirects]]
-  from = "/api/*"
-  to = "http://157.180.36.156:3004/:splat"
-  status = 200
-  force = false
-
-# Health check endpoint
-[[redirects]]
-  from = "/health"
-  to = "http://157.180.36.156:3005/health"
-  status = 200
-  force = false
+# NOTE: API calls use VITE_API_BASE_URL = "https://api.famile.xyz"
+# No proxy redirects needed - direct HTTPS to backend

@@ -254,40 +254,60 @@ Most submissions have 1-2 agents. We have:
 
 ## 🎬 Live Demo
 
+### Production Deployment
+
+**Frontend:** https://familexyz.netlify.app  
+**Backend API:** https://api.famile.xyz
+
 ### What We'll Show
 
-**1. Dashboard (http://localhost:5173)**
+**1. Dashboard (Production)**
+- URL: https://familexyz.netlify.app
 - 5 agents actively working
 - Real-time bond score tracking
 - Family member interactions
 - Payout calculations
 
-**2. API (http://localhost:3001)**
+**2. API (Production)**
 ```bash
+# Base URL: https://api.famile.xyz
+
+# Health check
+curl https://api.famile.xyz/health
+
 # Get agent payouts
-curl http://localhost:3001/api/agents/agent-123/payouts?weeks=12
+curl https://api.famile.xyz/api/agents/agent-123/payouts?weeks=12
 
 # Calculate dry-run payout
-curl -X POST http://localhost:3001/api/payouts/calculate \
+curl -X POST https://api.famile.xyz/api/payouts/calculate \
   -H "Content-Type: application/json" \
   -d '{"agentId":"agent-123","familyId":"family-456","previousScore":70,"currentScore":75}'
 
 # View pending payouts
-curl http://localhost:3001/api/payouts/pending
+curl https://api.famile.xyz/api/payouts/pending
 
 # File dispute (admin)
-curl -X POST http://localhost:3001/api/payouts/dispute \
+curl -X POST https://api.famile.xyz/api/payouts/dispute \
   -H "Content-Type: application/json" \
   -d '{"recordId":"payout-123","reason":"Score seems inflated"}'
 ```
 
-**3. Hedera Verification**
-- Real HCS Topic: https://hashscan.io/testnet/topic/0.0.7304500
-- Real FAM Token: https://hashscan.io/testnet/token/0.0.7304501
-- Real Account: https://hashscan.io/testnet/account/0.0.6511978
+**3. Hedera Verification (Testnet)**
+- **HCS Topic:** https://hashscan.io/testnet/topic/0.0.7304500
+- **FAM Token:** https://hashscan.io/testnet/token/0.0.7304501
+- **Account:** https://hashscan.io/testnet/account/0.0.6511978
 - Live transactions verified on-chain
 
-**4. Tests Running**
+**4. Local Development**
+```bash
+# Dashboard
+http://localhost:5173
+
+# API
+http://localhost:3001/health
+```
+
+**5. Tests Running**
 ```bash
 pnpm test --testPathPattern="payout"
 # Output: 154 tests passing ✅

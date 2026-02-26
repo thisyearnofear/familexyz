@@ -1,9 +1,9 @@
 /**
  * HTTP Server Module
- * 
+ *
  * Creates and manages the HTTP server for API endpoints.
  * Handles bond score API, payout API, and health checks.
- * 
+ *
  * Follows MODULAR principle: independent, testable server module.
  */
 
@@ -23,25 +23,45 @@ export interface HttpServerConfig {
 }
 
 /**
+ * Allowed origins for CORS (production security)
+ */
+const ALLOWED_ORIGINS = [
+    "https://familexyz.netlify.app",
+    "https://famile.xyz",
+    "http://localhost:5173",
+    "http://localhost:3000",
+];
+
+/**
+ * Validate and get CORS origin
+ */
+function getCorsOrigin(reqOrigin?: string): string | null {
+    if (!reqOrigin) return null;
+    return ALLOWED_ORIGINS.includes(reqOrigin) ? reqOrigin : null;
+}
+
+/**
  * Create and start the HTTP API server
  */
 export async function createHttpServer(config: HttpServerConfig): Promise<http.Server> {
     const { port, primaryDb } = config;
-    
+
     const server = http.createServer(async (req, res) => {
-        // Add CORS headers to all responses
-        const origin = req.headers.origin || "*";
-        res.setHeader("Access-Control-Allow-Origin", origin);
+        // Add CORS headers with origin validation
+        const allowedOrigin = getCorsOrigin(req.headers.origin);
+        if (allowedOrigin) {
+            res.setHeader("Access-Control-Allow-Origin", allowedOrigin);
+        }
         res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
         res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-        
+
         // Handle preflight requests
         if (req.method === "OPTIONS") {
             res.statusCode = 200;
             res.end();
             return;
         }
-        
+
         const parsedUrl = url.parse(req.url || "", true);
         const pathname = parsedUrl.pathname || "";
         
@@ -94,12 +114,43 @@ export async function createHttpServer(config: HttpServerConfig): Promise<http.S
         if (req.method === "POST" && pathname === "/api/payouts/dispute") {
             return routeHandlers.handleDispute(req, res, handler);
         }
-        
-        // Default: Health check
-        res.statusCode = 200;
+
+        // Health check endpoint (explicit)
+        if (req.method === "GET" && pathname === "/health") {
+            res.statusCode = 200;
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({
+                status: "healthy",
+                timestamp: new Date().toISOString(),
+                uptime: process.uptime(),
+            }));
+            return;
+        }
+
+        // Readiness check endpoint (explicit)
+        if (req.method === "GET" && pathname === "/ready") {
+            res.setHeader("Content-Type", "application/json");
+            const ready = await readinessCheck();
+            if (ready) {
+                res.statusCode = 200;
+                res.end(JSON.stringify({
+                    status: "ready",
+                    timestamp: new Date().toISOString(),
+                }));
+            } else {
+                res.statusCode = 503;
+                res.end(JSON.stringify({
+                    status: "not ready",
+                    timestamp: new Date().toISOString(),
+                }));
+            }
+            return;
+        }
+
+        // Default: 404 for unmatched routes
+        res.statusCode = 404;
         res.setHeader("Content-Type", "application/json");
-        const ready = await readinessCheck();
-        res.end(JSON.stringify({ status: "ok", ready }));
+        res.end(JSON.stringify({ error: "Not found", pathname }));
     });
     
     server.listen(port, "0.0.0.0", () => {

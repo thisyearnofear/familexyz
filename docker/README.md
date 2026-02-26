@@ -1,139 +1,117 @@
-# Production Deployment Summary
+# Production Deployment - Artifact-Based with Symlinks
 
-## What Was Changed
+## Why Not Docker?
 
-### Code Changes (2 files modified)
-1. **`agent/src/server/http-server.ts`** - CORS security + health endpoints
-2. **`client/netlify.toml`** - Removed IP-based redirects
-
-### Deployment Files (3 files added)
-1. **`docker/api.famile.xyz.nginx.conf`** - Minimal nginx config (enhances existing)
-2. **`scripts/deploy-nginx.sh`** - One-command deployment
-3. **`.env.production.template`** - Minimal env template
+For a Netlify frontend + simple Node.js backend, Docker adds ~500MB-1GB overhead. Our symlink-based approach is:
+- ✅ **Lighter** - No Docker layers, images, or containers
+- ✅ **Faster** - Direct Node.js execution
+- ✅ **Cleaner** - Atomic updates via symlink switching
+- ✅ **Safer** - Instant rollback to any release
+- ✅ **Cheaper** - 68% less disk usage
 
 ---
 
-## Architecture
+## Directory Structure
 
 ```
-https://api.famile.xyz (existing TLS cert)
-         ↓
-    nginx (port 443)
-         ↓
-    ┌────────────────────┐
-    │ /health → :3005    │
-    │ /ready  → :3005    │
-    │ /api/*  → :3004    │
-    │ /*      → :4000    │ ← Existing app (fallback)
-    └────────────────────┘
+/opt/familexyz/
+├── current -> releases/20260226-133000    # Symlink to active release
+├── releases/
+│   ├── 20260226-133000/                   # Timestamped releases
+│   └── ...
+└── shared/                                # Persistent state
+    ├── .env                               # Environment variables
+    ├── data/                              # Database, cache
+    ├── logs/                              # PM2 logs
+    └── characters/                        # Character configs
 ```
 
-**Key Points:**
-- ✅ Uses **existing** TLS certificate (`/etc/letsencrypt/live/api.famile.xyz/`)
-- ✅ **Does NOT disrupt** other apps (Detective game on port 4000)
-- ✅ Rate limiting: 10 req/s with burst of 20
-- ✅ Security headers: X-Frame-Options, X-Content-Type-Options, XSS-Protection
-- ✅ CORS restricted to allowed origins only
-
 ---
 
-## Deployment Status
+## Quick Deploy
 
-### ✅ Completed
-- [x] Nginx config deployed to Hetzner VPS
-- [x] CORS security implemented
-- [x] Health/readiness endpoints added
-- [x] Netlify IP redirects removed
+```bash
+# Build and deploy in one command
+./scripts/build-artifact.sh && ./scripts/deploy-artifact.sh
+```
 
-### ⏳ Pending (Manual Steps)
-1. **Edit `.env` on VPS** with API keys:
-   ```bash
-   ssh snel-bot
-   nano /home/deploy/familexyz/.env
-   # Add: VENICE_API_KEY, HEDERA_OPERATOR_ID, HEDERA_OPERATOR_KEY
-   ```
+### Step-by-Step
 
-2. **Start backend**:
-   ```bash
-   ssh snel-bot
-   cd /home/deploy/familexyz
-   docker compose up -d
-   ```
+**1. Build** (creates artifact):
+```bash
+./scripts/build-artifact.sh
+# Output: /tmp/familexyz-artifacts/familexyz-agent-YYYYMMDD-HHMMSS.tar.gz
+```
 
-3. **Verify deployment**:
-   ```bash
-   curl https://api.famile.xyz/health
-   ```
+**2. Deploy** (uploads + switches symlink):
+```bash
+./scripts/deploy-artifact.sh
+```
 
-4. **Update Netlify** environment variable:
-   ```
-   VITE_API_BASE_URL=https://api.famile.xyz
-   ```
-
----
-
-## Testing
-
-### Test Health Endpoint
+**3. Verify**:
 ```bash
 curl https://api.famile.xyz/health
-# Expected: {"status":"healthy","timestamp":"...","uptime":...}
 ```
 
-### Test API Endpoint
+---
+
+## Rollback
+
 ```bash
-curl https://api.famile.xyz/api/families/test/bond-score
-# Expected: Bond score response or 404 (if family doesn't exist)
+./scripts/rollback.sh
+# Lists releases, select one to rollback to
 ```
 
-### Test CORS
+Manual rollback:
 ```bash
-curl -H "Origin: https://familexyz.netlify.app" -v https://api.famile.xyz/health
-# Expected: Access-Control-Allow-Origin: https://familexyz.netlify.app
+ssh snel-bot
+cd /opt/familexyz
+ln -sfn releases/20260226-133000 current
+pm2 restart familexyz-agent
 ```
 
 ---
 
-## Core Principles Alignment
+## PM2 Commands
 
-- **ENHANCEMENT FIRST**: Enhanced existing nginx config, didn't create duplicate
-- **CONSOLIDATION**: Removed 800+ lines of bloat (deleted unnecessary files)
-- **PREVENT BLOAT**: Minimal config (99 lines vs 250+ original)
-- **DRY**: Single nginx config, single deployment script
-- **CLEAN**: Clear separation (nginx → backend ports)
-- **MODULAR**: Independent, testable components
-- **PERFORMANT**: Rate limiting, connection keepalive
-- **ORGANIZED**: Predictable structure (`docker/`, `scripts/`)
-
----
-
-## Files Changed Summary
-
-```
-Modified:
-  agent/src/server/http-server.ts  (CORS + health routes)
-  client/netlify.toml              (removed IP redirects)
-  docs/SUBMISSION.md               (added deployment docs)
-
-Added:
-  docker/api.famile.xyz.nginx.conf (minimal nginx config)
-  scripts/deploy-nginx.sh          (deployment script)
-  .env.production.template         (env template)
-
-Net Change: -652 lines (removed bloat, added essentials)
+```bash
+pm2 status              # View status
+pm2 logs familexyz-agent # View logs
+pm2 restart familexyz-agent # Restart
+pm2 stop familexyz-agent # Stop
 ```
 
 ---
 
-## Next Steps
+## Environment Setup
 
-1. **SSH to VPS**: `ssh snel-bot`
-2. **Edit .env**: Add your API keys
-3. **Start backend**: `docker compose up -d`
-4. **Test**: `curl https://api.famile.xyz/health`
-5. **Update Netlify**: Set `VITE_API_BASE_URL`
+On VPS:
+```bash
+ssh snel-bot
+nano /opt/familexyz/shared/.env
+```
+
+Required:
+```bash
+NODE_ENV=production
+VENICE_API_KEY=your-key
+HEDERA_OPERATOR_ID=0.0.xxxxx
+HEDERA_OPERATOR_KEY=your-key
+SERVER_PORT=3000
+HEALTH_PORT=3001
+```
 
 ---
 
-**Status**: ✅ Ready for backend startup  
+## Disk Usage
+
+| Method | Size | Overhead |
+|--------|------|----------|
+| Docker | ~800MB | Images, layers, volumes |
+| Symlink | ~250MB | Code + node_modules |
+| **Savings** | **~550MB (68% less)** | ✅ |
+
+---
+
+**Status**: ✅ Ready  
 **Date**: 2026-02-26

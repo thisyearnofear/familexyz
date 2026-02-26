@@ -58,8 +58,9 @@ Payments verified on-chain, transparent to all
 
 ### Advanced Tech Stack: AG-UI Protocol Integration
 FamilyXYZ implements the **AG-UI (Agent-User Interaction) Protocol**, a standardized, event-driven communication layer that bridges the gap between autonomous AI agents and modern frontends. This ensures a "Pro" user experience with:
-- **Real-time Event Streaming**: Uses Server-Sent Events (SSE) to deliver agent responses token-by-token.
-- **Reasoning Transparency**: Exposes the internal "Chain-of-Thought" (e.g., how the Wisdom agent calculates family metrics).
+- **Real-time Event Streaming**: Uses Server-Sent Events (SSE) to deliver agent responses token-by-token with zero-latency streaming.
+- **Reasoning Transparency**: Features a dedicated "Agent Reasoning" UI component that visualizes the agent's "Chain-of-Thought" in real-time.
+- **State Delta Synchronization**: Automatically synchronizes family bond scores and metrics via `StateDelta` events without manual refresh.
 - **State Synchronization**: Real-time `StateDelta` events keep the frontend dashboard (Bond Scores, Wallet Balances) updated without page refreshes.
 - **Tool Lifecycle Tracking**: Visualizes agent actions (e.g., "Logging to Hedera HCS") via `ToolCall` events.
 - **Human-in-the-Loop**: Integrated `Interrupt` signals for high-stakes actions like FAM token payouts.

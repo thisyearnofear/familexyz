@@ -143,4 +143,49 @@ export const apiClient = {
     fetcher({ url: `/gooddollar/status/${address}` }),
   claimGoodDollar: (address: string) =>
     fetcher({ url: `/gooddollar/claim`, method: "POST", body: { address } }),
+  
+  // --- AG-UI Protocol (Standardized AI-User Interaction) ---
+  streamAGUI: async (
+    agentId: string, 
+    text: string, 
+    onEvent: (event: any) => void
+  ) => {
+    const response = await fetch(`${BASE_URL}/${agentId}/ag-ui`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ text, user: "user" }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`AG-UI Stream failed: ${response.statusText}`);
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) return;
+
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n\n");
+      buffer = lines.pop() || "";
+
+      for (const line of lines) {
+        if (line.startsWith("data: ")) {
+          try {
+            const data = JSON.parse(line.slice(6));
+            onEvent(data);
+          } catch (e) {
+            console.error("Failed to parse AG-UI event", e);
+          }
+        }
+      }
+    }
+  },
 };

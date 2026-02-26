@@ -1,0 +1,217 @@
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { Send, Bot, Brain, Heart, Users, Leaf, Rocket, Info } from "lucide-react";
+import { apiClient } from "@/lib/api";
+import { ThoughtProcess } from "./ThoughtProcess";
+import { motion, AnimatePresence } from "framer-motion";
+
+interface Message {
+  id: string;
+  content: string;
+  sender: "user" | "agent" | "system";
+  agentName?: string;
+  timestamp: Date;
+  isStreaming?: boolean;
+}
+
+interface Thought {
+  id: string;
+  content: string;
+  type: "plan" | "reasoning" | "tool" | "observation";
+  status: "pending" | "completed" | "error";
+}
+
+interface Agent {
+  id: string;
+  name: string;
+  description: string;
+  color: string;
+}
+
+const agentConfigs: Record<string, any> = {
+  Wisdom: { icon: <Brain className="w-4 h-4" />, color: "bg-purple-500" },
+  Intimacy: { icon: <Heart className="w-4 h-4" />, color: "bg-pink-500" },
+  GenerationalBridge: { icon: <Users className="w-4 h-4" />, color: "bg-blue-500" },
+  Presence: { icon: <Leaf className="w-4 h-4" />, color: "bg-green-500" },
+  Growth: { icon: <Rocket className="w-4 h-4" />, color: "bg-orange-500" },
+};
+
+export const AGUIChatInterface: React.FC = () => {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [thoughts, setThoughts] = useState<Thought[]>([]);
+  const [bondScore, setBondScore] = useState<number | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(scrollToBottom, [messages, thoughts]);
+
+  useEffect(() => {
+    const loadAgents = async () => {
+      try {
+        const response = await apiClient.getAgents();
+        const loadedAgents = (response.agents || []).map((a: any) => ({
+          id: a.id || a.agentId,
+          name: a.name || a.id,
+          description: agentConfigs[a.name]?.description || "Family Agent",
+          color: agentConfigs[a.name]?.color || "bg-gray-500",
+        }));
+        setAgents(loadedAgents);
+        if (loadedAgents.length > 0) setSelectedAgent(loadedAgents[0]);
+      } catch (e) { console.error(e); }
+    };
+    loadAgents();
+  }, []);
+
+  const handleSendMessage = async () => {
+    if (!input.trim() || !selectedAgent || isLoading) return;
+
+    const userMsg: Message = {
+      id: Date.now().toString(),
+      content: input,
+      sender: "user",
+      timestamp: new Date(),
+    };
+
+    setMessages(prev => [...prev, userMsg]);
+    setInput("");
+    setIsLoading(true);
+    setThoughts([]);
+
+    let currentAgentMessage: Message | null = null;
+
+    try {
+      await apiClient.streamAGUI(selectedAgent.id, input, (event) => {
+        switch (event.type) {
+          case "RunStarted":
+            setIsLoading(true);
+            break;
+          
+          case "Reasoning":
+            setThoughts(prev => [
+              ...prev, 
+              { id: event.id || Math.random().toString(), content: event.content, type: "reasoning", status: "completed" }
+            ]);
+            break;
+
+          case "TextMessageContent":
+            setMessages(prev => {
+              const last = prev[prev.length - 1];
+              if (last && last.sender === "agent" && last.isStreaming) {
+                return [...prev.slice(0, -1), { ...last, content: last.content + event.text }];
+              } else {
+                return [...prev, {
+                  id: event.messageId || Date.now().toString(),
+                  content: event.text,
+                  sender: "agent",
+                  agentName: selectedAgent.name,
+                  timestamp: new Date(),
+                  isStreaming: true
+                }];
+              }
+            });
+            break;
+
+          case "RunFinished":
+            setMessages(prev => prev.map(m => m.isStreaming ? { ...m, isStreaming: false } : m));
+            setIsLoading(false);
+            break;
+
+          case "Custom":
+            if (event.subType === "family.bond_score_update") {
+              setBondScore(event.payload.newScore);
+            }
+            break;
+        }
+      });
+    } catch (e) {
+      console.error(e);
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-full max-w-4xl mx-auto bg-white shadow-2xl rounded-2xl overflow-hidden border border-purple-100">
+      {/* Header */}
+      <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-purple-50 to-white">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-purple-600 rounded-xl text-white shadow-lg">
+            <Bot className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className="font-bold text-gray-900">Family Protocol Chat</h2>
+            <div className="flex items-center gap-2">
+              <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+              <span className="text-xs text-gray-500 font-medium">AG-UI v1.0 Streaming Active</span>
+            </div>
+          </div>
+        </div>
+        
+        {bondScore !== null && (
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="flex items-center gap-2 bg-purple-100 px-3 py-1.5 rounded-full border border-purple-200"
+          >
+            <Heart className="w-4 h-4 text-purple-600 fill-purple-600" />
+            <span className="text-sm font-bold text-purple-900">Bond Score: {bondScore}</span>
+          </motion.div>
+        )}
+      </div>
+
+      {/* Messages Area */}
+      <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/30">
+        <div className="flex justify-center">
+            <div className="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg text-xs flex items-center gap-2 border border-blue-100">
+                <Info className="w-3 h-3" />
+                <span>Standardized Agent-User Interaction Protocol enabled</span>
+            </div>
+        </div>
+
+        {messages.map((msg) => (
+          <div key={msg.id} className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
+            <div className={`max-w-[80%] rounded-2xl px-5 py-3 shadow-sm ${
+              msg.sender === "user" 
+                ? "bg-purple-600 text-white rounded-tr-none" 
+                : "bg-white border border-gray-100 text-gray-800 rounded-tl-none"
+            }`}>
+              <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+              <span className={`text-[10px] mt-2 block opacity-60 ${msg.sender === "user" ? "text-right" : ""}`}>
+                {msg.timestamp.toLocaleTimeString()}
+              </span>
+            </div>
+          </div>
+        ))}
+
+        <ThoughtProcess thoughts={thoughts} isThinking={isLoading && thoughts.length > 0} />
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Input Area */}
+      <div className="p-6 bg-white border-t border-gray-100">
+        <div className="flex gap-4">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+            placeholder="Type your message to the family agents..."
+            className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+          />
+          <button
+            onClick={handleSendMessage}
+            disabled={isLoading || !input.trim()}
+            className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 text-white p-3 rounded-xl transition-all shadow-md active:scale-95"
+          >
+            <Send className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};

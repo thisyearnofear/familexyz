@@ -16,7 +16,7 @@ import {
 import { apiClient } from "@/lib/api";
 import { NavLink, useLocation } from "react-router";
 import type { UUID } from "@elizaos/core";
-import { Book, Cog, Home } from "lucide-react";
+import { Book, Cog, Home, MessageSquareQuote } from "lucide-react";
 import ConnectionStatus from "./connection-status";
 
 export function AppSidebar() {
@@ -59,6 +59,15 @@ export function AppSidebar() {
                             <SidebarMenuButton>
                                 <Home className="h-5 w-5 mr-2" />
                                 Dashboard
+                            </SidebarMenuButton>
+                        </NavLink>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <NavLink to="/chat/wisdom-agent?protocol=ag-ui">
+                            <SidebarMenuButton isActive={location.search.includes("protocol=ag-ui")}>
+                                <MessageSquareQuote className="h-5 w-5 mr-2 text-purple-600" />
+                                <span className="font-medium text-purple-900 dark:text-purple-100">Protocol Chat</span>
+                                <span className="ml-2 px-1.5 py-0.5 text-[10px] bg-purple-100 text-purple-700 rounded font-bold uppercase">New</span>
                             </SidebarMenuButton>
                         </NavLink>
                     </SidebarMenuItem>

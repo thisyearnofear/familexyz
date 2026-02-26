@@ -1,11 +1,12 @@
 #!/bin/bash
-# FamilyXYZ - Build Production Artifact
-# Creates a deployable artifact (dist + package.json + production deps)
+# FamilyXYZ - Build Production Artifact (Lean)
+# Creates minimal artifact - just agent source + package.json
+# Server will install all dependencies
 
 set -e
 
 echo "=========================================="
-echo "FamilyXYZ - Build Production Artifact"
+echo "FamilyXYZ - Build Lean Artifact"
 echo "=========================================="
 
 # Configuration
@@ -14,86 +15,65 @@ ARTIFACT_DIR="/tmp/familexyz-artifacts/${ARTIFACT_NAME}"
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 echo "📦 Building artifact: ${ARTIFACT_NAME}"
-echo "📁 Project root: ${PROJECT_ROOT}"
 
 # Clean previous builds
-echo "🧹 Cleaning previous builds..."
 rm -rf /tmp/familexyz-artifacts
 mkdir -p "${ARTIFACT_DIR}"
 
-# Build agent package
-echo "🔨 Building agent package..."
-cd "${PROJECT_ROOT}"
+# Copy ONLY agent source
+echo "📦 Copying agent source..."
+mkdir -p "${ARTIFACT_DIR}"
+rsync -a \
+    --exclude 'node_modules' \
+    --exclude 'dist' \
+    --exclude '*.log' \
+    agent/src "${ARTIFACT_DIR}/"
 
-# Install dependencies (if needed)
-if [ ! -d "node_modules" ]; then
-    echo "📦 Installing dependencies..."
-    pnpm install --frozen-lockfile
-fi
+# Copy agent package.json
+cp agent/package.json "${ARTIFACT_DIR}/"
 
-# Build the agent
-echo "🏗️  Running build..."
-pnpm --filter @elizaos/agent build
-
-# Copy built files to artifact
-echo "📦 Copying built files to artifact..."
-mkdir -p "${ARTIFACT_DIR}/agent"
-
-# Copy agent dist
-if [ -d "agent/dist" ]; then
-    cp -r agent/dist "${ARTIFACT_DIR}/agent/"
-fi
-
-# Copy agent source (for PM2)
-cp -r agent/src "${ARTIFACT_DIR}/agent/" 2>/dev/null || true
-cp -r agent/characters "${ARTIFACT_DIR}/agent/" 2>/dev/null || true
-
-# Copy package files
+# Copy root package files (for workspace resolution)
 cp package.json "${ARTIFACT_DIR}/"
 cp pnpm-lock.yaml "${ARTIFACT_DIR}/"
 cp pnpm-workspace.yaml "${ARTIFACT_DIR}/"
 
-# Copy necessary packages (only what's needed)
-echo "📦 Copying required packages..."
+# Copy only package source (no node_modules)
+echo "📦 Copying essential packages (source only)..."
 mkdir -p "${ARTIFACT_DIR}/packages"
 
-# Copy core packages that agent depends on
-for pkg in core hedera-core client-direct; do
+# Copy package source without node_modules or dist
+for pkg in core hedera-core client-direct plugin-node; do
     if [ -d "packages/${pkg}" ]; then
-        cp -r "packages/${pkg}" "${ARTIFACT_DIR}/packages/"
+        echo "  - ${pkg}"
+        mkdir -p "${ARTIFACT_DIR}/packages/${pkg}"
+        rsync -a \
+            --exclude 'node_modules' \
+            --exclude 'dist' \
+            --exclude '*.log' \
+            "packages/${pkg}/" "${ARTIFACT_DIR}/packages/${pkg}/"
     fi
 done
-
-# Copy plugins if they exist
-if [ -d "packages/plugin-node" ]; then
-    cp -r packages/plugin-node "${ARTIFACT_DIR}/packages/"
-fi
 
 # Create deployment metadata
 cat > "${ARTIFACT_DIR}/.deployment.json" << EOF
 {
   "artifact": "${ARTIFACT_NAME}",
   "built_at": "$(date -Iseconds)",
-  "git_commit": "$(git rev-parse --short HEAD 2>/dev/null || echo 'unknown')",
-  "git_branch": "$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'unknown')"
+  "git_commit": "$(git rev-parse --short HEAD 2>/dev/null || echo 'unknown')"
 }
 EOF
 
-# Create compressed artifact
+# Compress with better compression
 echo "📦 Compressing artifact..."
 cd /tmp/familexyz-artifacts
-tar -czf "${ARTIFACT_NAME}.tar.gz" "${ARTIFACT_NAME}"
+tar -cf - "${ARTIFACT_NAME}" | gzip -9 > "${ARTIFACT_NAME}.tar.gz"
 
-# Show artifact size
+# Show size
 ARTIFACT_SIZE=$(du -h "${ARTIFACT_NAME}.tar.gz" | cut -f1)
 echo ""
 echo "=========================================="
 echo "✅ Build Complete!"
 echo "=========================================="
-echo "📦 Artifact: /tmp/familexyz-artifacts/${ARTIFACT_NAME}.tar.gz"
+echo "📦 Artifact: ${ARTIFACT_NAME}.tar.gz"
 echo "📊 Size: ${ARTIFACT_SIZE}"
-echo "📝 Contents:"
-tar -tzf "${ARTIFACT_NAME}.tar.gz" | head -20
-echo "..."
 echo ""
-echo "Next step: ./scripts/deploy-artifact.sh ${ARTIFACT_NAME}"

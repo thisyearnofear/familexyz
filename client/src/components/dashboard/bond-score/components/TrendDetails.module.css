@@ -31,7 +31,7 @@
 .statLabel {
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--color-text-secondary, #666);
+  color: var(--color-text-secondary, #4b5563);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }

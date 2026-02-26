@@ -22,7 +22,7 @@
 .subtitle {
   margin: 8px 0 0 0;
   font-size: 14px;
-  color: #6b7280;
+  color: #4b5563;
 }
 
 /* Tab Navigation */
@@ -45,7 +45,7 @@
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
-  color: #6b7280;
+  color: #4b5563;
   transition: all 0.3s ease;
   white-space: nowrap;
 }

@@ -43,19 +43,19 @@
 }
 
 .scoreCard.excellent .scoreNumber {
-  color: #10b981;
+  color: #065f46; /* Emerald-900 (darker for contrast) */
 }
 
 .scoreCard.good .scoreNumber {
-  color: #3b82f6;
+  color: #1e40af; /* Blue-800 (darker for contrast) */
 }
 
 .scoreCard.fair .scoreNumber {
-  color: #f59e0b;
+  color: #92400e; /* Amber-800 (darker for contrast) */
 }
 
 .scoreCard.poor .scoreNumber {
-  color: #ef4444;
+  color: #991b1b; /* Red-800 (darker for contrast) */
 }
 
 .scoreLabel {
@@ -134,7 +134,7 @@
 
 .trendLabel {
   font-weight: 600;
-  color: var(--color-text-secondary, #666);
+  color: #374151; /* Gray-700 (darker for contrast) */
 }
 
 .trendValue {

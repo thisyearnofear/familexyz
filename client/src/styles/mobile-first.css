@@ -96,12 +96,12 @@
 }
 
 .platform-card.active {
-  border-color: #10b981;
+  border-color: #065f46; /* Emerald-900 (darker for contrast) */
   background-color: #ecfdf5;
 }
 
 .platform-card.coming-soon {
-  border-color: #f59e0b;
+  border-color: #92400e; /* Amber-800 (darker for contrast) */
   background-color: #fffbeb;
 }
 

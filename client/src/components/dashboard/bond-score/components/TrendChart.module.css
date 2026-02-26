@@ -28,7 +28,7 @@
   flex-direction: column;
   justify-content: space-between;
   font-size: 0.75rem;
-  color: var(--color-text-secondary, #666);
+  color: var(--color-text-secondary, #4b5563);
   min-width: 30px;
   padding-top: 10px;
   line-height: 1;
@@ -51,7 +51,7 @@
   justify-content: space-between;
   margin-top: 1rem;
   font-size: 0.75rem;
-  color: var(--color-text-secondary, #666);
+  color: var(--color-text-secondary, #4b5563);
 }
 
 .trendLabel {

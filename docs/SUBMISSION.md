@@ -59,8 +59,9 @@ Payments verified on-chain, transparent to all
 - **Wisdom Agent** 🧠 - Emotional intelligence coaching
 - **Intimacy Agent** 💖 - Relationship strengthening
 - **Generational Bridge** 👵👦 - Cross-age storytelling
-- **Presence Agent** 🧘 - Mindfulness guidance
-- **Growth Agent** 🚀 - Family challenges & goals
+- **Presence Agent** 🧘 - Mindfulness guidance (Presence tracking)
+- **Growth Agent** 🚀 - Family challenges & resilience
+- **Savings Agent** 💰 - Yield-bearing family wealth (Bonzo Finance)
 
 #### Phase 2: Measure Impact
 - Family Bond Score updated weekly from 7 signals:
@@ -506,7 +507,9 @@ FamilyXYZ demonstrates **complete, production-ready implementation** of a verifi
 - Only submission with 5 autonomous agents
 - Only submission with real HCS/HTS deployment
 - Only submission with 154 tests
-- Only submission with transparent payout economics
+ - **Verifiable Savings Logs**: Every deposit or withdrawal interaction with the **Bonzo Finance** lending vault is logged to the **Hedera Consensus Service (HCS)**, creating an immutable audit trail of the family's financial discipline and growth.
+ - **Growth Mindset Tracking**: The **Growth Agent** reframes challenges and celebrates persistence, logging these "growth moments" on-chain to contribute to the overall Family Bond Score.
+ - **Transparent Payout Economics**: Payouts are governed by the Family Bond Score, ensuring that tokens are distributed based on real, verifiable impact on family wellness.
 - Only submission with anti-gaming system
 
 ### Risk Mitigation

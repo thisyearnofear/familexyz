@@ -317,22 +317,63 @@ pnpm test --testPathPattern="payout"
 
 ## 🚀 Deployment
 
-### Quick Deploy (Hetzner VPS)
+### Production Architecture
+
+**Frontend:** Netlify (SPA hosting)  
+**Backend:** Hetzner VPS (artifact-based deployment)  
+**API:** https://api.famile.xyz
+
+### Quick Deploy
 
 ```bash
-# 1. Deploy nginx config (enhances existing api.famile.xyz)
-./scripts/deploy-nginx.sh
+# One command: build + deploy
+./scripts/build-artifact.sh && ./scripts/deploy-artifact.sh
+```
 
-# 2. Start backend
-docker compose up -d
+### Deployment Strategy
 
-# 3. Verify
+**Artifact-Based with Symlinks** (no Docker overhead):
+- ✅ **68% less disk** (250MB vs 800MB)
+- ✅ **Atomic updates** - symlink switching
+- ✅ **Instant rollback** - switch to any previous release
+- ✅ **PM2** - process management with auto-restart
+
+**Directory Structure:**
+```
+/opt/familexyz/
+├── current -> releases/{timestamp}    # Active release
+├── releases/                          # Immutable releases
+└── shared/                            # Persistent state
+    ├── .env                           # Environment (symlinked in)
+    ├── data/                          # Database
+    └── logs/                          # PM2 logs
+```
+
+### Manual Steps
+
+**1. Configure environment on VPS:**
+```bash
+ssh snel-bot
+nano /opt/familexyz/shared/.env
+# Add: VENICE_API_KEY, HEDERA_OPERATOR_ID, HEDERA_OPERATOR_KEY
+```
+
+**2. Deploy:**
+```bash
+./scripts/build-artifact.sh && ./scripts/deploy-artifact.sh
+```
+
+**3. Verify:**
+```bash
 curl https://api.famile.xyz/health
 ```
 
-**Note:** Uses existing TLS certificate at `/etc/letsencrypt/live/api.famile.xyz/`. Does not disrupt other apps on the server.
+### Rollback
 
-See `docker/api.famile.xyz.nginx.conf` for the minimal nginx configuration.
+```bash
+./scripts/rollback.sh
+# Select previous release to rollback to
+```
 
 ---
 

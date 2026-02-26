@@ -1,19 +1,72 @@
 #!/bin/bash
-# FamilyXYZ - Deploy to Hetzner VPS (Simple)
-# Direct deploy: copy source → install deps → restart PM2
-# No pre-built artifacts, no complexity
+# FamilyXYZ - Deploy to Hetzner VPS (Lean)
+# Syncs ONLY essential files: agent + core packages
+# Excludes: other packages, tests, docs, dev files
 
 set -e
 
 VPS_HOST="${VPS_HOSTNAME:-snel-bot}"
 VPS_USER="${VPS_USER:-deploy}"
-VPS_TARGET="/opt/familexyz"
+VPS_TARGET="/home/deploy/familexyz"
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 echo "=========================================="
 echo "FamilyXYZ - Deploy to Hetzner"
 echo "=========================================="
 echo "🎯 Target: ${VPS_HOST}:${VPS_TARGET}"
+echo ""
+
+# Create temp directory with only essential files
+TEMP_DEPLOY=$(mktemp -d)
+echo "📦 Preparing lean deployment in ${TEMP_DEPLOY}..."
+
+# Copy only essential files
+mkdir -p "${TEMP_DEPLOY}/agent"
+mkdir -p "${TEMP_DEPLOY}/packages"
+
+# Agent source
+rsync -a \
+    --exclude 'node_modules' \
+    --exclude 'dist' \
+    --exclude '*.log' \
+    --exclude '__tests__' \
+    --exclude '*.test.ts' \
+    "${PROJECT_ROOT}/agent/src/" "${TEMP_DEPLOY}/agent/src/"
+
+# Agent package.json
+cp "${PROJECT_ROOT}/agent/package.json" "${TEMP_DEPLOY}/agent/" 2>/dev/null || true
+
+# Root package files
+cp "${PROJECT_ROOT}/package.json" "${TEMP_DEPLOY}/"
+cp "${PROJECT_ROOT}/pnpm-lock.yaml" "${TEMP_DEPLOY}/"
+cp "${PROJECT_ROOT}/pnpm-workspace.yaml" "${TEMP_DEPLOY}/"
+cp "${PROJECT_ROOT}/tsconfig.json" "${TEMP_DEPLOY}/" 2>/dev/null || true
+
+# Essential packages only (core + hedera-core + client-direct)
+for pkg in core hedera-core client-direct; do
+    if [ -d "${PROJECT_ROOT}/packages/${pkg}" ]; then
+        echo "  - Including packages/${pkg}"
+        rsync -a \
+            --exclude 'node_modules' \
+            --exclude 'dist' \
+            --exclude '__tests__' \
+            --exclude '*.test.ts' \
+            --exclude '*.md' \
+            "${PROJECT_ROOT}/packages/${pkg}/" "${TEMP_DEPLOY}/packages/${pkg}/"
+    fi
+done
+
+# Characters
+if [ -d "${PROJECT_ROOT}/characters" ]; then
+    echo "  - Including characters/"
+    cp -r "${PROJECT_ROOT}/characters" "${TEMP_DEPLOY}/"
+fi
+
+# Show what we're deploying
+echo ""
+echo "📊 Deployment size:"
+du -sh "${TEMP_DEPLOY}"
+find "${TEMP_DEPLOY}" -type f | wc -l | xargs echo "  Files:"
 echo ""
 
 # Step 1: Create directory structure on VPS
@@ -30,16 +83,13 @@ if [ ! -f ${VPS_TARGET}/shared/.env ]; then
 fi
 "
 
-# Step 2: Sync source code (excludes node_modules, dist, etc.)
-echo "[2/5] Syncing source code to VPS..."
+# Step 2: Sync lean deployment
+echo "[2/5] Syncing lean deployment to VPS..."
 rsync -avz --delete \
-    --exclude 'node_modules' \
-    --exclude 'dist' \
-    --exclude '*.log' \
-    --exclude '.turbo' \
-    --exclude 'coverage' \
-    --exclude '.git' \
-    "${PROJECT_ROOT}/" "${VPS_USER}@${VPS_HOST}:${VPS_TARGET}/current/"
+    "${TEMP_DEPLOY}/" "${VPS_USER}@${VPS_HOST}:${VPS_TARGET}/current/"
+
+# Cleanup temp
+rm -rf "${TEMP_DEPLOY}"
 
 # Step 3: Install dependencies on server
 echo "[3/5] Installing production dependencies on server..."
@@ -49,25 +99,19 @@ cd ${VPS_TARGET}/current
 # Install pnpm if not available
 if ! command -v pnpm &> /dev/null; then
     echo '📦 Installing pnpm...'
-    curl -fsSL https://get.pnpm.io/v6.js | node - add --global pnpm
+    curl -fsSL https://get.pnpm.io/v6.js | node - add --global pnpm >/dev/null 2>&1
 fi
 
 # Install only production dependencies
 echo '📦 Running pnpm install --prod...'
-pnpm install --frozen-lockfile --prod
+pnpm install --frozen-lockfile --prod --ignore-scripts 2>&1 | tail -5
 "
 
 # Step 4: Copy shared files
 echo "[4/5] Copying shared files..."
-ssh "${VPS_USER}@${VPS_HOST}" "
-# Copy characters if they exist
-if [ -d '${PROJECT_ROOT}/characters' ]; then
-    echo '📦 Copying characters...'
+if [ -d "${PROJECT_ROOT}/characters" ]; then
+    rsync -avz "${PROJECT_ROOT}/characters/" "${VPS_USER}@${VPS_HOST}:${VPS_TARGET}/shared/characters/" 2>/dev/null || true
 fi
-"
-
-# Copy characters
-rsync -avz "${PROJECT_ROOT}/characters/" "${VPS_USER}@${VPS_HOST}:${VPS_TARGET}/shared/characters/" 2>/dev/null || true
 
 # Step 5: Start/restart PM2
 echo "[5/5] Starting application with PM2..."
@@ -143,5 +187,5 @@ echo "  PM2 logs:     pm2 logs familexyz-agent"
 echo "  PM2 status:   pm2 status"
 echo "  Health:       curl https://api.famile.xyz/health"
 echo ""
-echo "⚙️  Next: Edit /opt/familexyz/shared/.env with your API keys"
+echo "⚙️  Next: Edit ${VPS_TARGET}/shared/.env with your API keys"
 echo ""

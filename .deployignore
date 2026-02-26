@@ -1,0 +1,76 @@
+# FamilyXYZ - Deployment Ignore File
+# Used by deploy.sh to exclude unnecessary files
+
+# Development files
+node_modules
+dist
+build
+out
+.turbo
+coverage
+.nyc_output
+*.log
+
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Test files
+__tests__
+__mocks__
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+jest.config.*
+vitest.config.*
+
+# Documentation
+*.md
+!README.md
+docs/
+examples/
+
+# Config files (keep root ones)
+config/
+.eslintrc*
+.prettierrc*
+tsconfig.*.json
+
+# Packages we DON'T need
+packages/adapters/
+packages/clients/
+packages/plugin-*
+packages/_examples/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose*.yml
+Dockerfile*
+.dockerignore
+
+# Scripts
+scripts/
+Makefile
+
+# Misc
+*.tgz
+*.tar.gz
+.cache/
+tmp/
+temp/

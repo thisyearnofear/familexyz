@@ -33,6 +33,7 @@ How can we create a fair, trustless marketplace where **autonomous AI agents** c
 - **Low transaction costs** make micropayments viable
 - **HCS immutability** provides trustless audit trails
 - **HTS token service** enables autonomous payment
+- **AG-UI Protocol** standardizes agent-to-user event streaming
 
 ---
 

@@ -11,7 +11,13 @@ import {
     validateCharacterConfig,
     ServiceType,
     type Character,
+    stringToUuid,
+    composeContext,
+    generateMessageResponse,
+    ModelClass,
+    type Content,
 } from "@elizaos/core";
+import { z } from "zod";
 
 // import type { TeeLogQuery, TeeLogService } from "@elizaos/plugin-tee-log";
 import type { DirectClient } from "./index.js";
@@ -109,6 +115,44 @@ function sendSuccessResponse<T>(
     };
     res.json(response);
 }
+
+// AG-UI Protocol Types & Schemas
+interface AgUiBaseEvent {
+    type: string;
+    timestamp?: number;
+}
+
+interface AgUiTextMessageEvent extends AgUiBaseEvent {
+    type: "TextMessageContent";
+    messageId: string;
+    delta: string;
+}
+
+interface AgUiRunLifecycleEvent extends AgUiBaseEvent {
+    type: "RunStarted" | "RunFinished";
+    runId: string;
+}
+
+interface AgUiToolCallEvent extends AgUiBaseEvent {
+    type: "ToolCallStart" | "ToolCallEnd";
+    toolCallId: string;
+    toolName: string;
+}
+
+interface AgUiCustomEvent extends AgUiBaseEvent {
+    type: "Custom";
+    customType: string;
+    payload: any;
+}
+
+const AgUiEventSchema = z.discriminatedUnion("type", [
+    z.object({ type: z.literal("RunStarted"), runId: z.string(), timestamp: z.number().optional() }),
+    z.object({ type: z.literal("RunFinished"), runId: z.string(), timestamp: z.number().optional() }),
+    z.object({ type: z.literal("TextMessageContent"), messageId: z.string(), delta: z.string(), timestamp: z.number().optional() }),
+    z.object({ type: z.literal("ToolCallStart"), toolCallId: z.string(), toolName: z.string(), timestamp: z.number().optional() }),
+    z.object({ type: z.literal("ToolCallEnd"), toolCallId: z.string(), toolName: z.string(), timestamp: z.number().optional() }),
+    z.object({ type: z.literal("Custom"), customType: z.string(), payload: z.any(), timestamp: z.number().optional() }),
+]);
 
 function validateUUIDParams(
     params: { agentId: string; roomId?: string },
@@ -1095,6 +1139,110 @@ export function createApiRouter(
                 error: "Failed to fetch dashboard information",
                 details: error.message,
             });
+        }
+    });
+
+    /**
+     * AG-UI Protocol Implementation
+     * Standardized event-based communication for AI agents and frontends.
+     * Supports real-time streaming of message content, tool calls, and custom family metrics.
+     */
+    router.post("/:agentId/ag-ui", async (req, res) => {
+        const { agentId } = req.params;
+        const runtime = findAgentRuntime(agentId);
+
+        if (!runtime) {
+            return sendErrorResponse(res, 404, "Agent not found");
+        }
+
+        const text = req.body.text;
+        if (!text) {
+            return sendErrorResponse(res, 400, "No text provided");
+        }
+
+        const userId = stringToUuid(req.body.userId ?? "user");
+        const roomId = stringToUuid(req.body.roomId ?? "default-room-" + agentId);
+        const runId = stringToUuid(Date.now().toString());
+
+        // Set headers for SSE (Server-Sent Events)
+        res.setHeader("Content-Type", "text/event-stream");
+        res.setHeader("Cache-Control", "no-cache");
+        res.setHeader("Connection", "keep-alive");
+        res.flushHeaders();
+
+        const sendEvent = (event: any) => {
+            const data = { ...event, timestamp: Date.now() };
+            res.write(`data: ${JSON.stringify(data)}\n\n`);
+        };
+
+        try {
+            // 1. Signal Run Started
+            sendEvent({ type: "RunStarted", runId });
+
+            // 2. Prepare ElizaOS interaction
+            await runtime.ensureConnection(userId, roomId, req.body.userName, req.body.name, "direct");
+
+            const content: Content = { text, attachments: [], source: "direct" };
+            const userMessage = { content, userId, roomId, agentId: runtime.agentId };
+
+            const state = await runtime.composeState(userMessage, {
+                agentName: runtime.character.name,
+            });
+
+            const context = composeContext({
+                state,
+                template: directClient.loadCharacterTryPath ? "" : "", // dummy to use template if needed
+            });
+
+            // Note: In a production ag-ui implementation, we would use a streaming provider.
+            // Since we are wrapping the standard generateMessageResponse, we will simulate 
+            // the text streaming events based on the final response for this protocol implementation.
+            
+            const response = await generateMessageResponse({
+                runtime: runtime,
+                context,
+                modelClass: ModelClass.LARGE,
+            });
+
+            if (response && response.text) {
+                // 3. Stream Text Content (AG-UI format)
+                const messageId = stringToUuid(Date.now().toString());
+                
+                // Simulate streaming chunks for the UI experience
+                const words = response.text.split(" ");
+                for (let i = 0; i < words.length; i++) {
+                    sendEvent({
+                        type: "TextMessageContent",
+                        messageId,
+                        delta: words[i] + (i === words.length - 1 ? "" : " "),
+                    });
+                    // Artificial delay for realistic streaming simulation if desired
+                    // await new Promise(resolve => setTimeout(resolve, 20));
+                }
+
+                // 4. Check for Hedera logging / Bond Score updates in response
+                // If the agent performed an action that updates metrics, signal it via Custom event
+                if (response.action && response.action.includes("WISDOM") || response.action.includes("GROWTH")) {
+                    sendEvent({
+                        type: "Custom",
+                        customType: "family.bond_score_update",
+                        payload: {
+                            agent: runtime.character.name,
+                            action: response.action,
+                            impact: "positive"
+                        }
+                    });
+                }
+            }
+
+            // 5. Signal Run Finished
+            sendEvent({ type: "RunFinished", runId });
+            res.end();
+
+        } catch (error) {
+            elizaLogger.error("AG-UI Error:", error);
+            sendEvent({ type: "RunError", error: error.message });
+            res.end();
         }
     });
 

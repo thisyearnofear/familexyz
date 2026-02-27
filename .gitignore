@@ -2,6 +2,30 @@ node_modules
 /out
 
 # =============================================================================
+# IDE & AI ASSISTANT DIRECTORIES
+# =============================================================================
+# IDE configuration directories
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# AI assistant / code generator directories
+.qodo/
+.junie/
+.agent/
+.claude/
+.zencoder/
+.zenflow/
+
+# Cursor IDE
+.cursor/
+
+# GitHub Copilot
+.github/copilot/
+
+# =============================================================================
 # ENVIRONMENT FILES & SECRETS (CRITICAL SECURITY)
 # =============================================================================
 # All environment files (default ignore)

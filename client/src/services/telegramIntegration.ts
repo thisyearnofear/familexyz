@@ -1,28 +1,13 @@
 // Telegram Integration Service - Leverages existing backend client
 import { API_CONFIG } from "@/lib/constants";
+import type {
+  TelegramBotConfig,
+  TelegramIntegrationStatus,
+  TelegramFamilyGroup
+} from "@/types/integrations";
 
-export interface TelegramBotConfig {
-  botToken: string;
-  botUsername: string;
-  webhookUrl?: string;
-  familyGroupId?: string;
-}
-
-export interface TelegramIntegrationStatus {
-  isConnected: boolean;
-  botUsername?: string;
-  connectedGroups: number;
-  lastActivity?: Date;
-  error?: string;
-}
-
-export interface TelegramFamilyGroup {
-  id: string;
-  name: string;
-  memberCount: number;
-  agentsEnabled: string[];
-  lastActivity: Date;
-}
+// Re-export types for backwards compatibility
+export type { TelegramBotConfig, TelegramIntegrationStatus, TelegramFamilyGroup };
 
 class TelegramIntegrationService {
   private baseUrl = API_CONFIG.BASE_URL;
@@ -62,7 +47,7 @@ class TelegramIntegrationService {
       });
 
       const result = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(result.error || `HTTP ${response.status}`);
       }
@@ -107,7 +92,7 @@ class TelegramIntegrationService {
       });
 
       const result = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(result.error || `HTTP ${response.status}`);
       }
@@ -140,7 +125,7 @@ class TelegramIntegrationService {
       });
 
       const result = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(result.error || `HTTP ${response.status}`);
       }
@@ -165,7 +150,7 @@ class TelegramIntegrationService {
       });
 
       const result = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(result.error || `HTTP ${response.status}`);
       }

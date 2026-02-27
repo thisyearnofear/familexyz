@@ -24,31 +24,31 @@ const MetricCard = ({
     const getValueColor = () => {
         switch (variant) {
             case "positive":
-                return "text-green-700";
+                return "text-green-600 dark:text-green-400";
             case "negative":
-                return "text-red-700";
+                return "text-red-600 dark:text-red-400";
             default:
-                return "text-gray-900";
+                return "text-foreground";
         }
     };
 
     return (
         <Card
-            className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-white border-gray-200"
+            className="hover:shadow-md transition-all duration-200 hover:-translate-y-0.5"
             role="region"
             aria-label={`${title}: ${value}`}
         >
-            <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-gray-700 flex items-center gap-2">
+            <CardHeader className="pb-2 sm:pb-3">
+                <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center gap-2">
                     {title}
                 </CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
-                <div className={`text-2xl font-bold ${getValueColor()} mb-2`}>
+                <div className={`text-xl sm:text-2xl font-bold ${getValueColor()} mb-1 sm:mb-2`}>
                     {value}
                 </div>
                 {subtitle && (
-                    <p className="text-sm text-gray-700 leading-relaxed">
+                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
                         {subtitle}
                     </p>
                 )}
@@ -90,7 +90,7 @@ export const FamilyMetricsCards = ({
     }
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <MetricCard
                 title="💝 Family Connection"
                 value={`${metrics.healthScore}%`}
@@ -104,10 +104,10 @@ export const FamilyMetricsCards = ({
                 }
             />
             {stats?.latestTransactionId && (
-                <div className="col-span-1 md:col-span-2 lg:col-span-4 bg-green-50 border border-green-200 rounded-lg p-3 flex items-center justify-between animate-in fade-in slide-in-from-top-2">
+                <div className="col-span-1 sm:col-span-2 lg:col-span-4 bg-green-500/10 border border-green-500/20 rounded-lg p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                        <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                        <span className="text-sm font-medium text-green-800">
+                        <div className="h-2 w-2 rounded-full bg-green-500" />
+                        <span className="text-sm font-medium text-green-700 dark:text-green-400">
                             Hedera Consensus Verified
                         </span>
                     </div>
@@ -115,7 +115,7 @@ export const FamilyMetricsCards = ({
                         href={`https://hashscan.io/testnet/transaction/${stats.latestTransactionId}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-green-600 hover:text-green-800 hover:underline font-mono truncate max-w-[200px]"
+                        className="text-xs text-green-600 dark:text-green-400 hover:underline font-mono truncate max-w-full sm:max-w-[200px]"
                     >
                         Tx: {stats.latestTransactionId}
                     </a>

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FamilyMetricsCards } from "@/components/family/FamilyMetricsCards";
 import { FamilyRadarChart } from "@/components/family/FamilyRadarChart";
-import { FamilyConnectionRings } from "@/components/family/FamilyConnectionRings";
+import { FamilyNetwork3DLazy } from "@/components/family/FamilyNetwork3D.lazy";
 import { Zap, Target, Users, Sparkles } from "lucide-react";
 import type { FamilyStats } from "@/types/family";
 import type { FamilyMember } from "@/types/family";
@@ -104,26 +104,23 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card variant="premium" className="border-0">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        <Card variant="elevated">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Zap className="w-5 h-5 text-purple-600" />
+            <CardTitle className="flex items-center space-x-2 text-sm sm:text-base">
+              <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
               <span>Family Network</span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex justify-center">
-            <FamilyConnectionRings
-              healthScore={familyStats?.healthScore}
-              activeAgents={agentsData?.agents?.map((a: any) => a.name) || []}
-            />
+          <CardContent className="p-0 overflow-hidden">
+                        <FamilyNetwork3DLazy healthScore={familyStats?.healthScore || 85} />
           </CardContent>
         </Card>
 
-        <Card variant="gleam" className="border-0">
+        <Card variant="elevated">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Target className="w-5 h-5 text-indigo-600" />
+            <CardTitle className="flex items-center space-x-2 text-sm sm:text-base">
+              <Target className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
               <span>Family Dynamics</span>
             </CardTitle>
           </CardHeader>
@@ -132,10 +129,10 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           </CardContent>
         </Card>
 
-        <Card variant="gleam" className="border-0">
+        <Card variant="elevated">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Users className="w-5 h-5 text-purple-600" />
+            <CardTitle className="flex items-center space-x-2 text-sm sm:text-base">
+              <Users className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
               <span>Family Members</span>
             </CardTitle>
           </CardHeader>

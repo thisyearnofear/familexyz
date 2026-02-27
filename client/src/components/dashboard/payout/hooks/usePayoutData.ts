@@ -1,30 +1,8 @@
 import { useState, useEffect } from 'react';
+import type { PayoutStats, Payout, PayoutHistory, PayoutError } from "@/types/integrations";
 
-interface PayoutStats {
-  totalPayouts: number;
-  totalAmount: number;
-  averageAmount: number;
-  weeksCovered: number;
-}
-
-interface Payout {
-  timestamp: number;
-  amount: number;
-  scoreDelta: number;
-  multiplier: number;
-  familyId: string;
-}
-
-interface PayoutHistory {
-  agentId: string;
-  payouts: Payout[];
-  stats: PayoutStats;
-}
-
-interface PayoutError {
-  message: string;
-  status?: number;
-}
+// Re-export for backwards compatibility
+export type { PayoutStats, Payout, PayoutHistory, PayoutError };
 
 export const usePayoutData = (agentId: string, weeks?: number) => {
   const [data, setData] = useState<PayoutHistory | null>(null);

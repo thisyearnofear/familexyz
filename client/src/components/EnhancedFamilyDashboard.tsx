@@ -74,74 +74,64 @@ export const EnhancedFamilyDashboard: React.FC<EnhancedFamilyDashboardProps> = (
       role="main"
       aria-label="Enhanced Family Dashboard"
     >
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
-        <div
-          className="absolute -bottom-40 -left-40 w-80 h-80 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"
-          style={{ animationDelay: "2s" }}
-        ></div>
-      </div>
+      {/* Subtle background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-50/30 via-transparent to-pink-50/30 pointer-events-none" />
 
       {/* Enhanced Header */}
       <div className="relative bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 text-white px-6 py-8 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-purple-600/90 via-pink-600/90 to-indigo-600/90"></div>
         <div className="max-w-7xl mx-auto relative z-10">
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-            <div className="flex items-center space-x-4">
-              <FamilyLogo size="lg" className="w-12 h-12" />
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center space-x-3 sm:space-x-4">
+              <FamilyLogo size="lg" className="w-10 h-10 sm:w-12 sm:h-12" />
               <div>
-                <h1 className="text-2xl lg:text-3xl font-bold text-white drop-shadow-lg">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white drop-shadow-lg">
                   Family Connection Hub
                 </h1>
-                <p className="text-sm lg:text-base text-white/90 drop-shadow mt-1">
+                <p className="text-xs sm:text-sm lg:text-base text-white/90 drop-shadow mt-1">
                   AI-powered family wellness and growth platform
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center space-x-3">
-              <motion.div
-                className="flex items-center space-x-2"
-                animate={showCelebration ? { scale: [1, 1.2, 1] } : {}}
-                transition={{ duration: 0.6 }}
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <div
+                className={`flex items-center space-x-2 bg-white/20 backdrop-blur-sm rounded-full px-3 sm:px-4 py-2 border border-white/30 transition-transform duration-200 ${showCelebration ? 'scale-110' : ''}`}
               >
-                <div className="flex items-center space-x-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 border border-white/30">
-                  <Heart className="w-5 h-5 text-red-300" />
-                  <span className="font-semibold text-white">
-                    {familyStats?.healthScore || 85}%
-                  </span>
-                  <span className="text-xs text-white/90">Bond Strength</span>
-                </div>
-              </motion.div>
+                <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-red-300" />
+                <span className="font-semibold text-white text-sm sm:text-base">
+                  {familyStats?.healthScore || 85}%
+                </span>
+                <span className="text-xs text-white/90 hidden sm:inline">Bond Strength</span>
+              </div>
 
-              <Badge className="bg-green-500 text-white border-green-500">
-                <div className="w-2 h-2 bg-white rounded-full mr-2 animate-pulse"></div>
+              <Badge className="bg-green-500 text-white border-green-500 text-xs sm:text-sm">
+                <div className="w-2 h-2 bg-white rounded-full mr-1.5 sm:mr-2"></div>
                 <span>{familyMembers.length} Members</span>
               </Badge>
 
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-white/70 hover:text-white hover:bg-white/10"
+                className="text-white/70 hover:text-white hover:bg-white/10 h-8 w-8 sm:h-9 sm:w-auto sm:px-3 p-0"
               >
                 <Bell className="w-4 h-4" />
               </Button>
 
               <Button
                 onClick={() => setShowTreasuryModal(true)}
-                className="bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-sm shadow-sm"
+                className="bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-sm shadow-sm text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3"
                 size="sm"
               >
-                <Wallet className="w-4 h-4 mr-2" />
-                <span>Treasury</span>
+                <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Treasury</span>
               </Button>
 
               {familyStats?.latestTransactionId && (
                 <Button
                   variant="outline"
                   size="sm"
-                  className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                  className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-xs h-8 sm:h-9 px-2 sm:px-3 hidden sm:inline-flex"
                   onClick={() =>
                     window.open(
                       `https://hashscan.io/testnet/transaction/${familyStats.latestTransactionId}`,
@@ -149,8 +139,8 @@ export const EnhancedFamilyDashboard: React.FC<EnhancedFamilyDashboardProps> = (
                     )
                   }
                 >
-                  <span className="mr-2">⛓️</span>
-                  View on HashScan
+                  <span className="mr-1.5">⛓️</span>
+                  <span className="hidden md:inline">View on HashScan</span>
                 </Button>
               )}
             </div>

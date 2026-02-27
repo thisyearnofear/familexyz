@@ -1,5 +1,4 @@
 import React from "react";
-import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Users, MessageCircle, Settings, TrendingUp, LayoutDashboard, Target, Heart } from "lucide-react";
 
@@ -20,7 +19,7 @@ const tabs = [
 
 export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onTabChange }) => {
     return (
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="flex gap-1 sm:gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-1 px-1">
             {tabs.map((tab) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
@@ -32,23 +31,15 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onTabCh
                         size="sm"
                         onClick={() => onTabChange(tab.id)}
                         className={`
-                            relative whitespace-nowrap transition-all
+                            relative whitespace-nowrap transition-all duration-200 shrink-0
                             ${isActive
                                 ? "bg-purple-600 text-white hover:bg-purple-700"
-                                : "text-gray-400 hover:text-white hover:bg-white/5"
+                                : "text-muted-foreground hover:text-foreground hover:bg-accent"
                             }
                         `}
                     >
-                        <Icon className="w-4 h-4 mr-2" />
-                        {tab.label}
-
-                        {isActive && (
-                            <motion.div
-                                layoutId="activeTab"
-                                className="absolute inset-0 bg-purple-600 rounded-md -z-10"
-                                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                            />
-                        )}
+                        <Icon className="w-4 h-4 sm:mr-2" />
+                        <span className="hidden sm:inline">{tab.label}</span>
                     </Button>
                 );
             })}

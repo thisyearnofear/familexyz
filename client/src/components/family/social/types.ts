@@ -4,10 +4,13 @@
  */
 
 export type {
-  FamilyMember,
+  SocialFamilyMember,
   Comment,
   Achievement,
   FamilyChallenge,
   CreateChallengeData,
   FamilyPost
 } from "@/types/social";
+
+// Backwards compatibility alias
+export type { SocialFamilyMember as FamilyMember };

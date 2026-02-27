@@ -7,12 +7,11 @@ export interface IAttachment {
 // Domain-specific types
 export * from './bondScoring';
 export * from './family';
-export * from './social';
 export * from './integrations';
 
-// Re-export for convenience
+// Social types (explicit exports to avoid FamilyMember conflict with family.ts)
 export type {
-    FamilyMember as SocialFamilyMember,
+    SocialFamilyMember,
     Comment,
     Achievement,
     FamilyChallenge,

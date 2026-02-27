@@ -4,7 +4,7 @@ import React from "react";
  * Social feature types - consolidated from components/family/social/types.ts
  */
 
-export interface FamilyMember {
+export interface SocialFamilyMember {
   id: string;
   name: string;
   avatar?: string;
@@ -78,5 +78,4 @@ export interface FamilyPost {
   }>;
 }
 
-// Re-export for backwards compatibility
-export type { FamilyMember as SocialFamilyMember };
+

@@ -34,6 +34,7 @@ interface HederaAuthStore extends AuthState {
   // Actions
   initialize: () => Promise<void>;
   connectWallet: (walletType: WalletType) => Promise<HederaWalletConnection>;
+  autoConnect: () => Promise<HederaWalletConnection | null>;
   disconnectWallet: () => Promise<void>;
   createFamily: (familyName: string) => Promise<FamilyAuth>;
   joinFamily: (request: JoinFamilyRequest) => Promise<JoinFamilyResponse>;
@@ -119,6 +120,46 @@ const useHederaAuthStore = create<HederaAuthStore>()(
           };
         });
         throw error;
+      }
+    },
+
+    autoConnect: async () => {
+      const authService = HederaAuthService.getInstance();
+      set((state) => {
+        state.isConnecting = true;
+        state.error = undefined;
+      });
+
+      try {
+        const connection = await authService.autoConnect();
+
+        if (connection) {
+          set((state) => {
+            state.currentConnection = connection;
+            state.isConnected = true;
+            state.isConnecting = false;
+            state.session = authService.getCurrentSession() || undefined;
+          });
+        } else {
+          set((state) => {
+            state.isConnecting = false;
+          });
+        }
+
+        return connection;
+      } catch (error) {
+        set((state) => {
+          state.isConnecting = false;
+          state.error = {
+            code: "CONNECTION_FAILED",
+            message:
+              error instanceof Error
+                ? error.message
+                : "Auto-connect failed",
+            timestamp: new Date(),
+          };
+        });
+        return null;
       }
     },
 
@@ -308,6 +349,7 @@ export interface HederaAuthContextValue {
   // Actions
   initialize: () => Promise<void>;
   connectWallet: (walletType: WalletType) => Promise<HederaWalletConnection>;
+  autoConnect: () => Promise<HederaWalletConnection | null>;
   disconnectWallet: () => Promise<void>;
   createFamily: (familyName: string) => Promise<FamilyAuth>;
   joinFamily: (request: JoinFamilyRequest) => Promise<JoinFamilyResponse>;
@@ -467,6 +509,7 @@ export const HederaAuthProvider: React.FC<HederaAuthProviderProps> = ({
     // Actions
     initialize: store.initialize,
     connectWallet: store.connectWallet,
+    autoConnect: store.autoConnect,
     disconnectWallet: store.disconnectWallet,
     createFamily: store.createFamily,
     joinFamily: store.joinFamily,
@@ -515,6 +558,7 @@ export const useWalletConnection = () => {
     currentConnection,
     availableWallets,
     connectWallet,
+    autoConnect,
     disconnectWallet,
     error,
     clearError,
@@ -526,6 +570,7 @@ export const useWalletConnection = () => {
     connection: currentConnection,
     availableWallets,
     connectWallet,
+    autoConnect,
     disconnectWallet,
     error,
     clearError,

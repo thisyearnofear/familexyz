@@ -83,6 +83,7 @@
         "@coinbase/coinbase-sdk": "0.10.0",
         "@deepgram/sdk": "^3.9.0",
         "@injectivelabs/sdk-ts": "^1.14.33",
+        "@rollup/rollup-darwin-x64": "4.59.0",
         "@vitest/eslint-plugin": "1.0.1",
         "amqplib": "0.10.5",
         "better-sqlite3": "9.6.0",

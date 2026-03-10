@@ -6,7 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FamilyLogo } from "@/components/FamilyLogo";
 import { FamilyOnboarding } from "@/components/family/FamilyOnboarding";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { TabNavigation } from "@/components/dashboard";
+import type { DashboardTab } from "@/components/dashboard/TabNavigation";
 import { useFamilyStats, useAgents } from "@/hooks/useFamilyData";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 
@@ -16,6 +19,7 @@ import { InsightsTab } from "./dashboard/tabs/InsightsTab";
 import { ActivitiesTab } from "./dashboard/tabs/ActivitiesTab";
 import { SocialTab } from "./dashboard/tabs/SocialTab";
 import { MembersTab } from "./dashboard/tabs/MembersTab";
+import { AgentsTab } from "./dashboard/tabs/AgentsTab";
 import { SettingsTab } from "./dashboard/tabs/SettingsTab";
 import { BondScoreTab } from "./dashboard/tabs/BondScoreTab";
 import { FamilyTreasuryModal } from "./dashboard/FamilyTreasuryModal";
@@ -24,9 +28,9 @@ interface EnhancedFamilyDashboardProps {}
 
 export const EnhancedFamilyDashboard: React.FC<EnhancedFamilyDashboardProps> = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState<
-    "overview" | "insights" | "activities" | "social" | "members" | "bond-score" | "settings"
-  >((searchParams.get("tab") as any) || "overview");
+  const [activeTab, setActiveTab] = useState<DashboardTab>(
+    (searchParams.get("tab") as DashboardTab) || "overview"
+  );
 
   // Sync tab change to URL
   useEffect(() => {
@@ -34,6 +38,8 @@ export const EnhancedFamilyDashboard: React.FC<EnhancedFamilyDashboardProps> = (
   }, [activeTab, setSearchParams]);
   const [showCelebration, setShowCelebration] = useState(false);
   const [showTreasuryModal, setShowTreasuryModal] = useState(false);
+
+  const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
 
   // Custom hooks for data and state management
   const { data: familyStats, isLoading: isFamilyStatsLoading } = useFamilyStats();
@@ -148,10 +154,24 @@ export const EnhancedFamilyDashboard: React.FC<EnhancedFamilyDashboardProps> = (
         </div>
       </div>
 
-      <FamilyTreasuryModal
-        isOpen={showTreasuryModal}
-        onClose={() => setShowTreasuryModal(false)}
-      />
+      <ErrorBoundary
+        fallback={
+          <Dialog open={showTreasuryModal} onOpenChange={() => setShowTreasuryModal(false)}>
+            <DialogContent className="sm:max-w-md">
+              <div className="p-6 text-center space-y-3">
+                <p className="text-red-600 font-semibold">Wallet connection unavailable</p>
+                <p className="text-sm text-gray-600">Please ensure HashPack or another supported wallet extension is installed.</p>
+                <Button variant="outline" size="sm" onClick={() => setShowTreasuryModal(false)}>Close</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        }
+      >
+        <FamilyTreasuryModal
+          isOpen={showTreasuryModal}
+          onClose={() => setShowTreasuryModal(false)}
+        />
+      </ErrorBoundary>
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
@@ -179,6 +199,14 @@ export const EnhancedFamilyDashboard: React.FC<EnhancedFamilyDashboardProps> = (
           {activeTab === "activities" && <ActivitiesTab familyMembers={familyMembers} />}
 
           {activeTab === "social" && <SocialTab familyMembers={familyMembers} />}
+
+          {activeTab === "agents" && (
+            <AgentsTab
+              agentsData={agentsData}
+              selectedAgent={selectedAgent}
+              onAgentSelect={setSelectedAgent}
+            />
+          )}
 
           {activeTab === "members" && (
             <MembersTab

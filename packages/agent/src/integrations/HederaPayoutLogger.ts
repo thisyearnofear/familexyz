@@ -64,15 +64,32 @@ export interface HcsPayoutMessage {
 }
 
 /**
- * HederaPayoutLogger - Audit trail via HCS
+ * Minimal DB adapter interface for payout persistence.
+ * Matches the `(db as any).query(sql, params)` pattern used elsewhere.
+ */
+export interface PayoutDbAdapter {
+  query(sql: string, params: any[]): Promise<any[]>;
+}
+
+/**
+ * HederaPayoutLogger - Audit trail via HCS + optional SQLite persistence
  */
 export class HederaPayoutLogger {
   private hcsTopicId: string;
   private recordStorage: Map<string, PayoutRecord>;
+  private db: PayoutDbAdapter | null;
 
-  constructor(hcsTopicId: string) {
+  constructor(hcsTopicId: string, db?: PayoutDbAdapter) {
     this.hcsTopicId = hcsTopicId;
     this.recordStorage = new Map();
+    this.db = db || null;
+  }
+
+  /**
+   * Attach a DB adapter after construction (e.g. when primaryDb becomes available)
+   */
+  setDbAdapter(db: PayoutDbAdapter): void {
+    this.db = db;
   }
 
   /**
@@ -112,8 +129,11 @@ export class HederaPayoutLogger {
       record.hcsSequenceNumber = sequenceNumber;
       record.status = "confirmed";
 
-      // Store record for audit trail
+      // Store record in memory cache
       this.recordStorage.set(record.recordId, record);
+
+      // Persist to SQLite if adapter is available
+      await this.persistRecordToDb(record);
 
       return `HCS:${this.hcsTopicId}:${sequenceNumber}`;
     } catch (error) {
@@ -130,12 +150,18 @@ export class HederaPayoutLogger {
     agentId: string,
     limit: number = 52
   ): Promise<PayoutRecord[]> {
-    const records = Array.from(this.recordStorage.values())
+    // Try DB first
+    const dbRecords = await this.queryRecordsFromDb(
+      "SELECT * FROM agent_payout_tracking WHERE agent_id = ? ORDER BY week_number DESC LIMIT ?",
+      [agentId, limit],
+    );
+    if (dbRecords.length > 0) return dbRecords;
+
+    // Fallback to in-memory
+    return Array.from(this.recordStorage.values())
       .filter(r => r.agentId === agentId)
       .sort((a, b) => b.weekNumber - a.weekNumber)
       .slice(0, limit);
-
-    return records;
   }
 
   /**
@@ -145,12 +171,18 @@ export class HederaPayoutLogger {
     familyId: string,
     limit: number = 52
   ): Promise<PayoutRecord[]> {
-    const records = Array.from(this.recordStorage.values())
+    // Try DB first
+    const dbRecords = await this.queryRecordsFromDb(
+      "SELECT * FROM agent_payout_tracking WHERE family_id = ? ORDER BY week_number DESC LIMIT ?",
+      [familyId, limit],
+    );
+    if (dbRecords.length > 0) return dbRecords;
+
+    // Fallback to in-memory
+    return Array.from(this.recordStorage.values())
       .filter(r => r.familyId === familyId)
       .sort((a, b) => b.weekNumber - a.weekNumber)
       .slice(0, limit);
-
-    return records;
   }
 
   /**
@@ -372,6 +404,110 @@ export class HederaPayoutLogger {
    */
   clearStorage(): void {
     this.recordStorage.clear();
+  }
+
+  // ===========================================================================
+  // SQLite persistence helpers
+  // ===========================================================================
+
+  /**
+   * Persist a payout record to the agent_payout_tracking table.
+   */
+  private async persistRecordToDb(record: PayoutRecord): Promise<void> {
+    if (!this.db) return;
+    try {
+      await this.db.query(
+        `INSERT OR REPLACE INTO agent_payout_tracking
+           (id, agent_id, family_id, week_number,
+            previous_bond_score, new_bond_score, score_delta,
+            base_payout, performance_multiplier, recency_weight, final_payout,
+            hcs_record_id, tx_hash, status,
+            anomalies_detected, anomaly_flags, cooling_period_active, family_validated,
+            notes, created_at, executed_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          record.recordId,
+          record.agentId,
+          record.familyId,
+          record.weekNumber,
+          record.previousScore,
+          record.currentScore,
+          record.scoreDelta,
+          record.baseRate,
+          record.performanceMultiplier,
+          record.recencyWeight,
+          record.finalPayout,
+          record.hcsSequenceNumber ? `HCS:${this.hcsTopicId}:${record.hcsSequenceNumber}` : null,
+          record.txHash || null,
+          record.status,
+          record.anomalyFlags.length > 0 ? 1 : 0,
+          JSON.stringify(record.anomalyFlags),
+          record.coolingPeriodActive ? 1 : 0,
+          record.familyValidated ?? null,
+          JSON.stringify(record.notes),
+          record.timestamp.toISOString(),
+          record.status === "confirmed" ? new Date().toISOString() : null,
+        ],
+      );
+    } catch (err) {
+      console.error("Failed to persist payout record to SQLite:", err);
+    }
+  }
+
+  /**
+   * Query payout records from SQLite and convert rows to PayoutRecord[]
+   */
+  private async queryRecordsFromDb(sql: string, params: any[]): Promise<PayoutRecord[]> {
+    if (!this.db) return [];
+    try {
+      const rows: any[] = await this.db.query(sql, params);
+      if (!rows || rows.length === 0) return [];
+
+      return rows.map((row: any) => ({
+        recordId: row.id,
+        timestamp: new Date(row.created_at),
+        weekNumber: row.week_number,
+        agentId: row.agent_id,
+        familyId: row.family_id,
+        previousScore: row.previous_bond_score || 0,
+        currentScore: row.new_bond_score || 0,
+        scoreDelta: row.score_delta || 0,
+        baseRate: row.base_payout || 0,
+        performanceMultiplier: row.performance_multiplier || 1,
+        recencyWeight: row.recency_weight || 1,
+        calculatedPayout: row.final_payout || 0,
+        finalPayout: row.final_payout || 0,
+        anomalyFlags: row.anomaly_flags ? JSON.parse(row.anomaly_flags) : [],
+        coolingPeriodActive: !!row.cooling_period_active,
+        familyValidated: row.family_validated ?? null,
+        txHash: row.tx_hash || "",
+        hcsSequenceNumber: undefined,
+        status: row.status || "pending",
+        notes: row.notes ? JSON.parse(row.notes) : [],
+      }));
+    } catch (err) {
+      // Table may not exist yet — fall back silently
+      return [];
+    }
+  }
+
+  /**
+   * Load existing records from SQLite into memory cache on startup.
+   */
+  async loadFromDb(): Promise<number> {
+    if (!this.db) return 0;
+    try {
+      const records = await this.queryRecordsFromDb(
+        "SELECT * FROM agent_payout_tracking ORDER BY created_at DESC LIMIT 500",
+        [],
+      );
+      for (const record of records) {
+        this.recordStorage.set(record.recordId, record);
+      }
+      return records.length;
+    } catch {
+      return 0;
+    }
   }
 }
 

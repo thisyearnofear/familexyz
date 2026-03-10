@@ -323,4 +323,16 @@ export interface HederaAuthConfig {
       windowMs: number;
     };
   };
+  /**
+   * Feature flags for wallet connection strategy.
+   * Allows runtime control of connection behavior.
+   */
+  featureFlags?: {
+    /** Use WalletConnect v2 as the primary connection method (default: true) */
+    walletConnectPrimary?: boolean;
+    /** Disable HashConnect entirely (default: false) */
+    disableHashConnect?: boolean;
+    /** Auto-connect timeout in milliseconds (default: 15000) */
+    autoConnectTimeoutMs?: number;
+  };
 }

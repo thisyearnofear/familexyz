@@ -8,7 +8,8 @@ import { FamilyNetwork3DLazy } from "@/components/family/FamilyNetwork3D.lazy";
 import { Zap, Target, Users, Sparkles } from "lucide-react";
 import type { FamilyStats } from "@/types/family";
 import type { FamilyMember } from "@/types/family";
-import { AgentBadge, AskAgentButton } from "@/components/agents";
+import { AgentBadge, AskAgentButton, TeamConsensus } from "@/components/agents";
+import { useAgentInsights } from "@/hooks/useAgentInsights";
 
 interface OverviewTabProps {
   familyStats?: FamilyStats;
@@ -25,30 +26,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   familyMembers,
   onViewMembers,
 }) => {
-  // Agent highlights - proactive insights from agents
-  const agentHighlights = [
-    {
-      agentId: "wisdom",
-      agentName: "Wisdom",
-      agentEmoji: "🧠",
-      insight: "Your family's communication score improved 15% this week!",
-      action: "Keep up the great work with daily check-ins"
-    },
-    {
-      agentId: "intimacy",
-      agentName: "Intimacy",
-      agentEmoji: "💖",
-      insight: "Quality time together is at an all-time high",
-      action: "Consider planning a special family activity this weekend"
-    },
-    {
-      agentId: "presence",
-      agentName: "Presence",
-      agentEmoji: "🧘",
-      insight: "Mindfulness practices are showing positive results",
-      action: "Try extending your morning walks by 10 minutes"
-    }
-  ];
+  const { insights: agentHighlights } = useAgentInsights();
 
   return (
     <motion.div
@@ -60,6 +38,9 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
       className="space-y-6"
     >
       <FamilyMetricsCards stats={familyStats} isLoading={isFamilyStatsLoading} />
+
+      {/* Team Consensus */}
+      <TeamConsensus />
 
       {/* Agent Highlights Card */}
       <Card className="border-0 bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">

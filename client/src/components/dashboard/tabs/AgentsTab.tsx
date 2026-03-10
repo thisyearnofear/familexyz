@@ -1,25 +1,30 @@
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { ChatInterface } from "@/components/ChatInterface";
+import { PayoutDashboard } from "@/components/dashboard/payout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Brain, Heart, Users, Rocket, MessageCircle } from "lucide-react";
+import { Brain, Heart, Users, Rocket, MessageCircle, Leaf, Coins } from "lucide-react";
 
 interface AgentsTabProps {
   agentsData?: { agents: any[]; total: number };
   selectedAgent: string | null;
   onAgentSelect: (agentId: string) => void;
+  familyId?: string;
 }
 
-const agentMetadata: Record<string, { icon: React.ReactNode; color: string; description: string }> = {
-  Wisdom: { icon: <Brain className="w-6 h-6" />, color: "from-purple-500 to-purple-600", description: "Emotional guidance" },
-  Intimacy: { icon: <Heart className="w-6 h-6" />, color: "from-pink-500 to-pink-600", description: "Relationship building" },
-  GenerationalBridge: { icon: <Users className="w-6 h-6" />, color: "from-blue-500 to-blue-600", description: "Cross-generational" },
-  Growth: { icon: <Rocket className="w-6 h-6" />, color: "from-orange-500 to-orange-600", description: "Family challenges" },
+const agentMetadata: Record<string, { icon: React.ReactNode; emoji: string; color: string; description: string }> = {
+  Wisdom: { icon: <Brain className="w-6 h-6" />, emoji: "🧠", color: "from-purple-500 to-purple-600", description: "Philosophy & Emotional Intelligence" },
+  Intimacy: { icon: <Heart className="w-6 h-6" />, emoji: "💖", color: "from-pink-500 to-pink-600", description: "Couple & Family Relationship Coaching" },
+  GenerationalBridge: { icon: <Users className="w-6 h-6" />, emoji: "👵👦", color: "from-blue-500 to-blue-600", description: "Cross-Generational Connections" },
+  Presence: { icon: <Leaf className="w-6 h-6" />, emoji: "🧘", color: "from-green-500 to-green-600", description: "Mindfulness & Digital Wellness" },
+  Growth: { icon: <Rocket className="w-6 h-6" />, emoji: "🚀", color: "from-orange-500 to-orange-600", description: "Shared Family Growth Challenges" },
 };
 
-export const AgentsTab: React.FC<AgentsTabProps> = ({ agentsData, selectedAgent, onAgentSelect }) => {
+export const AgentsTab: React.FC<AgentsTabProps> = ({ agentsData, selectedAgent, onAgentSelect, familyId = "default" }) => {
+  const [showPayouts, setShowPayouts] = useState(false);
+
   return (
     <motion.div
       key="agents"
@@ -29,33 +34,73 @@ export const AgentsTab: React.FC<AgentsTabProps> = ({ agentsData, selectedAgent,
       transition={{ duration: 0.3 }}
       className="space-y-6"
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Agent Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         {agentsData?.agents?.map((agent: any) => {
-          const metadata = agentMetadata[agent.name] || { icon: <MessageCircle className="w-6 h-6" />, color: "from-gray-500 to-gray-600", description: "AI Agent" };
+          const metadata = agentMetadata[agent.name] || { icon: <MessageCircle className="w-6 h-6" />, emoji: "🤖", color: "from-gray-500 to-gray-600", description: "AI Agent" };
+          const isSelected = selectedAgent === agent.id;
           return (
             <Card
               key={agent.id}
-              className={`cursor-pointer transition-all hover:shadow-lg ${selectedAgent === agent.id ? "ring-2 ring-purple-500" : ""}`}
+              className={`cursor-pointer transition-all hover:shadow-lg ${isSelected ? "ring-2 ring-purple-500 shadow-lg" : ""}`}
               onClick={() => onAgentSelect(agent.id)}
             >
-              <CardHeader>
+              <CardHeader className="pb-2">
                 <div className={`w-12 h-12 rounded-full bg-gradient-to-r ${metadata.color} flex items-center justify-center text-white mb-2`}>
                   {metadata.icon}
                 </div>
-                <CardTitle>{agent.name}</CardTitle>
+                <CardTitle className="text-base">
+                  <span className="mr-1">{metadata.emoji}</span>
+                  {agent.name}
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-sm text-gray-600">{metadata.description}</p>
-                <Badge className="mt-2">Active</Badge>
+              <CardContent className="pt-0">
+                <p className="text-xs text-gray-600 mb-2">{metadata.description}</p>
+                <Badge className="bg-green-100 text-green-800 border-green-200">Active</Badge>
               </CardContent>
             </Card>
           );
         })}
       </div>
 
+      {/* Payouts Toggle */}
       {selectedAgent && (
-        <div className="mt-6">
+        <div className="flex gap-2">
+          <Button
+            variant={!showPayouts ? "default" : "outline"}
+            size="sm"
+            onClick={() => setShowPayouts(false)}
+            className={!showPayouts ? "bg-purple-600 hover:bg-purple-700" : ""}
+          >
+            <MessageCircle className="w-4 h-4 mr-2" />
+            Chat
+          </Button>
+          <Button
+            variant={showPayouts ? "default" : "outline"}
+            size="sm"
+            onClick={() => setShowPayouts(true)}
+            className={showPayouts ? "bg-purple-600 hover:bg-purple-700" : ""}
+          >
+            <Coins className="w-4 h-4 mr-2" />
+            Rewards & Payouts
+          </Button>
+        </div>
+      )}
+
+      {/* Agent Content */}
+      {selectedAgent && !showPayouts && (
+        <div className="mt-2">
           <ChatInterface initialAgentId={selectedAgent} />
+        </div>
+      )}
+
+      {selectedAgent && showPayouts && (
+        <div className="mt-2">
+          <PayoutDashboard
+            agentId={selectedAgent}
+            familyId={familyId}
+            agentName={agentsData?.agents?.find((a: any) => a.id === selectedAgent)?.name}
+          />
         </div>
       )}
     </motion.div>

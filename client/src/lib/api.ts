@@ -144,6 +144,12 @@ export const apiClient = {
   claimGoodDollar: (address: string) =>
     fetcher({ url: `/gooddollar/claim`, method: "POST", body: { address } }),
   
+  // --- Agent Insights ---
+  getAgentInsights: (): Promise<{ insights: any[] }> =>
+    fetcher({ url: "/agents/insights" }),
+  getAgentInsight: (agentId: string): Promise<any> =>
+    fetcher({ url: `/agents/${agentId}/insights` }),
+
   // --- AG-UI Protocol (Standardized AI-User Interaction) ---
   streamAGUI: async (
     agentId: string, 

@@ -19,6 +19,25 @@
   - HCS immutable audit trail
   - Token distribution service
   - 154 tests passing
+- **Phase 4b-UI: Payout UI ↔ Backend Wiring**
+  - Vite dev proxy (`/api/*` → port 3001)
+  - PayoutApiHandler connected to real Hedera env vars
+  - PayoutDashboard integrated into Agents tab
+  - Dry-run calculator, history, anomaly review UI
+- **Phase 4b-DB: Payout SQLite Persistence**
+  - Migration: `agent_payout_tracking` table
+  - HederaPayoutLogger reads/writes SQLite with in-memory cache
+  - Records survive server restarts
+- **Agent Dashboard Integration**
+  - Agents tab with all 5 agents (Chat / Payouts toggle)
+  - Live insights endpoint: `GET /agents/insights` (DirectClient port 3000)
+  - `useAgentInsights` hook fetches real-time agent runtime metrics
+  - TeamConsensus card, AgentReaction badges
+  - Notification dots on sidebar for each agent type
+- **WalletConnect v2 as Primary Auth**
+  - `autoConnect()` method: WalletConnect v2 first, HashConnect fallback
+  - Feature flags: `walletConnectPrimary`, `disableHashConnect`, `autoConnectTimeoutMs`
+  - ErrorBoundary around FamilyTreasuryModal
 
 ---
 
@@ -63,20 +82,18 @@ Environment Variable: VITE_WALLETCONNECT_PROJECT_ID
 
 ### 2. Full WalletConnect v2 Migration
 **Priority:** HIGH (before HashConnect shutdown in 2026)
+**Status:** Phase 3 complete — WalletConnect v2 is now the default
 
-**Plan:**
-1. Implement WalletConnect v2 as primary authentication method
-2. Keep HashConnect v3 as fallback during transition period
-3. Dual-stack support for both wallet protocols
-4. Feature flag to disable HashConnect if needed
+**Completed:**
+- ✅ Phase 1: WalletConnect v2 added alongside HashConnect
+- ✅ Phase 2: Both pathways tested in parallel
+- ✅ Phase 3: WalletConnect v2 is default via `autoConnect()`
+- ⬜ Phase 4: Remove HashConnect dependency (2025-2026)
 
-**Migration Steps:**
-```typescript
-// Phase 1: Add WalletConnect v2 alongside HashConnect
-// Phase 2: Test both pathways in parallel
-// Phase 3: Make WalletConnect v2 default
-// Phase 4: Remove HashConnect dependency (2025-2026)
-```
+**Feature Flags (in `HederaAuthConfig.featureFlags`):**
+- `walletConnectPrimary` — default `true`
+- `disableHashConnect` — default `false` (set `true` to fully disable)
+- `autoConnectTimeoutMs` — default `15000`
 
 ### 3. Enhanced Wallet Features
 - Token swapping and DEX integration
@@ -195,6 +212,6 @@ VITE_URL=http://localhost:5173
 
 ---
 
-**Last Updated:** November 22, 2025
-**Next Milestone:** Phase 4b Agent Payouts (UI & API Integration)
-**Next Review:** December 2025
+**Last Updated:** March 2026
+**Next Milestone:** Phase 4c A2A Protocol & Agent-to-Agent Trading
+**Next Review:** April 2026

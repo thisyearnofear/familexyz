@@ -193,6 +193,9 @@ export class HederaAuthService {
 
       switch (walletType) {
         case "hashpack":
+          if (this.config.featureFlags?.disableHashConnect) {
+            throw new Error("HashConnect is disabled via feature flag. Use WalletConnect instead.");
+          }
           connection = await this.connectHashPack();
           break;
         case "blade":
@@ -229,6 +232,64 @@ export class HederaAuthService {
       this.emit("wallet:error", authError);
       throw error;
     }
+  }
+
+  /**
+   * Auto-connect using the preferred wallet strategy.
+   *
+   * Order of preference (controlled by featureFlags):
+   *   1. Restore existing session (any wallet type)
+   *   2. WalletConnect v2 (primary by default)
+   *   3. HashConnect fallback (unless disabled)
+   *
+   * Returns the connection, or null if all attempts fail.
+   */
+  async autoConnect(): Promise<HederaWalletConnection | null> {
+    if (!this.isInitialized) {
+      await this.initialize();
+    }
+
+    // 1. If we already have a restored session, return it
+    if (this.authState.isConnected && this.authState.currentConnection) {
+      return this.authState.currentConnection;
+    }
+
+    const flags = this.config.featureFlags || {};
+    const wcPrimary = flags.walletConnectPrimary !== false; // default true
+    const hcDisabled = flags.disableHashConnect === true;   // default false
+    const timeout = flags.autoConnectTimeoutMs || 15000;
+
+    // Build ordered strategy list
+    const strategies: WalletType[] = wcPrimary
+      ? ["walletconnect", ...(hcDisabled ? [] : ["hashpack" as WalletType])]
+      : [...(hcDisabled ? [] : ["hashpack" as WalletType]), "walletconnect"];
+
+    for (const strategy of strategies) {
+      try {
+        console.log(`[autoConnect] Trying ${strategy}...`);
+        const connection = await Promise.race([
+          this.connectWallet(strategy),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error(`${strategy} connection timed out`)), timeout),
+          ),
+        ]);
+        console.log(`[autoConnect] Connected via ${strategy}`);
+        return connection;
+      } catch (err) {
+        console.warn(`[autoConnect] ${strategy} failed:`, err instanceof Error ? err.message : err);
+        // Continue to next strategy
+      }
+    }
+
+    console.warn("[autoConnect] All wallet strategies exhausted");
+    return null;
+  }
+
+  /**
+   * Get the current feature flags.
+   */
+  getFeatureFlags(): NonNullable<typeof this.config.featureFlags> {
+    return this.config.featureFlags || {};
   }
 
   /**

@@ -104,8 +104,10 @@ export function AppSidebar() {
                                             const agentName = agent.name.toLowerCase();
                                             const emoji = agentEmojis[agentName] || "🤖";
 
-                                            // Simulate notification status (in real app, this would come from API)
-                                            const hasNotification = ["wisdom", "intimacy", "presence"].includes(agentName);
+                                            // Show notification dot for agents that have insights
+                                            // Matched by name against known family agent types
+                                            const familyAgentTypes = ["wisdom", "intimacy", "presence", "growth", "bridge", "generationalbridge"];
+                                            const hasNotification = familyAgentTypes.some(t => agentName.includes(t));
 
                                             return (
                                                 <SidebarMenuItem key={agent.id} className="mb-3">

@@ -33,6 +33,9 @@ export function patchDirectClientRoutes(): void {
         // Family stats endpoints
         setupFamilyStatsRoutes(this);
         
+        // Agent insights endpoint (needs runtime access)
+        setupAgentInsightsRoutes(this);
+        
         return oldStart.apply(this, args);
     };
 }
@@ -99,6 +102,145 @@ function setupGoodDollarRoutes(client: DirectClient, gd: GoodDollarService): voi
             console.error("GoodDollar claim error:", err);
             return res.status(500).json({ error: "Failed to process claim" });
         }
+    });
+}
+
+/**
+ * Agent insight metadata mapping
+ */
+const AGENT_INSIGHT_META: Record<string, { emoji: string; focus: string }> = {
+    wisdom: { emoji: "🧠", focus: "communication and emotional intelligence" },
+    intimacy: { emoji: "💖", focus: "relationship quality and connection" },
+    generationalbridge: { emoji: "👵👦", focus: "cross-generational bonds" },
+    presence: { emoji: "🧘", focus: "mindfulness and digital wellness" },
+    growth: { emoji: "🚀", focus: "family challenges and development" },
+};
+
+/**
+ * Generate an insight string from runtime metrics for a given agent type
+ */
+function generateInsight(key: string, meta: any): { insight: string; action: string } {
+    const fam = meta.familyMetrics || {};
+    const total = fam.total || 0;
+    const positive = fam.positive || 0;
+    const negative = fam.negative || 0;
+    const healthPct = total > 0 ? Math.round(((positive + 1) / (positive + negative + 1)) * 100) : 0;
+
+    // Generate insight based on agent type and real metrics
+    switch (key) {
+        case "wisdom": {
+            if (healthPct >= 80) return { insight: `Family communication health is strong at ${healthPct}%`, action: "Keep up the great work with daily check-ins" };
+            if (healthPct >= 60) return { insight: `Communication score is ${healthPct}% — room to grow`, action: "Try a guided conversation prompt tonight at dinner" };
+            return { insight: `Communication health needs attention at ${healthPct}%`, action: "Share one appreciation with each family member today" };
+        }
+        case "intimacy": {
+            const im = meta.intimacyMetrics || {};
+            const aff = im.affection || 0;
+            if (aff > 5) return { insight: `Affection signals are strong (${aff} this period)`, action: "Schedule a one-on-one catch-up with each family member" };
+            return { insight: "Connection moments could increase", action: "Consider planning a special family activity this weekend" };
+        }
+        case "generationalbridge": {
+            const gm = meta.generationalMetrics || {};
+            const bridge = gm.bridge || 0;
+            if (bridge > 3) return { insight: `Cross-generational storytelling is active (${bridge} bridges)`, action: "Start a family traditions journal together" };
+            return { insight: "Inter-generational conversations can deepen bonds", action: "Ask an elder to share a favorite memory this week" };
+        }
+        case "presence": {
+            const pm = meta.presenceMetrics || {};
+            const attention = pm.attention || 0;
+            const distraction = pm.distraction || 0;
+            if (attention > distraction) return { insight: `Presence scores are positive (${attention} vs ${distraction} distractions)`, action: "Try extending your morning walks by 10 minutes" };
+            return { insight: "Digital distractions are outpacing presence moments", action: "Initiate a device-free dinner tonight" };
+        }
+        case "growth": {
+            const gr = meta.growthMetrics || {};
+            const growth = gr.growth || 0;
+            if (growth > 3) return { insight: `Growth momentum is strong (${growth} milestones)`, action: "Celebrate a recent achievement together" };
+            return { insight: "Family growth challenges are waiting", action: "Set a new shared family goal for next week" };
+        }
+        default:
+            return { insight: `Agent health: ${healthPct}%`, action: "Continue engaging with your family agents" };
+    }
+}
+
+/**
+ * Setup Agent Insights API routes
+ */
+function setupAgentInsightsRoutes(client: DirectClient): void {
+    // All agents insights
+    client.app.get("/agents/insights", (req: any, res: any) => {
+        const insights: any[] = [];
+
+        for (const agent of (client as any).agents.values()) {
+            if (!agent || !agent.runtime) continue;
+
+            const name: string = agent.runtime.character?.name || "";
+            const key = name.toLowerCase().replace(/\s+/g, "");
+            const metaInfo = AGENT_INSIGHT_META[key];
+            if (!metaInfo) continue;
+
+            const meta = agent.runtime.meta || {};
+            const { insight, action } = generateInsight(key, meta);
+
+            insights.push({
+                agentId: agent.runtime.agentId || key,
+                agentName: name,
+                agentEmoji: metaInfo.emoji,
+                focus: metaInfo.focus,
+                insight,
+                action,
+                metrics: {
+                    familyMetrics: meta.familyMetrics || {},
+                    intimacyMetrics: meta.intimacyMetrics || {},
+                    presenceMetrics: meta.presenceMetrics || {},
+                    generationalMetrics: meta.generationalMetrics || {},
+                    growthMetrics: meta.growthMetrics || {},
+                },
+                lastTransactionId: meta.latestTransactionId || null,
+            });
+        }
+
+        res.json({ insights });
+    });
+
+    // Single agent insights
+    client.app.get("/agents/:agentId/insights", (req: any, res: any) => {
+        const { agentId } = req.params as { agentId: string };
+
+        for (const agent of (client as any).agents.values()) {
+            if (!agent || !agent.runtime) continue;
+
+            const runtimeId = agent.runtime.agentId || "";
+            const name: string = agent.runtime.character?.name || "";
+            const key = name.toLowerCase().replace(/\s+/g, "");
+
+            if (runtimeId !== agentId && key !== agentId) continue;
+
+            const metaInfo = AGENT_INSIGHT_META[key];
+            if (!metaInfo) continue;
+
+            const meta = agent.runtime.meta || {};
+            const { insight, action } = generateInsight(key, meta);
+
+            return res.json({
+                agentId: runtimeId || key,
+                agentName: name,
+                agentEmoji: metaInfo.emoji,
+                focus: metaInfo.focus,
+                insight,
+                action,
+                metrics: {
+                    familyMetrics: meta.familyMetrics || {},
+                    intimacyMetrics: meta.intimacyMetrics || {},
+                    presenceMetrics: meta.presenceMetrics || {},
+                    generationalMetrics: meta.generationalMetrics || {},
+                    growthMetrics: meta.growthMetrics || {},
+                },
+                lastTransactionId: meta.latestTransactionId || null,
+            });
+        }
+
+        return res.status(404).json({ error: `Agent '${agentId}' not found` });
     });
 }
 

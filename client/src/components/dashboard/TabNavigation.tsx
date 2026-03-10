@@ -1,10 +1,12 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Users, MessageCircle, Settings, TrendingUp, LayoutDashboard, Target, Heart } from "lucide-react";
+import { Users, MessageCircle, Settings, TrendingUp, LayoutDashboard, Target, Heart, Bot } from "lucide-react";
+
+export type DashboardTab = "overview" | "insights" | "activities" | "social" | "members" | "agents" | "bond-score" | "settings";
 
 interface TabNavigationProps {
-    activeTab: "overview" | "insights" | "activities" | "social" | "members" | "bond-score" | "settings";
-    onTabChange: (tab: "overview" | "insights" | "activities" | "social" | "members" | "bond-score" | "settings") => void;
+    activeTab: DashboardTab;
+    onTabChange: (tab: DashboardTab) => void;
 }
 
 const tabs = [
@@ -12,6 +14,7 @@ const tabs = [
     { id: "insights" as const, label: "Insights", icon: TrendingUp },
     { id: "members" as const, label: "Members", icon: Users },
     { id: "activities" as const, label: "Activities", icon: Target },
+    { id: "agents" as const, label: "Agents", icon: Bot },
     { id: "social" as const, label: "Social", icon: MessageCircle },
     { id: "bond-score" as const, label: "Bond Score", icon: Heart },
     { id: "settings" as const, label: "Settings", icon: Settings },

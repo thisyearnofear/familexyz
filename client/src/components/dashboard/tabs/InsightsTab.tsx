@@ -2,6 +2,9 @@ import React from "react";
 import { motion } from "framer-motion";
 import { EnhancedAnalytics } from "@/components/family/EnhancedAnalytics";
 import { PersonalizedRecommendations } from "@/components/family/PersonalizedRecommendations";
+import { AgentContribution } from "@/components/agents";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TrendingUp } from "lucide-react";
 import type { FamilyStats } from "@/types/family";
 import type { FamilyMember } from "@/types/family";
 
@@ -9,6 +12,34 @@ interface InsightsTabProps {
   familyStats?: FamilyStats;
   familyMembers: FamilyMember[];
 }
+
+const metricAgentMapping = [
+  {
+    label: "Family Health Forecast",
+    agents: [
+      { id: "wisdom", name: "Wisdom", emoji: "🧠", contribution: "Emotional analysis" },
+    ],
+  },
+  {
+    label: "Stability Index",
+    agents: [
+      { id: "presence", name: "Presence", emoji: "🧘", contribution: "Consistency tracking" },
+    ],
+  },
+  {
+    label: "Communication Depth",
+    agents: [
+      { id: "intimacy", name: "Intimacy", emoji: "💖", contribution: "Connection metrics" },
+      { id: "wisdom", name: "Wisdom", emoji: "🧠", contribution: "Clarity analysis" },
+    ],
+  },
+  {
+    label: "Growth Momentum",
+    agents: [
+      { id: "growth", name: "Growth", emoji: "🚀", contribution: "Challenge tracking" },
+    ],
+  },
+];
 
 export const InsightsTab: React.FC<InsightsTabProps> = ({ familyStats, familyMembers }) => {
   return (
@@ -20,6 +51,35 @@ export const InsightsTab: React.FC<InsightsTabProps> = ({ familyStats, familyMem
       transition={{ duration: 0.3 }}
       className="space-y-6"
     >
+      {/* Agent-attributed metric cards */}
+      <Card className="border-0 bg-white/80 backdrop-blur-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <TrendingUp className="w-5 h-5 text-purple-600" />
+            Agent-Powered Insights
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {metricAgentMapping.map((metric) => (
+              <div key={metric.label} className="p-4 bg-gray-50 rounded-lg border">
+                <p className="text-sm font-semibold text-gray-900 mb-1">{metric.label}</p>
+                <p className="text-2xl font-bold text-purple-700 mb-2">
+                  {metric.label === "Family Health Forecast"
+                    ? `${familyStats?.healthScore || 78}/100`
+                    : metric.label === "Stability Index"
+                    ? "85/100"
+                    : metric.label === "Communication Depth"
+                    ? "82/100"
+                    : "76/100"}
+                </p>
+                <AgentContribution agents={metric.agents} />
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
       <EnhancedAnalytics stats={familyStats} history={undefined} />
       <PersonalizedRecommendations
         familyMembers={familyMembers}

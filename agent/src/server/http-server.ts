@@ -17,6 +17,9 @@ declare global {
     var payoutApiHandler: any | undefined;
 }
 
+// Module-level ref to primaryDb so initializePayoutHandler can use it
+let _primaryDb: IDatabaseAdapter | null = null;
+
 export interface HttpServerConfig {
     port: number;
     primaryDb: IDatabaseAdapter | null;
@@ -45,6 +48,7 @@ function getCorsOrigin(reqOrigin?: string): string | null {
  */
 export async function createHttpServer(config: HttpServerConfig): Promise<http.Server> {
     const { port, primaryDb } = config;
+    _primaryDb = primaryDb;
 
     const server = http.createServer(async (req, res) => {
         // Add CORS headers with origin validation
@@ -421,12 +425,31 @@ async function initializePayoutHandler(): Promise<void> {
         const { HederaTokenService: HTS } = await import("@familexyz/agent/integrations/HederaTokenService.js");
         const { PayoutApiHandler } = await import("../api/index.js");
         
+        const hcsTopicId = process.env.HEDERA_WISDOM_TOPIC_ID || "0.0.0";
+        const famTokenId = process.env.HEDERA_FAMILY_TOKEN_ID || "0.0.0";
+        const treasuryId = process.env.HEDERA_TREASURY_ACCOUNT_ID || process.env.HEDERA_OPERATOR_ID || "0.0.0";
+
         const payoutService = new PSvc();
         const anomalyService = new ADSvc();
-        const hcsLogger = new HPL("0.0.0.0");
-        const tokenService = new HTS("0.0.0.0", "0.0.0.0", []);
+
+        // Create HCS logger with optional SQLite persistence
+        const dbAdapter = _primaryDb && 'query' in _primaryDb
+            ? { query: (sql: string, params: any[]) => (_primaryDb as any).query(sql, params) }
+            : undefined;
+        const hcsLogger = new HPL(hcsTopicId, dbAdapter);
+
+        // Load existing records from DB into memory cache
+        if (dbAdapter) {
+            const loaded = await hcsLogger.loadFromDb();
+            if (loaded > 0) {
+                elizaLogger.info(`Loaded ${loaded} payout records from SQLite`);
+            }
+        }
+
+        const tokenService = new HTS(famTokenId, treasuryId, []);
         
         global.payoutApiHandler = new PayoutApiHandler(payoutService, anomalyService, hcsLogger, tokenService);
+        elizaLogger.info(`Payout handler initialized (topic: ${hcsTopicId}, token: ${famTokenId}, db: ${dbAdapter ? 'sqlite' : 'memory-only'})`);
     } catch (err) {
         elizaLogger.warn("Payout services not available:", err);
         global.payoutApiHandler = null;

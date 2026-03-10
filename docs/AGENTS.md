@@ -165,6 +165,14 @@ Wisdom, Intimacy & Presence agree:
 strengthening all key relationships."
 ```
 
+### 7. Live Backend Insights API
+Agent insights are now served from real runtime metrics:
+- **Endpoint:** `GET /agents/insights` (DirectClient, port 3000)
+- **Per-agent:** `GET /agents/:agentId/insights`
+- **Data source:** `agent.runtime.meta` (familyMetrics, intimacyMetrics, etc.)
+- **Frontend hook:** `useAgentInsights()` fetches live data with 30s polling
+- **Fallback:** Static template insights when backend is unreachable
+
 ---
 
 ## 💰 Payout System & Incentives

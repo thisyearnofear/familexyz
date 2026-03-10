@@ -132,6 +132,15 @@ Execute Transfer (HederaTokenService)
 | `/api/payouts/anomalies` | GET | Anomaly review list (admin) |
 | `/api/payouts/dispute` | POST | File dispute against payout |
 
+#### Agent Insights APIs (Live Metrics)
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/agents/insights` | GET | All agents' real-time insights (port 3000) |
+| `/agents/:agentId/insights` | GET | Single agent insight + metrics (port 3000) |
+
+**Note:** Agent insight endpoints are served by DirectClient (port 3000) because they require access to agent runtimes. The frontend's `BASE_URL` already points to port 3000.
+
 #### Bond Scoring APIs (Phase 4a)
 
 | Endpoint | Method | Purpose |
@@ -269,13 +278,17 @@ Detects gaming patterns and manages cooling periods.
 - Network topology anomalies
 
 #### HederaPayoutLogger
-Immutable audit trail on Hedera Consensus Service.
+Immutable audit trail on Hedera Consensus Service + SQLite persistence.
 
 **Methods:**
-- `logPayoutRecord(record)` - Submit HCS message
+- `logPayoutRecord(record)` - Submit HCS message + persist to SQLite
 - `getPayoutRecord(recordId)` - Retrieve from Mirror Node
 - `getAgentPayoutStats(agentId, startWeek, endWeek)` - Aggregation
 - `getFamilyPayoutStats(familyId, startWeek, endWeek)` - Aggregation
+- `setDbAdapter(db)` - Attach SQLite adapter at runtime
+- `loadFromDb()` - Hydrate in-memory cache from SQLite on startup
+
+**Persistence:** Records are written to both in-memory Map (fast cache) and `agent_payout_tracking` SQLite table (durable). On startup, existing records are loaded from SQLite into the cache.
 
 #### HederaTokenService
 FAM token distribution on Hedera.
@@ -375,11 +388,12 @@ Each agent is a specialized plugin with:
 - **<100ms API response time**
 
 ### Optimization Strategies
-- In-memory caching for hot data
+- In-memory caching for hot data (HederaPayoutLogger dual-layer cache)
 - Batch HCS submissions
 - Async/await for I/O
 - Query result caching
 - Memoized React components
+- Agent insights served from runtime metadata (zero DB overhead)
 
 ---
 

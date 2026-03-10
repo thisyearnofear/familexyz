@@ -193,7 +193,7 @@ export class AnomalyDetectionService {
   ): AnomalyFlag[] {
     const flags: AnomalyFlag[] = [];
 
-    const compositeImproved = current.compositeScore > previous.compositeScore;
+    const compositeImproved = current.bondScore > previous.bondScore;
     
     // Count how many signals improved vs declined
     const signalKeys = Object.keys(previous.scores) as Array<keyof typeof previous.scores>;
@@ -225,10 +225,10 @@ export class AnomalyDetectionService {
   ): AnomalyFlag[] {
     const flags: AnomalyFlag[] = [];
     
-    if (previous.compositeScore === 0) return flags;
+    if (previous.bondScore === 0) return flags;
 
     const percentChange = Math.abs(
-      (current.compositeScore - previous.compositeScore) / previous.compositeScore * 100
+      (current.bondScore - previous.bondScore) / previous.bondScore * 100
     );
 
     if (percentChange > this.config.largeJumpThreshold) {
@@ -236,7 +236,7 @@ export class AnomalyDetectionService {
         type: "LARGE_JUMP",
         severity: percentChange > 50 ? "high" : "medium",
         confidence: Math.min(1, percentChange / 100),
-        details: `Composite score jumped ${percentChange.toFixed(1)}% in single week (${previous.compositeScore} → ${current.compositeScore})`,
+        details: `Composite score jumped ${percentChange.toFixed(1)}% in single week (${previous.bondScore} → ${current.bondScore})`,
         recommendation: percentChange > 50 ? "investigation" : "review",
       });
     }

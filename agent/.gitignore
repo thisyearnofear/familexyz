@@ -1,6 +1,7 @@
 *.ts
 !index.ts
 !character.ts
+!src/**/*.ts
 .env
 *.env
 .env*

@@ -476,7 +476,7 @@ export function createApiRouter(
 
             for (const agentRuntime of agents.values()) {
                 const teeLogService = agentRuntime
-                    .getService<TeeLogService>(ServiceType.TEE_LOG)
+                    .getService<any>(ServiceType.TEE_LOG)
                     .getInstance();
 
                 const agents = await teeLogService.getAllAgents();
@@ -485,7 +485,7 @@ export function createApiRouter(
 
             const runtime: AgentRuntime = agents.values().next().value;
             const teeLogService = runtime
-                .getService<TeeLogService>(ServiceType.TEE_LOG)
+                .getService<any>(ServiceType.TEE_LOG)
                 .getInstance();
             const attestation = await teeLogService.generateAttestation(
                 JSON.stringify(allAgents),
@@ -510,7 +510,7 @@ export function createApiRouter(
             }
 
             const teeLogService = agentRuntime
-                .getService<TeeLogService>(ServiceType.TEE_LOG)
+                .getService<any>(ServiceType.TEE_LOG)
                 .getInstance();
 
             const teeAgent = await teeLogService.getAgent(agentId);
@@ -534,7 +534,7 @@ export function createApiRouter(
                 const page = Number.parseInt(req.body.page) || 1;
                 const pageSize = Number.parseInt(req.body.pageSize) || 10;
 
-                const teeLogQuery: TeeLogQuery = {
+                const teeLogQuery: any = {
                     agentId: query.agentId || "",
                     roomId: query.roomId || "",
                     userId: query.userId || "",
@@ -545,7 +545,7 @@ export function createApiRouter(
                 };
                 const agentRuntime: AgentRuntime = agents.values().next().value;
                 const teeLogService = agentRuntime
-                    .getService<TeeLogService>(ServiceType.TEE_LOG)
+                    .getService<any>(ServiceType.TEE_LOG)
                     .getInstance();
                 const pageQuery = await teeLogService.getLogs(
                     teeLogQuery,
@@ -643,7 +643,7 @@ export function createApiRouter(
 
         try {
             const gdService =
-                runtime.getService<GoodDollarService>(ServiceType.GOODDOLLAR);
+                runtime.getService<any>(ServiceType.GOODDOLLAR);
             if (!gdService) {
                 res.status(503).json({
                     error: "GoodDollar service not available",
@@ -720,7 +720,7 @@ export function createApiRouter(
 
         try {
             const identityService =
-                runtime.getService<IdentityService>(ServiceType.IDENTITY);
+                runtime.getService<any>(ServiceType.IDENTITY);
             if (!identityService) {
                 res.json({
                     success: true,
@@ -815,7 +815,7 @@ export function createApiRouter(
 
         try {
             const streamingService =
-                runtime.getService<StreamingService>(ServiceType.STREAMING);
+                runtime.getService<any>(ServiceType.STREAMING);
             if (!streamingService) {
                 res.json({
                     success: true,

@@ -101,7 +101,7 @@ function isAllStrings(arr: unknown[]): boolean {
 /**
  * Handle plugin importing from string names
  */
-async function handlePluginImporting(plugins: string[]): Promise<any[]> {
+export async function handlePluginImporting(plugins: string[]): Promise<any[]> {
     if (!plugins || plugins.length === 0) {
         return [];
     }

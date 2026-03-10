@@ -67,6 +67,7 @@
     },
     "pnpm": {
         "overrides": {
+            "esbuild": "0.24.2",
             "onnxruntime-node": "1.20.1",
             "viem": "2.21.58",
             "@polkadot/util": "12.6.2",

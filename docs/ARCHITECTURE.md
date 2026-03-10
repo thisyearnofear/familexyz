@@ -512,6 +512,58 @@ pnpm deploy
 
 ---
 
+## 🌐 AG-UI Protocol (Agent-User Interaction)
+
+FamilyXYZ implements the [AG-UI protocol](https://docs.ag-ui.com) for real-time, typed communication between agents and the frontend.
+
+### Event Types
+
+All events follow the AG-UI spec and are defined in `client/src/types/agui.ts`.
+
+| Category | Events | Purpose |
+|----------|--------|---------|
+| Lifecycle | `RunStarted`, `RunFinished`, `RunError` | Stream lifecycle |
+| Steps | `StepStarted`, `StepFinished` | Agent reasoning progress |
+| Text | `TextMessageStart`, `TextMessageContent`, `TextMessageEnd` | Streamed response |
+| Tools | `ToolCallStart`, `ToolCallArgs`, `ToolCallEnd` | Frontend tool invocation |
+| State | `StateSnapshot`, `StateDelta` | Shared state (JSON Patch RFC 6902) |
+| Custom | `Custom` | Family-specific events (`family.*`) |
+
+### Frontend Tools (Human-in-the-Loop)
+
+Defined in `client/src/hooks/useFamilyTools.ts` and sent in the request body.
+
+| Tool | Purpose |
+|------|---------|
+| `confirmPayout` | Approve agent payouts before Hedera execution |
+| `setFamilyGoal` | Propose a new shared family goal |
+| `suggestActivity` | Recommend a bond-strengthening activity |
+
+When the agent invokes a frontend tool, the UI shows an approval card. The user can approve or reject.
+
+### Endpoint
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/:agentId/ag-ui` | POST | SSE stream of AG-UI events (port 3000) |
+
+**Request body:**
+```json
+{
+  "text": "How is our family doing?",
+  "user": "user",
+  "tools": [{ "name": "confirmPayout", "description": "...", "parameters": {...} }],
+  "context": {}
+}
+```
+
+### State Management
+
+- `StateSnapshot` emitted at run start with real `runtime.meta` data (familyMetrics, intimacyMetrics, etc.)
+- `StateDelta` uses JSON Patch RFC 6902 operations: `[{ "op": "replace", "path": "/family/overallHealth", "value": 82 }]`
+
+---
+
 ## 📚 References
 
 - [Hedera Documentation](https://docs.hedera.com/)

@@ -1,8 +1,10 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
-import { Send, Bot, Brain, Heart, Users, Leaf, Rocket, Info } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { Send, Bot, Brain, Heart, Users, Leaf, Rocket, Info, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { apiClient } from "@/lib/api";
 import { ThoughtProcess } from "./ThoughtProcess";
 import { motion, AnimatePresence } from "framer-motion";
+import { useFamilyTools, type PendingToolCall } from "@/hooks/useFamilyTools";
+import type { AGUIEvent } from "@/types/agui";
 
 interface Message {
   id: string;
@@ -35,6 +37,57 @@ const agentConfigs: Record<string, any> = {
   Growth: { icon: <Rocket className="w-4 h-4" />, color: "bg-orange-500" },
 };
 
+// ── Tool Approval Dialog ───────────────────────────────
+const ToolApprovalCard: React.FC<{
+  call: PendingToolCall;
+  onApprove: (toolCallId: string) => void;
+  onReject: (toolCallId: string) => void;
+}> = ({ call, onApprove, onReject }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, scale: 0.95 }}
+    className="bg-amber-50 border border-amber-200 rounded-xl p-4 my-3 space-y-3"
+  >
+    <div className="flex items-center gap-2 text-sm font-semibold text-amber-800">
+      <Loader2 className="w-4 h-4 animate-spin" />
+      Agent wants to run: <span className="font-mono text-amber-900">{call.toolName}</span>
+    </div>
+    <pre className="text-xs bg-white/70 rounded-lg p-3 overflow-x-auto text-gray-700">
+      {JSON.stringify(call.args, null, 2)}
+    </pre>
+    <div className="flex gap-2">
+      <button
+        onClick={() => onApprove(call.toolCallId)}
+        className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors"
+      >
+        <CheckCircle2 className="w-3.5 h-3.5" /> Approve
+      </button>
+      <button
+        onClick={() => onReject(call.toolCallId)}
+        className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
+      >
+        <XCircle className="w-3.5 h-3.5" /> Reject
+      </button>
+    </div>
+  </motion.div>
+);
+
+// ── Step Progress Indicator ────────────────────────────
+const StepProgress: React.FC<{ steps: { name: string; done: boolean }[] }> = ({ steps }) => {
+  if (steps.length === 0) return null;
+  return (
+    <div className="flex items-center gap-3 px-2 py-1 text-xs text-gray-500">
+      {steps.map((s) => (
+        <span key={s.name} className={`flex items-center gap-1 ${s.done ? "text-green-600" : "text-purple-600 font-medium"}`}>
+          {s.done ? <CheckCircle2 className="w-3 h-3" /> : <Loader2 className="w-3 h-3 animate-spin" />}
+          {s.name}
+        </span>
+      ))}
+    </div>
+  );
+};
+
 export const AGUIChatInterface: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -43,13 +96,22 @@ export const AGUIChatInterface: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [thoughts, setThoughts] = useState<Thought[]>([]);
   const [bondScore, setBondScore] = useState<number | null>(null);
+  const [agentSnapshot, setAgentSnapshot] = useState<Record<string, unknown> | null>(null);
+  const [activeSteps, setActiveSteps] = useState<{ name: string; done: boolean }[]>([]);
+
+  // Accumulates streamed tool-call JSON args keyed by toolCallId
+  const toolArgsBufferRef = useRef<Record<string, string>>({});
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  const { tools, pendingToolCalls, enqueueToolCall, resolveToolCall, clearPendingToolCalls } = useFamilyTools();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  useEffect(scrollToBottom, [messages, thoughts]);
+  useEffect(scrollToBottom, [messages, thoughts, pendingToolCalls]);
 
   useEffect(() => {
     const loadAgents = async () => {
@@ -68,7 +130,150 @@ export const AGUIChatInterface: React.FC = () => {
     loadAgents();
   }, []);
 
-  const handleSendMessage = async () => {
+  // ── AG-UI event handler ──────────────────────────────
+  const handleEvent = (event: AGUIEvent) => {
+    switch (event.type) {
+      // Lifecycle
+      case "RunStarted":
+        setIsLoading(true);
+        setActiveSteps([]);
+        clearPendingToolCalls();
+        toolArgsBufferRef.current = {};
+        break;
+
+      case "RunFinished":
+        setMessages(prev => prev.map(m => m.isStreaming ? { ...m, isStreaming: false } : m));
+        setIsLoading(false);
+        setActiveSteps([]);
+        break;
+
+      case "RunError":
+        setIsLoading(false);
+        setActiveSteps([]);
+        break;
+
+      // State
+      case "StateSnapshot":
+        setAgentSnapshot((event as any).snapshot ?? null);
+        break;
+
+      case "StateDelta":
+        // For now we just refresh the bond score if present in the patch
+        for (const op of (event as any).delta ?? []) {
+          if (op.path === "/family/overallHealth" && op.value != null) {
+            setBondScore(op.value);
+          }
+        }
+        break;
+
+      // Steps
+      case "StepStarted":
+        setActiveSteps(prev => [...prev, { name: (event as any).stepName, done: false }]);
+        setThoughts(prev => [
+          ...prev,
+          { id: Math.random().toString(), content: (event as any).stepName, type: "reasoning", status: "pending" },
+        ]);
+        break;
+
+      case "StepFinished":
+        setActiveSteps(prev => prev.map(s => s.name === (event as any).stepName ? { ...s, done: true } : s));
+        setThoughts(prev =>
+          prev.map(t =>
+            t.content === (event as any).stepName && t.status === "pending" ? { ...t, status: "completed" } : t,
+          ),
+        );
+        break;
+
+      // Text messages
+      case "TextMessageStart":
+        setMessages(prev => [
+          ...prev,
+          {
+            id: (event as any).messageId || Date.now().toString(),
+            content: "",
+            sender: "agent",
+            agentName: selectedAgent?.name,
+            timestamp: new Date(),
+            isStreaming: true,
+          },
+        ]);
+        break;
+
+      case "TextMessageContent":
+        setMessages(prev => {
+          const last = prev[prev.length - 1];
+          if (last && last.sender === "agent" && last.isStreaming) {
+            return [...prev.slice(0, -1), { ...last, content: last.content + ((event as any).content ?? "") }];
+          }
+          // Fallback: create a new message if TextMessageStart was missed
+          return [
+            ...prev,
+            {
+              id: (event as any).messageId || Date.now().toString(),
+              content: (event as any).content ?? "",
+              sender: "agent" as const,
+              agentName: selectedAgent?.name,
+              timestamp: new Date(),
+              isStreaming: true,
+            },
+          ];
+        });
+        break;
+
+      case "TextMessageEnd":
+        setMessages(prev => prev.map(m => m.isStreaming ? { ...m, isStreaming: false } : m));
+        break;
+
+      // Tool calls
+      case "ToolCallStart": {
+        const { toolCallId, toolCallName } = event as any;
+        toolArgsBufferRef.current[toolCallId] = "";
+        setThoughts(prev => [
+          ...prev,
+          { id: toolCallId, content: `Tool: ${toolCallName}`, type: "tool", status: "pending" },
+        ]);
+        break;
+      }
+
+      case "ToolCallArgs": {
+        const { toolCallId, delta } = event as any;
+        if (toolCallId && delta) {
+          toolArgsBufferRef.current[toolCallId] = (toolArgsBufferRef.current[toolCallId] || "") + delta;
+        }
+        break;
+      }
+
+      case "ToolCallEnd": {
+        const { toolCallId } = event as any;
+        const argsJson = toolArgsBufferRef.current[toolCallId];
+        // Find the matching tool name from the thoughts
+        const matchingThought = thoughts.find(t => t.id === toolCallId);
+        const toolName = matchingThought?.content?.replace("Tool: ", "") ?? "";
+
+        // Check if this is a frontend tool
+        if (tools.some(t => t.name === toolName) && argsJson) {
+          try {
+            enqueueToolCall(toolCallId, toolName, JSON.parse(argsJson));
+          } catch { /* malformed JSON — skip */ }
+        }
+
+        setThoughts(prev => prev.map(t => t.id === toolCallId ? { ...t, status: "completed" } : t));
+        delete toolArgsBufferRef.current[toolCallId];
+        break;
+      }
+
+      // Custom events
+      case "Custom": {
+        const { name, value } = event as any;
+        if (name === "family.bond_score_update" && value?.newScore != null) {
+          setBondScore(value.newScore);
+        }
+        break;
+      }
+    }
+  };
+
+  const handleSendMessage = () => {
     if (!input.trim() || !selectedAgent || isLoading) return;
 
     const userMsg: Message = {
@@ -83,56 +288,27 @@ export const AGUIChatInterface: React.FC = () => {
     setIsLoading(true);
     setThoughts([]);
 
-    let currentAgentMessage: Message | null = null;
+    // Abort any previous stream
+    abortRef.current?.abort();
 
-    try {
-      await apiClient.streamAGUI(selectedAgent.id, input, (event) => {
-        switch (event.type) {
-          case "RunStarted":
-            setIsLoading(true);
-            break;
-          
-          case "Reasoning":
-            setThoughts(prev => [
-              ...prev, 
-              { id: event.id || Math.random().toString(), content: event.content, type: "reasoning", status: "completed" }
-            ]);
-            break;
+    abortRef.current = apiClient.streamAGUI(
+      selectedAgent.id,
+      userMsg.content,
+      handleEvent,
+      { tools },
+    );
+  };
 
-          case "TextMessageContent":
-            setMessages(prev => {
-              const last = prev[prev.length - 1];
-              if (last && last.sender === "agent" && last.isStreaming) {
-                return [...prev.slice(0, -1), { ...last, content: last.content + event.text }];
-              } else {
-                return [...prev, {
-                  id: event.messageId || Date.now().toString(),
-                  content: event.text,
-                  sender: "agent",
-                  agentName: selectedAgent.name,
-                  timestamp: new Date(),
-                  isStreaming: true
-                }];
-              }
-            });
-            break;
+  const handleToolApprove = (toolCallId: string) => {
+    resolveToolCall(toolCallId);
+    // In a full bidirectional setup the result would be POSTed back.
+    // For now we log approval and let the run continue.
+    console.log("[AG-UI] Tool approved:", toolCallId);
+  };
 
-          case "RunFinished":
-            setMessages(prev => prev.map(m => m.isStreaming ? { ...m, isStreaming: false } : m));
-            setIsLoading(false);
-            break;
-
-          case "Custom":
-            if (event.subType === "family.bond_score_update") {
-              setBondScore(event.payload.newScore);
-            }
-            break;
-        }
-      });
-    } catch (e) {
-      console.error(e);
-      setIsLoading(false);
-    }
+  const handleToolReject = (toolCallId: string) => {
+    resolveToolCall(toolCallId);
+    console.log("[AG-UI] Tool rejected:", toolCallId);
   };
 
   return (
@@ -147,7 +323,7 @@ export const AGUIChatInterface: React.FC = () => {
             <h2 className="font-bold text-gray-900">Family Protocol Chat</h2>
             <div className="flex items-center gap-2">
               <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-xs text-gray-500 font-medium">AG-UI v1.0 Streaming Active</span>
+              <span className="text-xs text-gray-500 font-medium">AG-UI v1.1 Streaming Active</span>
             </div>
           </div>
         </div>
@@ -188,6 +364,14 @@ export const AGUIChatInterface: React.FC = () => {
           </div>
         ))}
 
+        {/* Tool approval dialogs */}
+        <AnimatePresence>
+          {pendingToolCalls.map(call => (
+            <ToolApprovalCard key={call.toolCallId} call={call} onApprove={handleToolApprove} onReject={handleToolReject} />
+          ))}
+        </AnimatePresence>
+
+        <StepProgress steps={activeSteps} />
         <ThoughtProcess thoughts={thoughts} isThinking={isLoading && thoughts.length > 0} />
         <div ref={messagesEndRef} />
       </div>

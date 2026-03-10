@@ -151,47 +151,73 @@ export const apiClient = {
     fetcher({ url: `/agents/${agentId}/insights` }),
 
   // --- AG-UI Protocol (Standardized AI-User Interaction) ---
-  streamAGUI: async (
-    agentId: string, 
-    text: string, 
-    onEvent: (event: any) => void
-  ) => {
-    const response = await fetch(`${BASE_URL}/${agentId}/ag-ui`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ text, user: "user" }),
-    });
+  streamAGUI: (
+    agentId: string,
+    text: string,
+    onEvent: (event: import("@/types/agui").AGUIEvent) => void,
+    options?: {
+      tools?: import("@/types/agui").ToolDefinition[];
+      context?: Record<string, unknown>;
+      userId?: string;
+      roomId?: string;
+      threadId?: string;
+    },
+  ): AbortController => {
+    const controller = new AbortController();
 
-    if (!response.ok) {
-      throw new Error(`AG-UI Stream failed: ${response.statusText}`);
-    }
+    (async () => {
+      try {
+        const response = await fetch(`${BASE_URL}/${agentId}/ag-ui`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            text,
+            user: options?.userId ?? "user",
+            userId: options?.userId,
+            roomId: options?.roomId,
+            threadId: options?.threadId,
+            tools: options?.tools,
+            context: options?.context,
+          }),
+          signal: controller.signal,
+        });
 
-    const reader = response.body?.getReader();
-    if (!reader) return;
+        if (!response.ok) {
+          throw new Error(`AG-UI Stream failed: ${response.statusText}`);
+        }
 
-    const decoder = new TextDecoder();
-    let buffer = "";
+        const reader = response.body?.getReader();
+        if (!reader) return;
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
+        const decoder = new TextDecoder();
+        let buffer = "";
 
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n\n");
-      buffer = lines.pop() || "";
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-      for (const line of lines) {
-        if (line.startsWith("data: ")) {
-          try {
-            const data = JSON.parse(line.slice(6));
-            onEvent(data);
-          } catch (e) {
-            console.error("Failed to parse AG-UI event", e);
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n\n");
+          buffer = lines.pop() || "";
+
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              try {
+                const data = JSON.parse(line.slice(6));
+                onEvent(data);
+              } catch (e) {
+                console.error("Failed to parse AG-UI event", e);
+              }
+            }
           }
         }
+      } catch (err: any) {
+        if (err.name !== "AbortError") {
+          console.error("AG-UI stream error", err);
+        }
       }
-    }
+    })();
+
+    return controller;
   },
 };

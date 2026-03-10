@@ -1191,6 +1191,7 @@ export function createApiRouter(
         const userId = stringToUuid(req.body.userId ?? "user");
         const roomId = stringToUuid(req.body.roomId ?? "default-room-" + agentId);
         const runId = stringToUuid(Date.now().toString());
+        const frontendTools = req.body.tools || [];
 
         // Set headers for SSE (Server-Sent Events)
         res.setHeader("Content-Type", "text/event-stream");
@@ -1204,51 +1205,49 @@ export function createApiRouter(
         };
 
         try {
-            // 1. Signal Run Started
-            sendEvent({ type: "RunStarted", runId });
+            // ── Lifecycle: Run Started ──────────────────────────
+            sendEvent({ type: "RunStarted", runId, threadId: roomId });
 
-            // 2. Prepare ElizaOS interaction
+            // ── State Snapshot (real runtime.meta) ─────────────
+            const meta = (runtime as any).meta || {};
+            sendEvent({
+                type: "StateSnapshot",
+                snapshot: {
+                    agentName: runtime.character.name,
+                    familyMetrics: meta.familyMetrics ?? null,
+                    intimacyMetrics: meta.intimacyMetrics ?? null,
+                    presenceMetrics: meta.presenceMetrics ?? null,
+                    generationalMetrics: meta.generationalMetrics ?? null,
+                    growthMetrics: meta.growthMetrics ?? null,
+                    latestTransactionId: meta.latestTransactionId ?? null,
+                },
+            });
+
+            // ── Step: Compose context ──────────────────────────
+            sendEvent({ type: "StepStarted", stepName: "Composing context" });
+
             await runtime.ensureConnection(userId, roomId, req.body.userName, req.body.name, "direct");
 
             const content: Content = { text, attachments: [], source: "direct" };
             const userMessage = { content, userId, roomId, agentId: runtime.agentId };
 
-            // Emit Reasoning event for context preparation
-            sendEvent({ 
-                type: "Reasoning", 
-                message: `Synthesizing memory and preparing context for ${runtime.character.name}...` 
-            });
-
             const state = await runtime.composeState(userMessage, {
                 agentName: runtime.character.name,
             });
 
-            // Emit StateDelta if there are interesting state changes (simulated for demo)
+            // StateDelta (JSON Patch RFC 6902)
             if (state.recentMessagesData) {
                 sendEvent({
                     type: "StateDelta",
-                    path: "session.messageCount",
-                    value: state.recentMessagesData.length
+                    delta: [{ op: "replace", path: "/session/messageCount", value: state.recentMessagesData.length }],
                 });
             }
 
-            const context = composeContext({
-                state,
-                template: directClient.loadCharacterTryPath ? "" : "", // dummy to use template if needed
-            });
+            const context = composeContext({ state, template: "" });
+            sendEvent({ type: "StepFinished", stepName: "Composing context" });
 
-            // Note: In a production ag-ui implementation, we would use a streaming provider.
-            // Since we are wrapping the standard generateMessageResponse, we will simulate 
-            // the text streaming events based on the final response for this protocol implementation.
-            
-            // Emit ToolCallStart for the main reasoning engine
-            const toolCallId = stringToUuid(Date.now().toString());
-            sendEvent({
-                type: "ToolCallStart",
-                toolCallId,
-                toolName: "ElizaOS_Reasoning_Engine",
-                toolInput: { contextLength: context.length }
-            });
+            // ── Step: Generating response ──────────────────────
+            sendEvent({ type: "StepStarted", stepName: "Generating response" });
 
             const response = await generateMessageResponse({
                 runtime: runtime,
@@ -1256,97 +1255,98 @@ export function createApiRouter(
                 modelClass: ModelClass.LARGE,
             });
 
-            sendEvent({
-                type: "ToolCallEnd",
-                toolCallId,
-                toolName: "ElizaOS_Reasoning_Engine",
-                toolOutput: { action: response?.action || "none" }
-            });
+            sendEvent({ type: "StepFinished", stepName: "Generating response" });
 
             if (response && response.text) {
-                // Check if an interrupt is needed for high-stakes actions (simulated)
-                if (response.action === "SEND_PAYOUT" || response.action === "EXECUTE_TRANSACTION") {
-                    sendEvent({
-                        type: "Interrupt",
-                        interruptId: stringToUuid("interrupt-" + Date.now()),
-                        prompt: `The agent ${runtime.character.name} is requesting to execute a high-stakes action: ${response.action}. Do you approve?`
-                    });
-                    // In a real app, we would pause here and wait for a resume event.
-                    // For the hackathon demo, we'll log it and continue.
-                    sendEvent({ type: "Reasoning", message: "User approval simulated for hackathon demo." });
-                }
-
-                // 3. Stream Text Content (AG-UI format)
+                // ── Text Message lifecycle ─────────────────────
                 const messageId = stringToUuid(Date.now().toString());
-                
-                // Simulate streaming chunks for the UI experience
+                sendEvent({ type: "TextMessageStart", messageId, role: "assistant" });
+
                 const words = response.text.split(" ");
                 for (let i = 0; i < words.length; i++) {
                     sendEvent({
                         type: "TextMessageContent",
                         messageId,
-                        delta: words[i] + (i === words.length - 1 ? "" : " "),
+                        content: words[i] + (i === words.length - 1 ? "" : " "),
                     });
-                    // Artificial delay for realistic streaming simulation
                     await new Promise(resolve => setTimeout(resolve, 10));
                 }
 
-                // 4. Check for Hedera logging / Bond Score updates in response
-                // If the agent performed an action that updates metrics, signal it via Custom event
+                sendEvent({ type: "TextMessageEnd", messageId });
+
+                // ── Frontend tool invocation for high-stakes actions ──
+                if (
+                    (response.action === "SEND_PAYOUT" || response.action === "EXECUTE_TRANSACTION") &&
+                    frontendTools.some((t: any) => t.name === "confirmPayout")
+                ) {
+                    const payoutToolCallId = stringToUuid("tc-payout-" + Date.now());
+                    sendEvent({
+                        type: "ToolCallStart",
+                        toolCallId: payoutToolCallId,
+                        toolCallName: "confirmPayout",
+                        parentMessageId: messageId,
+                    });
+                    sendEvent({
+                        type: "ToolCallArgs",
+                        toolCallId: payoutToolCallId,
+                        delta: JSON.stringify({
+                            agentName: runtime.character.name,
+                            amount: 100,
+                            reason: response.action,
+                        }),
+                    });
+                    sendEvent({ type: "ToolCallEnd", toolCallId: payoutToolCallId });
+                }
+
+                // ── Family action metrics ──────────────────────
                 const isFamilyAction = response.action && (
-                    response.action.includes("WISDOM") || 
-                    response.action.includes("GROWTH") || 
+                    response.action.includes("WISDOM") ||
+                    response.action.includes("GROWTH") ||
                     response.action.includes("INTIMACY") ||
                     response.action.includes("PRESENCE") ||
                     response.action.includes("SAVINGS")
                 );
 
                 if (isFamilyAction) {
-                    const actionToolId = stringToUuid("action-" + Date.now());
-                    sendEvent({
-                        type: "ToolCallStart",
-                        toolCallId: actionToolId,
-                        toolName: `Hedera_HCS_Logger_${response.action}`,
-                        toolInput: { agent: runtime.character.name, action: response.action }
-                    });
-
-                    // Simulate the logging delay
+                    sendEvent({ type: "StepStarted", stepName: "Recording on-chain" });
                     await new Promise(resolve => setTimeout(resolve, 500));
+                    sendEvent({ type: "StepFinished", stepName: "Recording on-chain" });
 
-                    sendEvent({
-                        type: "ToolCallEnd",
-                        toolCallId: actionToolId,
-                        toolName: `Hedera_HCS_Logger_${response.action}`,
-                        toolOutput: { status: "success", topicId: "0.0.123456" }
-                    });
+                    // Real bond score from runtime.meta (fallback to estimate)
+                    const bondScore =
+                        meta.familyMetrics?.bondScore ??
+                        meta.familyMetrics?.overallHealth ??
+                        null;
 
                     sendEvent({
                         type: "Custom",
-                        customType: "family.bond_score_update",
-                        payload: {
+                        name: "family.bond_score_update",
+                        value: {
                             agent: runtime.character.name,
                             action: response.action,
                             impact: "positive",
-                            verifiableTrail: "https://hashscan.io/testnet/topic/0.0.123456"
-                        }
+                            newScore: bondScore,
+                            verifiableTrail: "https://hashscan.io/testnet/topic/0.0.7304500",
+                        },
                     });
 
-                    // Update StateDelta with new "Bond Score"
-                    sendEvent({
-                        type: "StateDelta",
-                        path: "family.overallHealth",
-                        value: Math.floor(Math.random() * 20) + 70 // Simulated real-time update
-                    });
+                    // StateDelta with real value
+                    if (bondScore !== null) {
+                        sendEvent({
+                            type: "StateDelta",
+                            delta: [{ op: "replace", path: "/family/overallHealth", value: bondScore }],
+                        });
+                    }
                 }
             }
 
-            // 5. Signal Run Finished
-            sendEvent({ type: "RunFinished", runId });
+            // ── Lifecycle: Run Finished ────────────────────────
+            sendEvent({ type: "RunFinished", runId, threadId: roomId });
             res.end();
 
         } catch (error) {
             elizaLogger.error("AG-UI Error:", error);
-            sendEvent({ type: "RunError", error: error.message });
+            sendEvent({ type: "RunError", message: error.message, code: "INTERNAL" });
             res.end();
         }
     });

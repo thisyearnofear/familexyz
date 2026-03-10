@@ -173,6 +173,15 @@ Agent insights are now served from real runtime metrics:
 - **Frontend hook:** `useAgentInsights()` fetches live data with 30s polling
 - **Fallback:** Static template insights when backend is unreachable
 
+### 8. AG-UI Protocol Chat
+Real-time agent chat via the AG-UI protocol (`POST /:agentId/ag-ui`):
+- **Typed events:** All event types defined in `client/src/types/agui.ts`
+- **Step progress:** `StepStarted` / `StepFinished` show reasoning pipeline (context composition, response generation, on-chain recording)
+- **State sync:** `StateSnapshot` at run start with live `runtime.meta`; `StateDelta` uses JSON Patch RFC 6902
+- **Frontend tools:** `confirmPayout`, `setFamilyGoal`, `suggestActivity` — defined in `client/src/hooks/useFamilyTools.ts` and sent in the request body
+- **Human-in-the-loop:** Tool approval cards render in the chat UI; user approves/rejects before execution
+- **Custom events:** `family.bond_score_update`, `family.payout_proposed`, `family.milestone_reached`
+
 ---
 
 ## 💰 Payout System & Incentives

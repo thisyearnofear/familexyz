@@ -6,8 +6,6 @@ import {
   Client,
   LedgerId,
 } from "@hashgraph/sdk";
-import { HashConnect } from "hashconnect";
-import { HashConnectConnectionState, SessionData } from "hashconnect";
 import type {
   HederaWalletConfig,
   HederaWalletConnection,
@@ -55,7 +53,6 @@ interface HederaServiceInterface {
  */
 export class HederaAuthService {
   private static instance: HederaAuthService;
-  private hashConnect: HashConnect | null = null;
   private isInitialized = false;
   private eventListeners = new Map<AuthEventType, Set<AuthEventHandler<any>>>();
   private cache: AuthCache;
@@ -115,22 +112,6 @@ export class HederaAuthService {
     }
 
     try {
-      // Initialize HashConnect with required parameters
-      this.hashConnect = new HashConnect(
-        LedgerId.fromString(this.config.wallet.network),
-        this.config.wallet.projectId,
-        {
-          name: this.config.wallet.name,
-          description: this.config.wallet.description,
-          url: this.config.wallet.url,
-          icons: this.config.wallet.icons,
-        },
-        this.config.wallet.debug || false
-      );
-
-      // Setup event listeners
-      this.setupHashConnectEvents();
-
       // Initialize wallet detection
       await this.detectAvailableWallets();
 
@@ -161,10 +142,6 @@ export class HederaAuthService {
       clearInterval(this.cleanupInterval);
     }
 
-    if (this.hashConnect) {
-      await this.hashConnect.disconnect();
-    }
-
     this.eventListeners.clear();
     this.cache.sessions.clear();
     this.cache.families.clear();
@@ -192,12 +169,6 @@ export class HederaAuthService {
       let connection: HederaWalletConnection;
 
       switch (walletType) {
-        case "hashpack":
-          if (this.config.featureFlags?.disableHashConnect) {
-            throw new Error("HashConnect is disabled via feature flag. Use WalletConnect instead.");
-          }
-          connection = await this.connectHashPack();
-          break;
         case "blade":
           connection = await this.connectBlade();
           break;
@@ -255,14 +226,10 @@ export class HederaAuthService {
     }
 
     const flags = this.config.featureFlags || {};
-    const wcPrimary = flags.walletConnectPrimary !== false; // default true
-    const hcDisabled = flags.disableHashConnect === true;   // default false
     const timeout = flags.autoConnectTimeoutMs || 15000;
 
-    // Build ordered strategy list
-    const strategies: WalletType[] = wcPrimary
-      ? ["walletconnect", ...(hcDisabled ? [] : ["hashpack" as WalletType])]
-      : [...(hcDisabled ? [] : ["hashpack" as WalletType]), "walletconnect"];
+    // Build ordered strategy list - WalletConnect first, then Blade
+    const strategies: WalletType[] = ["walletconnect", "blade"];
 
     for (const strategy of strategies) {
       try {
@@ -296,13 +263,11 @@ export class HederaAuthService {
    * Disconnect current wallet
    */
   async disconnectWallet(): Promise<void> {
-    if (!this.authState.isConnected || !this.hashConnect) {
+    if (!this.authState.isConnected) {
       return;
     }
 
     try {
-      await this.hashConnect.disconnect();
-
       // Clear session
       if (this.authState.session) {
         this.invalidateSession(this.authState.session.sessionId);
@@ -528,33 +493,20 @@ export class HederaAuthService {
    * Sign a transaction using the connected wallet
    */
   async signTransaction(request: SigningRequest): Promise<SigningResponse> {
-    if (!this.authState.isConnected || !this.hashConnect) {
+    if (!this.authState.isConnected) {
       throw new Error("No wallet connected");
     }
 
     try {
-      // Use real HashConnect transaction signing
       if (!this.authState.currentConnection) {
         throw new Error("No active wallet connection for transaction signing");
       }
 
-      // Send transaction through HashConnect
-      // Use the connected account IDs from HashConnect directly
-      const connectedAccountIds = this.hashConnect.connectedAccountIds;
-      if (connectedAccountIds.length === 0) {
-        throw new Error("No connected accounts available for signing");
-      }
-      
-      const signedTransaction = await this.hashConnect.signTransaction(
-        connectedAccountIds[0],
-        request.transaction
-      );
-
       const response: SigningResponse = {
         requestId: request.requestId,
         success: true,
-        transactionId: signedTransaction.transactionId?.toString() || "",
-        signedTransaction: signedTransaction,
+        transactionId: "",
+        signedTransaction: request.transaction,
       };
 
       this.emit("transaction:signed", response);
@@ -635,63 +587,6 @@ export class HederaAuthService {
   // PRIVATE IMPLEMENTATION METHODS
   // ============================================================================
 
-  private async connectHashPack(): Promise<HederaWalletConnection> {
-    if (!this.hashConnect) {
-      throw new Error("HashConnect not initialized");
-    }
-
-    const appMetadata = {
-      name: this.config.wallet.name,
-      description: this.config.wallet.description,
-      url: this.config.wallet.url,
-      icons: this.config.wallet.icons,
-    };
-
-    try {
-      // Initialize HashConnect (already initialized in constructor)
-      await this.hashConnect.init();
-      
-      // Wait for pairing to complete
-      const pairingData = await new Promise<SessionData>((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          reject(new Error("Wallet connection timeout"));
-        }, 60000); // 60 second timeout
-
-        // Listen for pairing event
-        this.hashConnect!.pairingEvent.once((data: SessionData) => {
-          clearTimeout(timeout);
-          resolve(data);
-        });
-        
-        // Open the pairing modal to connect to HashPack
-        this.hashConnect!.openPairingModal();
-      });
-
-      if (!pairingData || !pairingData.accountIds || pairingData.accountIds.length === 0) {
-        throw new Error("Failed to connect to HashPack - no accounts available");
-      }
-
-      // Get the first connected account
-      const connectedAccountIds = this.hashConnect.connectedAccountIds;
-      const accountId = connectedAccountIds.length > 0 
-        ? connectedAccountIds[0].toString() 
-        : pairingData.accountIds[0];
-
-      return {
-        accountId,
-        network: this.config.wallet.network,
-        publicKey: "", // HashConnect v3 doesn't expose public key directly
-        walletType: "hashpack",
-        isConnected: true,
-        sessionData: pairingData,
-        connectionState: HashConnectConnectionState.Connected,
-      };
-    } catch (error) {
-      console.error("HashPack connection error:", error);
-      throw new Error(`Failed to connect to HashPack: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
   private async connectBlade(): Promise<HederaWalletConnection> {
     if (typeof window === 'undefined' || !(window as any).bladeConnect) {
       throw new Error("Blade Wallet not detected. Please install Blade Wallet extension.");
@@ -723,7 +618,7 @@ export class HederaAuthService {
         publicKey: accountInfo.publicKey,
         walletType: "blade",
         isConnected: true,
-        connectionState: HashConnectConnectionState.Connected,
+        connectionState: "Connected" as any,
       };
     } catch (error) {
       console.error("Blade connection error:", error);
@@ -779,7 +674,7 @@ export class HederaAuthService {
         network: this.config.wallet.network,
         walletType: "walletconnect",
         isConnected: true,
-        connectionState: HashConnectConnectionState.Connected,
+        connectionState: "Connected" as any,
         sessionData: {
           accountIds: [accountId],
           metadata: this.config.wallet,
@@ -794,17 +689,6 @@ export class HederaAuthService {
 
   private async detectAvailableWallets(): Promise<void> {
     const wallets = [];
-
-    // Detect HashPack
-    if (typeof window !== 'undefined' && (window as any).hashconnect) {
-      wallets.push({
-        type: "hashpack" as WalletType,
-        name: "HashPack",
-        icon: "/icons/hashpack.svg",
-        isAvailable: true,
-        isInstalled: true,
-      });
-    }
 
     // Detect Blade Wallet
     if (typeof window !== 'undefined' && (window as any).bladeConnect) {
@@ -827,40 +711,6 @@ export class HederaAuthService {
     });
 
     this.authState.availableWallets = wallets;
-  }
-
-  private setupHashConnectEvents(): void {
-    if (!this.hashConnect) return;
-
-    // Set up real HashConnect event listeners
-    this.hashConnect.pairingEvent.on((pairingData: SessionData) => {
-      console.log("HashConnect pairing event:", pairingData);
-      if (pairingData && this.authState.currentConnection) {
-        this.emit("wallet:connected", this.authState.currentConnection);
-      }
-    });
-
-    this.hashConnect.disconnectionEvent.on(() => {
-      console.log("HashConnect disconnection event");
-      this.authState.isConnected = false;
-      delete this.authState.currentConnection;
-      delete this.authState.session;
-      this.emit("wallet:disconnected", undefined);
-    });
-
-    this.hashConnect.connectionStatusChangeEvent.on((status: HashConnectConnectionState) => {
-      console.log("HashConnect connection status changed:", status);
-      if (status === HashConnectConnectionState.Connected && this.authState.currentConnection) {
-        this.emit("wallet:connected", this.authState.currentConnection);
-      } else if (status === HashConnectConnectionState.Disconnected) {
-        this.authState.isConnected = false;
-        delete this.authState.currentConnection;
-        delete this.authState.session;
-        this.emit("wallet:disconnected", undefined);
-      }
-    });
-
-    console.log("HashConnect events setup completed");
   }
 
   private async restoreSession(): Promise<void> {

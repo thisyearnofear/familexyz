@@ -1,0 +1,53 @@
+{
+  "name": "@elizaos/a2a-protocol",
+  "version": "0.1.0",
+  "description": "Agent-to-Agent protocol for FamilyXYZ - enables agents to trade tools, insights, and resources",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "a2a",
+    "agent",
+    "trading",
+    "family",
+    "elizaos"
+  ],
+  "scripts": {
+    "build": "tsup 'src/**/*.ts' --format esm,cjs --dts --clean",
+    "dev": "tsup src/index.ts --format esm --dts --watch",
+    "clean": "rm -rf dist",
+    "test": "jest",
+    "lint": "eslint src --ext .ts",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.10.5",
+    "typescript": "^5.3.3",
+    "tsup": "^8.0.1",
+    "jest": "^29.7.0",
+    "@types/jest": "^29.5.8",
+    "eslint": "^8.56.0",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/familexyz",
+    "directory": "packages/family/a2a-protocol"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

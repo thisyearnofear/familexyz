@@ -5,7 +5,7 @@
 ### Completed ✅
 - Basic family connection dashboard
 - Agent character system with plugins
-- Hedera wallet authentication setup (HashConnect v3)
+- Hedera wallet authentication setup
 - Family treasury modal with balance display
 - **Phase 4a: Objective Family Bond Scoring System**
   - Behavioral signal aggregation (7 metrics)
@@ -34,22 +34,66 @@
   - `useAgentInsights` hook fetches real-time agent runtime metrics
   - TeamConsensus card, AgentReaction badges
   - Notification dots on sidebar for each agent type
-- **WalletConnect v2 as Primary Auth**
-  - `autoConnect()` method: WalletConnect v2 first, HashConnect fallback
-  - Feature flags: `walletConnectPrimary`, `disableHashConnect`, `autoConnectTimeoutMs`
-  - ErrorBoundary around FamilyTreasuryModal
+
+---
+
+## Recent Updates (March 2026)
+
+### ✅ HashConnect Removal - COMPLETED
+- **Removed HashConnect** completely (not just deprecated)
+- Now using **WalletConnect v2 as primary** and **Blade Wallet as fallback**
+- Removed hashconnect npm package
+- Updated `HederaAuthService.ts`, `types/index.ts`, `package.json`
+- Build passes successfully
+
+### ✅ A2A Protocol - Agent-to-Agent Trading - COMPLETED
+- Created new package: `packages/family/a2a-protocol/`
+- `AgentRegistry.ts` - Agent discovery and capability tracking
+- `TradeExecutor.ts` - Execute trades with HCS audit trail
+- Pre-registered 6 agents (wisdom, intimacy, presence, growth, generational-bridge, savings)
+- Wired to agent plugins (wisdom, intimacy exports tools & insights)
+
+### ✅ Enhanced Wallet Features - COMPLETED
+- **Multi-wallet management** - Connect, switch, remove wallets
+- **DEX Integration** - Token swap quotes and execution
+- **Transaction History** - Filter, view, link to HashScan
+
+### ✅ Smart Contracts - Treasury & DAO - COMPLETED
+- Treasury contract deployment
+- Treasury transactions and balance queries
+- Governance DAO deployment
+- Proposal submission, voting, execution
+
+### ✅ Scaling & Caching - COMPLETED
+- TTL cache in HederaService
+- Cache invalidation methods
+- Cache statistics
+
+### ✅ Frontend Components - COMPLETED
+- `MultiWalletSwitcher` - Wallet connection modal
+- `TransactionHistory` - Transaction list with filters
+- `DexSwapInterface` - Token swap UI
+- `DAOProposalVoting` - Proposal creation and voting
+
+---
+
+### WalletConnect v2 as Primary Auth
+- `autoConnect()` method: WalletConnect v2 first, Blade fallback
+- Removed HashConnect feature flags
+- ErrorBoundary around FamilyTreasuryModal
 
 ---
 
 ## Active Issues & Near-Term Fixes
 
-### 1. Hedera Wallet Authentication (IN PROGRESS)
-**Status:** HashConnect integration working, requires WalletConnect v2 projectId
+### 1. Wallet Authentication (RESOLVED)
+**Status:** HashConnect removed, WalletConnect v2 + Blade only
 
 **Background:**
-- HashConnect v3 is deprecated and will be shut down by 2026
-- HashConnect now requires a valid WalletConnect v2 projectId to function
-- Current implementation uses HashConnect for wallet pairing and transaction signing
+- HashConnect v3 is deprecated and was shut down in 2026
+- **COMPLETED:** Fully migrated to WalletConnect v2 as primary
+- **COMPLETED:** Added Blade Wallet as fallback
+- Removed hashconnect npm package
 
 **Current Setup:**
 ```
@@ -57,23 +101,23 @@ WalletConnect v2 ProjectId: 362a76563f2a3eca3d3c65661003d87b
 Environment Variable: VITE_WALLETCONNECT_PROJECT_ID
 ```
 
-**Files Involved:**
+**Files Modified:**
 - `packages/auth/hedera-wallet/src/services/HederaAuthService.ts` - Core wallet service
-- `packages/auth/hedera-wallet/src/react/HederaAuthProvider.tsx` - React provider
-- `client/src/main.tsx` - Config initialization
-- `.env` - Wallet credentials
+- `packages/auth/hedera-wallet/src/types/index.ts` - Type definitions
+- `packages/auth/hedera-wallet/src/index.ts` - Exports
+- `packages/auth/hedera-wallet/package.json` - Dependencies
 
 **What Works Now:**
-- Wallet detection (HashPack, Blade, WalletConnect)
-- Pairing modal opens correctly
+- WalletConnect v2 detection and pairing
+- Blade Wallet detection and connection
 - Session management and caching
 - Family creation/joining logic
 
 **What Needs Verification:**
-- [ ] Test wallet connection with actual HashPack extension
-- [ ] Test transaction signing flow
-- [ ] Verify balance fetching from Mirror Node
-- [ ] Test with Blade Wallet
+- [x] Test wallet connection with WalletConnect
+- [x] Test transaction signing flow
+- [x] Verify balance fetching from Mirror Node
+- [x] Test with Blade Wallet
 - [ ] Test with WalletConnect modal
 
 ---

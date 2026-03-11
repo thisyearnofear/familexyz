@@ -171,6 +171,18 @@ export interface HederaCache {
     lastUpdated: Map<string, number>;
 }
 
+export interface CacheEntry<T> {
+    value: T;
+    expiresAt: number;
+    hitCount: number;
+}
+
+export interface TTLCacheOptions {
+    defaultTTL: number;
+    maxEntries: number;
+    cleanupInterval: number;
+}
+
 // Event types for real-time updates
 export interface HederaEvent {
     type: HederaEventType;
@@ -238,6 +250,37 @@ export interface FamilyMember {
 }
 
 export type FamilyRole = "admin" | "parent" | "child" | "guardian" | "observer";
+
+// Enhanced wallet types
+export interface MultiWalletAccount {
+    accountId: string;
+    walletType: string;
+    nickname?: string;
+    isActive: boolean;
+    addedAt: number;
+    lastUsed?: number;
+}
+
+export interface TokenSwapQuote {
+    fromToken: string;
+    toToken: string;
+    fromAmount: number;
+    toAmount: number;
+    exchangeRate: number;
+    priceImpact: number;
+    validUntil: number;
+    slippageBps: number;
+}
+
+export interface TransactionHistoryEntry {
+    transactionId: string;
+    type: string;
+    amount: number;
+    tokenId?: string;
+    timestamp: number;
+    status: string;
+    memo: string;
+}
 
 // Utility types
 export type HederaNetwork = "testnet" | "mainnet" | "previewnet";

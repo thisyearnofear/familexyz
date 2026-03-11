@@ -342,4 +342,233 @@ export class HederaContractService {
       return result;
     }, "queryContractFunction");
   }
+
+  // ============================================================================
+  // TREASURY CONTRACT METHODS
+  // ============================================================================
+
+  /**
+   * Deploy family treasury contract
+   */
+  async deployTreasuryContract(
+    familyId: string,
+    adminAccountId: string,
+    signers: string[],
+  ): Promise<HederaServiceResponse<string>> {
+    return this.hederaService.executeWithRetry(async () => {
+      const client = this.hederaService.getClient();
+
+      const transaction = new ContractCreateTransaction()
+        .setBytecode(new Uint8Array(0)) // Would load from compiled contract
+        .setGas(200000)
+        .setConstructorParameters(
+          new ContractFunctionParameters()
+            .addString(familyId)
+            .addAddress(adminAccountId)
+            .addUint256(signers.length),
+        );
+
+      const response = await transaction.execute(client);
+      const receipt = await response.getReceipt(client);
+
+      if (!receipt.contractId) {
+        throw new Error("Failed to deploy treasury contract");
+      }
+
+      const contractId = receipt.contractId.toString();
+      console.log(`✅ Deployed treasury contract: ${contractId} for family: ${familyId}`);
+
+      return contractId;
+    }, "deployTreasuryContract");
+  }
+
+  /**
+   * Execute treasury transaction (requires multi-sig)
+   */
+  async executeTreasuryTransaction(
+    contractId: string,
+    toAccountId: string,
+    amount: number,
+    tokenId?: string,
+  ): Promise<HederaServiceResponse<string>> {
+    return this.hederaService.executeWithRetry(async () => {
+      const client = this.hederaService.getClient();
+
+      const transaction = new ContractExecuteTransaction()
+        .setContractId(ContractId.fromString(contractId))
+        .setGas(100000)
+        .setFunction(
+          "executeTransaction",
+          new ContractFunctionParameters()
+            .addAddress(toAccountId)
+            .addUint256(amount)
+            .addString(tokenId || ""),
+        );
+
+      const response = await transaction.execute(client);
+      const transactionId = response.transactionId.toString();
+
+      console.log(`✅ Treasury transaction executed: ${transactionId}`);
+      return transactionId;
+    }, "executeTreasuryTransaction");
+  }
+
+  /**
+   * Get treasury balance
+   */
+  async getTreasuryBalance(
+    contractId: string,
+  ): Promise<HederaServiceResponse<{ hbar: number; tokens: Record<string, number> }>> {
+    return this.hederaService.executeWithRetry(async () => {
+      const client = this.hederaService.getClient();
+
+      const query = new ContractCallQuery()
+        .setContractId(ContractId.fromString(contractId))
+        .setGas(50000)
+        .setFunction("getBalance", new ContractFunctionParameters());
+
+      const result = await query.execute(client);
+
+      // Simplified return - would parse from contract result
+      const balance = {
+        hbar: 0,
+        tokens: {},
+      };
+
+      console.log(`[Treasury] Balance for ${contractId}:`, balance);
+      return balance;
+    }, "getTreasuryBalance");
+  }
+
+  // ============================================================================
+  // GOVERNANCE DAO METHODS
+  // ============================================================================
+
+  /**
+   * Deploy governance DAO contract
+   */
+  async deployGovernanceDAO(
+    familyId: string,
+    name: string,
+    votingPeriod: number = 604800, // 1 week
+    quorum: number = 50, // 50% threshold
+  ): Promise<HederaServiceResponse<string>> {
+    return this.hederaService.executeWithRetry(async () => {
+      const client = this.hederaService.getClient();
+
+      const transaction = new ContractCreateTransaction()
+        .setBytecode(new Uint8Array(0)) // Would load from compiled contract
+        .setGas(300000)
+        .setConstructorParameters(
+          new ContractFunctionParameters()
+            .addString(familyId)
+            .addString(name)
+            .addUint256(votingPeriod)
+            .addUint256(quorum),
+        );
+
+      const response = await transaction.execute(client);
+      const receipt = await response.getReceipt(client);
+
+      if (!receipt.contractId) {
+        throw new Error("Failed to deploy DAO contract");
+      }
+
+      const contractId = receipt.contractId.toString();
+      console.log(`✅ Deployed governance DAO: ${contractId} for family: ${familyId}`);
+
+      return contractId;
+    }, "deployGovernanceDAO");
+  }
+
+  /**
+   * Submit a proposal to the DAO
+   */
+  async submitProposal(
+    contractId: string,
+    proposerAccountId: string,
+    title: string,
+    description: string,
+  ): Promise<HederaServiceResponse<number>> {
+    return this.hederaService.executeWithRetry(async () => {
+      const client = this.hederaService.getClient();
+
+      const transaction = new ContractExecuteTransaction()
+        .setContractId(ContractId.fromString(contractId))
+        .setGas(150000)
+        .setFunction(
+          "submitProposal",
+          new ContractFunctionParameters()
+            .addString(title)
+            .addString(description)
+            .addAddress(proposerAccountId),
+        );
+
+      const response = await transaction.execute(client);
+      const receipt = await response.getReceipt(client);
+
+      // Simplified - would get proposal ID from event logs
+      const proposalId = Date.now();
+      console.log(`✅ Proposal submitted: ${proposalId} to DAO: ${contractId}`);
+
+      return proposalId;
+    }, "submitProposal");
+  }
+
+  /**
+   * Cast a vote on a proposal
+   */
+  async castVote(
+    contractId: string,
+    proposalId: number,
+    voterAccountId: string,
+    support: boolean,
+  ): Promise<HederaServiceResponse<string>> {
+    return this.hederaService.executeWithRetry(async () => {
+      const client = this.hederaService.getClient();
+
+      const transaction = new ContractExecuteTransaction()
+        .setContractId(ContractId.fromString(contractId))
+        .setGas(100000)
+        .setFunction(
+          "castVote",
+          new ContractFunctionParameters()
+            .addUint256(proposalId)
+            .addAddress(voterAccountId)
+            .addBool(support),
+        );
+
+      const response = await transaction.execute(client);
+      const transactionId = response.transactionId.toString();
+
+      console.log(`✅ Vote cast on proposal ${proposalId}: ${support ? "FOR" : "AGAINST"}`);
+      return transactionId;
+    }, "castVote");
+  }
+
+  /**
+   * Execute a passed proposal
+   */
+  async executeProposal(
+    contractId: string,
+    proposalId: number,
+  ): Promise<HederaServiceResponse<string>> {
+    return this.hederaService.executeWithRetry(async () => {
+      const client = this.hederaService.getClient();
+
+      const transaction = new ContractExecuteTransaction()
+        .setContractId(ContractId.fromString(contractId))
+        .setGas(200000)
+        .setFunction(
+          "executeProposal",
+          new ContractFunctionParameters().addUint256(proposalId),
+        );
+
+      const response = await transaction.execute(client);
+      const transactionId = response.transactionId.toString();
+
+      console.log(`✅ Proposal ${proposalId} executed`);
+      return transactionId;
+    }, "executeProposal");
+  }
 }

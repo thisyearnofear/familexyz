@@ -157,3 +157,18 @@ export class IntimacyPlugin {
 }
 
 export const createIntimacyPlugin = () => new IntimacyPlugin();
+
+// A2A Protocol exports for tool licensing
+export const intimacyTools = {
+  name: "communication_frameworks",
+  description: "Communication improvement tools",
+  cost: 10,
+  type: "tool" as const,
+};
+
+export const intimacyInsights = {
+  name: "relationship_metrics",
+  description: "Relationship health insights",
+  cost: 12,
+  type: "insight" as const,
+};

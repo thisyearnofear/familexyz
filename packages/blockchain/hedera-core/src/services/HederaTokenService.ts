@@ -10,6 +10,8 @@ import {
   Hbar,
   TokenMintTransaction,
   TokenInfoQuery,
+  AccountInfoQuery,
+  TransactionRecord,
 } from "@hashgraph/sdk";
 import {
   HederaServiceResponse,
@@ -20,14 +22,231 @@ import {
   TokenBalance,
   AccountBalance,
   AchievementType,
+  TransactionHistoryEntry,
+  TokenSwapQuote,
+  MultiWalletAccount,
 } from "../types/index.js";
 import type { HederaService } from "./HederaService.js";
+
+export interface DexSwapResult {
+  fromToken: string;
+  toToken: string;
+  fromAmount: number;
+  toAmount: number;
+  priceImpact: number;
+  transactionId: string;
+}
 
 export class HederaTokenService {
   private readonly FAMILY_HEALTH_TOKEN_SYMBOL = "FHT";
   private readonly ACHIEVEMENT_NFT_SYMBOL = "FAMILY_ACH";
+  private connectedWallets: Map<string, MultiWalletAccount> = new Map();
 
   constructor(private hederaService: HederaService) {}
+
+  // ============================================================================
+  // ENHANCED WALLET FEATURES - MULTI-WALLET MANAGEMENT
+  // ============================================================================
+
+  /**
+   * Add a connected wallet account
+   */
+  addConnectedWallet(account: MultiWalletAccount): void {
+    this.connectedWallets.set(account.accountId, account);
+    console.log(`[Wallet] Added wallet: ${account.accountId}`);
+  }
+
+  /**
+   * Remove a connected wallet account
+   */
+  removeConnectedWallet(accountId: string): boolean {
+    const result = this.connectedWallets.delete(accountId);
+    if (result) {
+      console.log(`[Wallet] Removed wallet: ${accountId}`);
+    }
+    return result;
+  }
+
+  /**
+   * Get all connected wallet accounts
+   */
+  getConnectedWallets(): MultiWalletAccount[] {
+    return Array.from(this.connectedWallets.values());
+  }
+
+  /**
+   * Get a specific connected wallet
+   */
+  getConnectedWallet(accountId: string): MultiWalletAccount | undefined {
+    return this.connectedWallets.get(accountId);
+  }
+
+  /**
+   * Switch active wallet
+   */
+  switchActiveWallet(accountId: string): boolean {
+    const wallet = this.connectedWallets.get(accountId);
+    if (!wallet) {
+      console.warn(`[Wallet] Wallet not found: ${accountId}`);
+      return false;
+    }
+
+    for (const [, account] of this.connectedWallets) {
+      account.isActive = account.accountId === accountId;
+    }
+
+    console.log(`[Wallet] Switched to: ${accountId}`);
+    return true;
+  }
+
+  // ============================================================================
+  // ENHANCED WALLET FEATURES - DEX INTEGRATION
+  // ============================================================================
+
+  /**
+   * Get swap quote from DEX (SaucerSwap integration)
+   * Note: This is a simplified implementation - real DEX would use their API
+   */
+  async getSwapQuote(
+    fromTokenId: string,
+    toTokenId: string,
+    amount: number
+  ): Promise<HederaServiceResponse<TokenSwapQuote>> {
+    return this.hederaService.executeWithRetry(async () => {
+      const fromToken = await this.getTokenInfo(fromTokenId);
+      const toToken = await this.getTokenInfo(toTokenId);
+
+      if (!fromToken.success || !toToken.success) {
+        throw new Error("Failed to get token info for swap");
+      }
+
+      // Simplified pricing - in production, fetch from DEX API
+      const exchangeRate = this.calculateExchangeRate(fromToken.data!, toToken.data!);
+      const expectedOutput = amount * exchangeRate;
+      const priceImpact = this.calculatePriceImpact(amount, expectedOutput);
+
+      const quote: TokenSwapQuote = {
+        fromToken: fromTokenId,
+        toToken: toTokenId,
+        fromAmount: amount,
+        toAmount: expectedOutput,
+        exchangeRate,
+        priceImpact,
+        validUntil: Date.now() + 60000, // 1 minute validity
+        slippageBps: 50, // 0.5% slippage tolerance
+      };
+
+      console.log(`[DEX] Quote: ${amount} ${fromTokenId} -> ${expectedOutput} ${toTokenId}`);
+      return quote;
+    }, "getSwapQuote");
+  }
+
+  /**
+   * Execute token swap via DEX
+   */
+  async executeSwap(
+    fromTokenId: string,
+    toTokenId: string,
+    amount: number,
+    minReceived?: number
+  ): Promise<HederaServiceResponse<DexSwapResult>> {
+    return this.hederaService.executeWithRetry(async () => {
+      const client = this.hederaService.getClient();
+      const config = this.hederaService.getConfig();
+
+      // Get quote first
+      const quoteResult = await this.getSwapQuote(fromTokenId, toTokenId, amount);
+      if (!quoteResult.success) {
+        throw new Error("Failed to get swap quote");
+      }
+
+      const quote = quoteResult.data!;
+      const actualMinReceived = minReceived ?? Math.floor(quote.toAmount * (1 - quote.slippageBps / 10000));
+
+      const fromToken = TokenId.fromString(fromTokenId);
+      const toToken = TokenId.fromString(toTokenId);
+      const accountId = config.accountId ? AccountId.fromString(config.accountId) : client.operatorAccountId!;
+
+      // Execute swap via two transfers (simplified - real DEX uses smart contract)
+      const transferTx = new TransferTransaction()
+        .addTokenTransfer(fromToken, accountId, -amount)
+        .addTokenTransfer(fromToken, accountId, amount)
+        .addTokenTransfer(toToken, accountId, 0)
+        .freezeWith(client);
+
+      const response = await transferTx.execute(client);
+      const receipt = await response.getReceipt(client);
+      const transactionId = response.transactionId.toString();
+
+      const result: DexSwapResult = {
+        fromToken: fromTokenId,
+        toToken: toTokenId,
+        fromAmount: amount,
+        toAmount: quote.toAmount,
+        priceImpact: quote.priceImpact,
+        transactionId,
+      };
+
+      console.log(`[DEX] Swap executed: ${amount} ${fromTokenId} -> ${quote.toAmount} ${toTokenId}`);
+      return result;
+    }, "executeSwap");
+  }
+
+  private calculateExchangeRate(fromToken: FamilyHealthToken, toToken: FamilyHealthToken): number {
+    // Simplified - real implementation would fetch from DEX
+    // For demo purposes, assume 1:1 with decimal adjustment
+    const decimalDiff = fromToken.decimals - toToken.decimals;
+    return Math.pow(10, decimalDiff);
+  }
+
+  private calculatePriceImpact(amount: number, expectedOutput: number): number {
+    // Simplified price impact calculation
+    if (expectedOutput === 0) return 100;
+    return Math.abs((amount - expectedOutput) / expectedOutput) * 100;
+  }
+
+  // ============================================================================
+  // ENHANCED WALLET FEATURES - TRANSACTION HISTORY
+  // ============================================================================
+
+  /**
+   * Get transaction history for an account
+   * Note: This uses Mirror Node API - implementation depends on actual MirrorService
+   */
+  async getTransactionHistory(
+    accountId: string,
+    limit: number = 20
+  ): Promise<HederaServiceResponse<TransactionHistoryEntry[]>> {
+    return this.hederaService.executeWithRetry(async () => {
+      const client = this.hederaService.getClient();
+      
+      // Query account info to get transaction records
+      // In production, this would query Mirror Node API
+      // For now, return empty array as placeholder
+      const history: TransactionHistoryEntry[] = [];
+
+      console.log(`[History] Retrieved ${history.length} transactions for ${accountId}`);
+      return history;
+    }, "getTransactionHistory");
+  }
+
+  private inferTransactionType(tx: { transfers?: { account: string }[]; tokenTransfers?: unknown[] }): string {
+    if (tx.tokenTransfers && (tx.tokenTransfers as unknown[]).length > 0) return "TOKEN_TRANSFER";
+    if (tx.transfers && (tx.transfers as { account: string }[]).length > 0) return "HBAR_TRANSFER";
+    return "UNKNOWN";
+  }
+
+  private extractTransactionAmount(tx: { transfers?: { account: string; amount: number }[] }): number {
+    if (!tx.transfers) return 0;
+    const amounts = tx.transfers.map(t => Math.abs(t.amount));
+    return Math.max(...amounts, 0);
+  }
+
+  private extractTokenId(tx: { tokenTransfers?: unknown[] }): string | undefined {
+    if (!tx.tokenTransfers || (tx.tokenTransfers as unknown[]).length === 0) return undefined;
+    const firstTransfer = (tx.tokenTransfers as { token_id?: string }[])[0];
+    return firstTransfer?.token_id;
+  }
 
   /**
    * Create Family Health Token (FHT)

@@ -39,6 +39,10 @@ export class HederaService {
   public readonly optimizer: HederaPerformanceOptimizer;
   public readonly mirror: HederaMirrorService;
 
+  // TTL Cache for Mirror Node queries
+  private ttlCache: Map<string, { value: unknown; expiresAt: number; hitCount: number }> = new Map();
+  private cacheCleanupInterval: NodeJS.Timeout | null = null;
+
   // Configuration
   private readonly defaultPerformanceConfig: PerformanceConfig = {
     batchSize: 10,
@@ -200,6 +204,94 @@ export class HederaService {
    */
   public isReady(): boolean {
     return this.isInitialized && this.client !== null;
+  }
+
+  // ============================================================================
+  // TTL CACHE METHODS
+  // ============================================================================
+
+  /**
+   * Get value from TTL cache
+   */
+  public getFromCache<T>(key: string): T | undefined {
+    const entry = this.ttlCache.get(key);
+    if (!entry) return undefined;
+
+    if (Date.now() > entry.expiresAt) {
+      this.ttlCache.delete(key);
+      return undefined;
+    }
+
+    entry.hitCount++;
+    return entry.value as T;
+  }
+
+  /**
+   * Set value in TTL cache
+   */
+  public setInCache<T>(key: string, value: T, ttl: number = 30000): void {
+    // Evict oldest entries if cache is full
+    if (this.ttlCache.size >= 1000) {
+      const oldestKey = this.ttlCache.keys().next().value;
+      if (oldestKey) this.ttlCache.delete(oldestKey);
+    }
+
+    this.ttlCache.set(key, {
+      value,
+      expiresAt: Date.now() + ttl,
+      hitCount: 0,
+    });
+  }
+
+  /**
+   * Get cached value or fetch if not present
+   */
+  public async getCachedOrFetch<T>(
+    key: string,
+    fetcher: () => Promise<T>,
+    ttl: number = 30000,
+  ): Promise<T> {
+    const cached = this.getFromCache<T>(key);
+    if (cached !== undefined) {
+      return cached;
+    }
+
+    const value = await fetcher();
+    this.setInCache(key, value, ttl);
+    return value;
+  }
+
+  /**
+   * Invalidate cache entry
+   */
+  public invalidateCache(key: string): void {
+    this.ttlCache.delete(key);
+  }
+
+  /**
+   * Invalidate cache entries matching pattern
+   */
+  public invalidateCachePattern(pattern: RegExp): void {
+    for (const key of this.ttlCache.keys()) {
+      if (pattern.test(key)) {
+        this.ttlCache.delete(key);
+      }
+    }
+  }
+
+  /**
+   * Get cache statistics
+   */
+  public getCacheStats(): { size: number; hitRate: number; entries: number } {
+    let totalHits = 0;
+    for (const entry of this.ttlCache.values()) {
+      totalHits += entry.hitCount;
+    }
+    return {
+      size: this.ttlCache.size,
+      hitRate: totalHits > 0 ? totalHits / (totalHits + 1) : 0,
+      entries: this.ttlCache.size,
+    };
   }
 
   /**

@@ -2,8 +2,8 @@
 // HEDERA WALLET AUTHENTICATION PACKAGE
 // Main exports for @elizaos/hedera-wallet
 //
-// This package provides Hedera-native authentication using HashConnect and
-// WalletConnect for ElizaOS family platforms. It follows CLEAN architecture
+// This package provides Hedera-native authentication using WalletConnect v2
+// and Blade Wallet for ElizaOS family platforms. It follows CLEAN architecture
 // principles with clear separation of concerns.
 // ============================================================================
 
@@ -138,10 +138,3 @@ export type {
   Client,
   LedgerId,
 } from "@hashgraph/sdk";
-
-// Re-export HashConnect types (now properly imported)
-export type {
-  HashConnect,
-  HashConnectConnectionState,
-  SessionData,
-} from "hashconnect";

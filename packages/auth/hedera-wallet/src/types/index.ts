@@ -1,5 +1,4 @@
 import { AccountId, PrivateKey, PublicKey } from "@hashgraph/sdk";
-import { HashConnect, HashConnectConnectionState, SessionData } from "hashconnect";
 
 // ============================================================================
 // CORE AUTHENTICATION TYPES
@@ -34,12 +33,15 @@ export interface HederaWalletConnection {
   publicKey?: string;
   walletType: WalletType;
   isConnected: boolean;
-  sessionData?: SessionData;
-  connectionState: HashConnectConnectionState;
+  sessionData?: {
+    accountIds: string[];
+    metadata: WalletMetadata;
+    network: string;
+  };
+  connectionState: string;
 }
 
 export type WalletType =
-  | "hashpack"
   | "blade"
   | "kabila"
   | "metamask"
@@ -328,10 +330,6 @@ export interface HederaAuthConfig {
    * Allows runtime control of connection behavior.
    */
   featureFlags?: {
-    /** Use WalletConnect v2 as the primary connection method (default: true) */
-    walletConnectPrimary?: boolean;
-    /** Disable HashConnect entirely (default: false) */
-    disableHashConnect?: boolean;
     /** Auto-connect timeout in milliseconds (default: 15000) */
     autoConnectTimeoutMs?: number;
   };

@@ -1,7 +1,3 @@
-import { createAnthropic } from "@ai-sdk/anthropic";
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { createMistral } from "@ai-sdk/mistral";
-import { createGroq } from "@ai-sdk/groq";
 import { createOpenAI } from "@ai-sdk/openai";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import {
@@ -12,11 +8,7 @@ import {
     type StepResult as AIStepResult,
 } from "ai";
 import { Buffer } from "buffer";
-import { createOllama } from "ollama-ai-provider";
-import OpenAI from "openai";
 import { encodingForModel, type TiktokenModel } from "js-tiktoken";
-import { AutoTokenizer } from "@huggingface/transformers";
-import Together from "together-ai";
 import type { ZodSchema } from "zod";
 import { elizaLogger } from "./index.ts";
 import {
@@ -49,7 +41,6 @@ import {
     type TelemetrySettings,
     TokenizerType,
 } from "./types.ts";
-import { fal } from "@fal-ai/client";
 
 import BigNumber from "bignumber.js";
 import { createPublicClient, http } from "viem";

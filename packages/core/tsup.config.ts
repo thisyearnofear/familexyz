@@ -12,6 +12,7 @@ export default defineConfig({
     splitting: false,
     dts: false,
     noExternal: ["bignumber.js"],
+    skipNodeModulesBundle: true,
     external: [
         "dotenv",
         "fs",
@@ -21,6 +22,7 @@ export default defineConfig({
         "onnxruntime-node",
         "sharp",
         "@huggingface/transformers",
+        "fastembed",
 
         "fsevents",
         // Add all the packages that are causing issues

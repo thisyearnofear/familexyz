@@ -1,11 +1,30 @@
 import path from "node:path";
 import { fileURLToPath } from "url";
-import { FlagEmbedding, EmbeddingModel } from "fastembed";
 import elizaLogger from "./logger";
+
+type FlagEmbedding = {
+    init: (options: {
+        cacheDir: string;
+        model: string;
+        maxLength: number;
+    }) => Promise<{
+        queryEmbed: (input: string) => Promise<number[] | Float32Array | Float32Array[]>;
+    }>;
+};
+
+let FlagEmbeddingModule: FlagEmbedding | null = null;
+
+async function loadFastembed(): Promise<FlagEmbedding> {
+    if (!FlagEmbeddingModule) {
+        const module = await import("fastembed");
+        FlagEmbeddingModule = module as unknown as FlagEmbedding;
+    }
+    return FlagEmbeddingModule;
+}
 
 class LocalEmbeddingModelManager {
     private static instance: LocalEmbeddingModelManager | null;
-    private model: FlagEmbedding | null = null;
+    private model: ReturnType<FlagEmbedding["init"]> | null = null;
     private initPromise: Promise<void> | null = null;
     private initializationLock = false;
 
@@ -29,19 +48,15 @@ class LocalEmbeddingModelManager {
     }
 
     public async initialize(): Promise<void> {
-        // If already initialized, return immediately
         if (this.model) {
             return;
         }
 
-        // If initialization is in progress, wait for it
         if (this.initPromise) {
             return this.initPromise;
         }
 
-        // Use a lock to prevent multiple simultaneous initializations
         if (this.initializationLock) {
-            // Wait for current initialization to complete
             while (this.initializationLock) {
                 await new Promise((resolve) => setTimeout(resolve, 100));
             }
@@ -79,9 +94,10 @@ class LocalEmbeddingModelManager {
 
             elizaLogger.debug("Initializing BGE embedding model...");
 
-            this.model = await FlagEmbedding.init({
+            const FastEmbed = await loadFastembed();
+            this.model = await FastEmbed.init({
                 cacheDir: cacheDir,
-                model: EmbeddingModel.BGESmallENV15,
+                model: "BGESmallENV15",
                 maxLength: 512,
             });
 
@@ -102,19 +118,7 @@ class LocalEmbeddingModelManager {
         }
 
         try {
-            // Let fastembed handle tokenization internally
             const embedding = await this.model.queryEmbed(input);
-            // Debug the raw embedding - uncomment if debugging embeddings
-            // elizaLogger.debug("Raw embedding from BGE:", {
-            //     type: typeof embedding,
-            //     isArray: Array.isArray(embedding),
-            //     dimensions: Array.isArray(embedding)
-            //         ? embedding.length
-            //         : "not an array",
-            //     sample: Array.isArray(embedding)
-            //         ? embedding.slice(0, 5)
-            //         : embedding,
-            // });
             return this.processEmbedding(embedding);
         } catch (error) {
             elizaLogger.error("Embedding generation failed:", error);
@@ -122,7 +126,7 @@ class LocalEmbeddingModelManager {
         }
     }
 
-    private processEmbedding(embedding: number[]): number[] {
+    private processEmbedding(embedding: number[] | Float32Array | Float32Array[]): number[] {
         let finalEmbedding: number[];
 
         if (
@@ -137,7 +141,7 @@ class LocalEmbeddingModelManager {
         ) {
             finalEmbedding = Array.from(embedding[0]);
         } else if (Array.isArray(embedding)) {
-            finalEmbedding = embedding;
+            finalEmbedding = embedding as number[];
         } else {
             throw new Error(`Unexpected embedding format: ${typeof embedding}`);
         }
@@ -161,14 +165,12 @@ class LocalEmbeddingModelManager {
 
     public async reset(): Promise<void> {
         if (this.model) {
-            // Add any cleanup logic here if needed
             this.model = null;
         }
         this.initPromise = null;
         this.initializationLock = false;
     }
 
-    // For testing purposes
     public static resetInstance(): void {
         if (LocalEmbeddingModelManager.instance) {
             LocalEmbeddingModelManager.instance.reset();

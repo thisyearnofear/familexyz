@@ -37,8 +37,8 @@ COPY characters ./characters
 # Install only essential workspace dependencies
 ENV DOCKER_BUILD=true
 RUN pnpm install --frozen-lockfile --ignore-scripts
-# Build only the family plugins and essential dependencies
-RUN pnpm build --filter=@elizaos/core \
+# Build all packages respecting turbo dependency order
+RUN pnpm turbo run build --filter=@elizaos/core \
     --filter=@elizaos/config \
     --filter=@elizaos/family-nlp-utils \
     --filter=@elizaos/family/plugin-intimacy \

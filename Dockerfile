@@ -36,20 +36,20 @@ COPY packages/blockchain/hedera-core ./packages/blockchain/hedera-core
 COPY characters ./characters
 # Install only essential workspace dependencies
 ENV DOCKER_BUILD=true
+ENV PNPM_LINKER=hoisted
 RUN pnpm install --frozen-lockfile --ignore-scripts
-# Build packages sequentially
-RUN pnpm -r --filter=@elizaos/core build && \
-    pnpm -r --filter=@elizaos/config build && \
-    pnpm -r --filter=@elizaos/family-nlp-utils build && \
-    pnpm -r --filter=@elizaos/client-direct build && \
-    pnpm -r --filter=@elizaos/adapter-sqlite build && \
-    pnpm -r --filter=@elizaos/hedera-core build && \
-    pnpm -r --filter=@elizaos/family-metrics build && \
-    pnpm -r --filter=@elizaos/family/plugin-intimacy build && \
-    pnpm -r --filter=@elizaos/family/plugin-wisdom build && \
-    pnpm -r --filter=@elizaos/family/plugin-presence build && \
-    pnpm -r --filter=@elizaos/family/plugin-growth build && \
-    pnpm -r --filter=@elizaos/family/plugin-generational-bridge build
+# Build packages sequentially using pnpm filter with workspace resolution
+RUN cd packages/core && pnpm build && cd ../..
+RUN cd packages/config && pnpm build && cd ../..
+RUN cd packages/family/nlp-utils && pnpm build && cd ../../..
+RUN cd packages/clients/direct && pnpm build && cd ../../..
+RUN cd packages/adapters/sqlite && pnpm build && cd ../../..
+RUN cd packages/blockchain/hedera-core && pnpm build && cd ../../..
+RUN cd packages/family/plugin-intimacy && pnpm build && cd ../../..
+RUN cd packages/family/plugin-wisdom && pnpm build && cd ../../..
+RUN cd packages/family/plugin-presence && pnpm build && cd ../../..
+RUN cd packages/family/plugin-growth && pnpm build && cd ../../..
+RUN cd packages/family/plugin-generational-bridge && pnpm build && cd ../../..
 
 # --- build: (optional) if we ever switch to a compiled build; currently ts-node runs
 FROM deps AS build

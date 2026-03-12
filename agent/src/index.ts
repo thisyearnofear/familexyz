@@ -179,8 +179,17 @@ async function startAgent(character: Character, directClient: DirectClient): Pro
             fs.mkdirSync(dataDir, { recursive: true });
         }
         
-        db = (await initializeDatabase(dataDir)) as IDatabaseAdapter & IDatabaseCacheAdapter;
-        await db.init();
+        // Check for cached database - DISABLED for testing
+        // const cachedDbAdapter = (global as any).__cachedDbAdapter;
+        const cachedDbAdapter = null; // Disable caching
+        const filePath = process.env.SQLITE_FILE ?? path.resolve(dataDir, "db.sqlite");
+        const cachedFilePath = null; // (global as any).__cachedDbFilePath;
+        
+        if (false && cachedFilePath === filePath && cachedDbAdapter) {
+            db = cachedDbAdapter;
+        } else {
+            db = (await initializeDatabase(dataDir)) as IDatabaseAdapter & IDatabaseCacheAdapter;
+        }
         
         // Run database migrations
         try {
@@ -354,7 +363,7 @@ const hasValidRemoteUrls = () =>
  */
 const startAgents = async () => {
     const directClient = new DirectClient();
-    let serverPort = Number.parseInt(settings.SERVER_PORT || "3000");
+    let serverPort = Number.parseInt(settings.SERVER_PORT || "31337");
     const args = await parseArguments();
     const charactersArg = args.characters || args.character;
     let characters = [defaultCharacter];
@@ -424,10 +433,10 @@ const startAgents = async () => {
     directClient.start(serverPort);
     
     // Start HTTP API server
-    const healthPort = Number.parseInt(process.env.HEALTH_PORT || "3001");
+    const healthPort = Number.parseInt(process.env.HEALTH_PORT || "31338");
     await createHttpServer({ port: healthPort, primaryDb });
     
-    if (serverPort !== Number.parseInt(settings.SERVER_PORT || "3000")) {
+    if (serverPort !== Number.parseInt(settings.SERVER_PORT || "31337")) {
         elizaLogger.log(`Server started on alternate port ${serverPort}`);
     }
     

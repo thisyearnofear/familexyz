@@ -15,10 +15,20 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+let cachedDb: IDatabaseAdapter & IDatabaseCacheAdapter | null = null;
+let cachedDataDir: string | null = null;
+
 /**
  * Initialize the appropriate database adapter based on environment variables
+ * Uses singleton pattern to reuse the same database connection for all characters
  */
 export async function initializeDatabase(dataDir: string): Promise<IDatabaseAdapter & IDatabaseCacheAdapter> {
+    // Return cached database if already initialized for same dataDir
+    if (cachedDb && cachedDataDir === dataDir) {
+        elizaLogger.info("Reusing existing SQLite database connection");
+        return cachedDb;
+    }
+    
     // Supabase - Cloud PostgreSQL
     if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
         return initializeSupabase();
@@ -55,9 +65,8 @@ async function initializeSupabase(): Promise<IDatabaseAdapter & IDatabaseCacheAd
         process.env.SUPABASE_ANON_KEY!
     );
 
-    db.init()
-        .then(() => elizaLogger.success("Successfully connected to Supabase database"))
-        .catch((error) => elizaLogger.error("Failed to connect to Supabase:", error));
+    await db.init();
+    elizaLogger.success("Successfully connected to Supabase database");
 
     return db as IDatabaseAdapter & IDatabaseCacheAdapter;
 }
@@ -74,9 +83,8 @@ async function initializePostgres(): Promise<IDatabaseAdapter & IDatabaseCacheAd
         parseInputs: true,
     });
 
-    db.init()
-        .then(() => elizaLogger.success("Successfully connected to PostgreSQL database"))
-        .catch((error) => elizaLogger.error("Failed to connect to PostgreSQL:", error));
+    await db.init();
+    elizaLogger.success("Successfully connected to PostgreSQL database");
 
     return db as IDatabaseAdapter & IDatabaseCacheAdapter;
 }
@@ -114,9 +122,17 @@ async function initializeQdrant(): Promise<IDatabaseAdapter & IDatabaseCacheAdap
 
 /**
  * Initialize SQLite database adapter (default)
+ * Uses singleton pattern to reuse connection
  */
 async function initializeSQLite(dataDir: string): Promise<IDatabaseAdapter & IDatabaseCacheAdapter> {
     const filePath = process.env.SQLITE_FILE ?? path.resolve(dataDir, "db.sqlite");
+    
+    // Return cached database if already initialized
+    if (cachedDb && cachedDataDir === dataDir) {
+        elizaLogger.info("Reusing existing SQLite database connection");
+        return cachedDb;
+    }
+    
     elizaLogger.info(`Initializing SQLite database at ${filePath}...`);
     
     const req = createRequire(import.meta.url);
@@ -125,9 +141,12 @@ async function initializeSQLite(dataDir: string): Promise<IDatabaseAdapter & IDa
     
     const db = new SqliteDatabaseAdapter(new BetterSqlite3(filePath));
 
-    db.init()
-        .then(() => elizaLogger.success("Successfully connected to SQLite database"))
-        .catch((error) => elizaLogger.error("Failed to connect to SQLite:", error));
+    await db.init();
+    elizaLogger.success("Successfully connected to SQLite database");
+
+    // Cache the database for reuse
+    cachedDb = db;
+    cachedDataDir = dataDir;
 
     return db as IDatabaseAdapter & IDatabaseCacheAdapter;
 }

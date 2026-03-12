@@ -106,23 +106,48 @@ export async function handlePluginImporting(plugins: string[]): Promise<any[]> {
         return [];
     }
     
-    elizaLogger.info("Plugins are: ", plugins);
     const importedPlugins = await Promise.all(
         plugins.map(async (plugin) => {
             try {
                 const importedPlugin = await import(plugin);
-                const functionName =
-                    plugin
-                        .replace("@elizaos/plugin-", "")
-                        .replace(/-./g, (x) => x[1].toUpperCase()) + "Plugin";
-                return importedPlugin.default || importedPlugin[functionName];
-            } catch (importError) {
-                elizaLogger.error(`Failed to import plugin: ${plugin}`, importError);
+                
+                // Handle various export patterns
+                let result;
+                
+                // Try default export first
+                if (importedPlugin.default) {
+                    // If default is an object with named exports, look for the plugin class
+                    if (typeof importedPlugin.default === 'object' && !Array.isArray(importedPlugin.default)) {
+                        const functionName =
+                            plugin
+                                .replace("@elizaos/plugin-", "")
+                                .replace("@elizaos/family/plugin-", "")
+                                .replace(/-./g, (x) => x[1].toUpperCase()) + "Plugin";
+                        result = importedPlugin.default[functionName] || importedPlugin.default.default;
+                    } else {
+                        result = importedPlugin.default;
+                    }
+                }
+                
+                // If still undefined, try named export
+                if (!result) {
+                    const functionName =
+                        plugin
+                            .replace("@elizaos/plugin-", "")
+                            .replace("@elizaos/family/plugin-", "")
+                            .replace(/-./g, (x) => x[1].toUpperCase()) + "Plugin";
+                    result = importedPlugin[functionName];
+                }
+                
+                return result;
+            } catch (importError: any) {
+                elizaLogger.error(`Failed to import plugin: ${plugin}`, importError?.message || importError);
                 return [];
             }
         }),
     );
-    return importedPlugins;
+    // Filter out undefined values
+    return importedPlugins.filter(Boolean);
 }
 
 /**

@@ -29,6 +29,8 @@
         "@elizaos/client-direct": "workspace:*",
         "@elizaos/config": "workspace:*",
         "@elizaos/core": "workspace:*",
+        "@elizaos/family-metrics": "workspace:*",
+        "@elizaos/family-nlp-utils": "workspace:*",
         "@elizaos/family/plugin-generational-bridge": "workspace:*",
         "@elizaos/family/plugin-growth": "workspace:*",
         "@elizaos/family/plugin-intimacy": "workspace:*",

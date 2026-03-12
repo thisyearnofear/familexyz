@@ -37,18 +37,18 @@ COPY characters ./characters
 # Install only essential workspace dependencies
 ENV DOCKER_BUILD=true
 RUN pnpm install --frozen-lockfile --ignore-scripts
-# Build all packages respecting turbo dependency order
-RUN pnpm turbo run build --filter=@elizaos/core \
-    --filter=@elizaos/config \
-    --filter=@elizaos/family-nlp-utils \
-    --filter=@elizaos/family/plugin-intimacy \
-    --filter=@elizaos/family/plugin-wisdom \
-    --filter=@elizaos/family/plugin-presence \
-    --filter=@elizaos/family/plugin-growth \
-    --filter=@elizaos/family/plugin-generational-bridge \
-    --filter=@elizaos/client-direct \
-    --filter=@elizaos/adapter-sqlite \
-    --filter=@elizaos/hedera-core
+# Build packages in dependency order
+RUN pnpm build --filter=@elizaos/core && \
+    pnpm build --filter=@elizaos/config && \
+    pnpm build --filter=@elizaos/family-nlp-utils && \
+    pnpm build --filter=@elizaos/client-direct && \
+    pnpm build --filter=@elizaos/adapter-sqlite && \
+    pnpm build --filter=@elizaos/hedera-core && \
+    pnpm build --filter=@elizaos/family/plugin-intimacy && \
+    pnpm build --filter=@elizaos/family/plugin-wisdom && \
+    pnpm build --filter=@elizaos/family/plugin-presence && \
+    pnpm build --filter=@elizaos/family/plugin-growth && \
+    pnpm build --filter=@elizaos/family/plugin-generational-bridge
 
 # --- build: (optional) if we ever switch to a compiled build; currently ts-node runs
 FROM deps AS build

@@ -12,6 +12,12 @@
  * - server/direct-client-routes.ts - DirectClient routes
  */
 
+// Load environment variables FIRST before any other imports
+import { config } from "dotenv";
+import { resolve } from "path";
+config({ path: resolve(process.env.HOME || "/home/deploy", "familexyz/shared/.env") });
+config(); // Also try loading from current directory .env
+
 import { DirectClient } from "@elizaos/client-direct";
 import {
     AgentRuntime,

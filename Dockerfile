@@ -37,8 +37,19 @@ COPY characters ./characters
 # Install only essential workspace dependencies
 ENV DOCKER_BUILD=true
 RUN pnpm install --frozen-lockfile --ignore-scripts
-# Build ALL packages (turbo handles dependency order)
-RUN pnpm turbo run build --no-daemon
+# Build packages sequentially
+RUN pnpm -r --filter=@elizaos/core build && \
+    pnpm -r --filter=@elizaos/config build && \
+    pnpm -r --filter=@elizaos/family-nlp-utils build && \
+    pnpm -r --filter=@elizaos/client-direct build && \
+    pnpm -r --filter=@elizaos/adapter-sqlite build && \
+    pnpm -r --filter=@elizaos/hedera-core build && \
+    pnpm -r --filter=@elizaos/family-metrics build && \
+    pnpm -r --filter=@elizaos/family/plugin-intimacy build && \
+    pnpm -r --filter=@elizaos/family/plugin-wisdom build && \
+    pnpm -r --filter=@elizaos/family/plugin-presence build && \
+    pnpm -r --filter=@elizaos/family/plugin-growth build && \
+    pnpm -r --filter=@elizaos/family/plugin-generational-bridge build
 
 # --- build: (optional) if we ever switch to a compiled build; currently ts-node runs
 FROM deps AS build

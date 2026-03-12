@@ -367,7 +367,9 @@ export async function loadCharacterFromOnchain(): Promise<Character[]> {
  * Main function to load all characters
  */
 export async function loadCharacters(charactersArg: string): Promise<Character[]> {
-    let characterPaths = commaSeparatedStringToArray(charactersArg);
+    // Support CHARACTERS_PATH env var as fallback
+    const charactersPath = charactersArg || process.env.CHARACTERS_PATH || "";
+    let characterPaths = commaSeparatedStringToArray(charactersPath);
 
     if (process.env.USE_CHARACTER_STORAGE === "true") {
         characterPaths = await readCharactersFromStorage(characterPaths);

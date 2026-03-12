@@ -37,18 +37,8 @@ COPY characters ./characters
 # Install only essential workspace dependencies
 ENV DOCKER_BUILD=true
 RUN pnpm install --frozen-lockfile --ignore-scripts
-# Build packages in correct order (core first, then dependents)
-RUN cd packages/core && pnpm build
-RUN cd packages/config && pnpm build
-RUN cd packages/family/nlp-utils && pnpm build
-RUN cd packages/clients/direct && pnpm build
-RUN cd packages/adapters/sqlite && pnpm build
-RUN cd packages/blockchain/hedera-core && pnpm build
-RUN cd packages/family/plugin-intimacy && pnpm build
-RUN cd packages/family/plugin-wisdom && pnpm build
-RUN cd packages/family/plugin-presence && pnpm build
-RUN cd packages/family/plugin-growth && pnpm build
-RUN cd packages/family/plugin-generational-bridge && pnpm build
+# Build all packages using turbo which handles dependencies
+RUN pnpm turbo run build
 
 # --- build: (optional) if we ever switch to a compiled build; currently ts-node runs
 FROM deps AS build

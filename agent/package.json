@@ -5,8 +5,8 @@
     "main": "src/index.ts",
     "type": "module",
     "scripts": {
-        "start": "node --loader ts-node/esm src/index.ts --characters=../characters/wisdom.character.json,../characters/intimacy.character.json,../characters/generationalBridge.character.json,../characters/presence.character.json,../characters/growth.character.json",
-        "dev": "node --loader ts-node/esm src/index.ts",
+        "start": "node --import tsx src/index.ts --characters=../characters/wisdom.character.json,../characters/intimacy.character.json,../characters/generationalBridge.character.json,../characters/presence.character.json,../characters/growth.character.json",
+        "dev": "node --import tsx src/index.ts",
         "check-types": "tsc --noEmit",
         "test": "jest"
     },
@@ -19,6 +19,7 @@
         "exec": "node --enable-source-maps --loader ts-node/esm src/index.ts"
     },
     "dependencies": {
+        "@familexyz/agent": "workspace:*",
         "@elizaos/adapter-pglite": "workspace:*",
         "@elizaos/adapter-postgres": "workspace:*",
         "@elizaos/adapter-qdrant": "workspace:*",

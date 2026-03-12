@@ -1,0 +1,23 @@
+{
+    "name": "@familexyz/agent",
+    "version": "1.0.0",
+    "description": "FamileXYZ Agent Services",
+    "type": "module",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": "./dist/index.js",
+        "./*": "./dist/*.js"
+    },
+    "scripts": {
+        "build": "tsup src/index.ts --format esm,cjs --out-dir dist",
+        "dev": "tsup src/index.ts --format esm,cjs --out-dir dist --watch"
+    },
+    "dependencies": {
+        "@elizaos/core": "workspace:*",
+        "@elizaos/hedera-core": "workspace:*"
+    },
+    "devDependencies": {
+        "tsup": "8.3.5"
+    }
+}

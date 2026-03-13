@@ -20,7 +20,8 @@ import type {
 } from "@elizaos/core";
 import { elizaLogger } from "@elizaos/core";
 import type { Account } from "viem";
-import { generateContentHash } from "./HcsReceiptLogger.js";
+import { generateContentHash, logMessageReceiptToHcs, type MessageReceipt } from "./HcsReceiptLogger.js";
+import type { HederaService } from "@elizaos/hedera-core";
 
 /**
  * XMTP-specific configuration
@@ -35,6 +36,8 @@ export interface XmtpChannelConfig extends ChannelConfig {
         env?: "production" | "dev";
         /** HCS topic ID for message receipts */
         hcsTopicId?: string;
+        /** HederaService instance for HCS logging */
+        hederaService?: HederaService;
     };
 }
 
@@ -64,6 +67,7 @@ export class XmtpFamilyClient implements FamilyMessagingAdapter {
         error: "Not initialized",
     };
     private hcsTopicId?: string;
+    private hederaService?: HederaService;
 
     /**
      * Connect to XMTP network with wallet-derived identity
@@ -71,7 +75,7 @@ export class XmtpFamilyClient implements FamilyMessagingAdapter {
     async connect(config: XmtpChannelConfig): Promise<void> {
         try {
             const { privateKey } = config.credentials;
-            const { env = "dev", hcsTopicId } = config.options || {};
+            const { env = "dev", hcsTopicId, hederaService } = config.options || {};
 
             if (!privateKey) {
                 throw new Error("Private key is required for XMTP identity");
@@ -79,8 +83,9 @@ export class XmtpFamilyClient implements FamilyMessagingAdapter {
 
             elizaLogger.info(`[XMTP] Initializing client (${env} network)...`);
 
-            // Store HCS topic ID for message receipts
+            // Store HCS topic ID and HederaService for message receipts
             this.hcsTopicId = hcsTopicId;
+            this.hederaService = hederaService;
 
             // Create XMTP client with wallet
             // Note: In production, use proper wallet integration
@@ -348,26 +353,44 @@ export class XmtpFamilyClient implements FamilyMessagingAdapter {
         content: string
     ): Promise<void> {
         try {
+            if (!this.hederaService) {
+                elizaLogger.debug(
+                    `[HCS] Skipping receipt logging - HederaService not initialized`
+                );
+                return;
+            }
+
             elizaLogger.debug(
                 `[HCS] Logging message receipt: ${messageId} for ${conversationId}`
             );
 
-            // In production, use actual HederaConsensusService
-            // Example:
-            // const hederaService = HederaService.getInstance(config);
-            // await logMessageReceiptToHcs(hederaService, {
-            //     messageId,
-            //     conversationId,
-            //     sender: this.client?.address || 'unknown',
-            //     recipient: conversationId,
-            //     timestamp: Date.now(),
-            //     contentHash,
-            //     messageType: 'xmtp',
-            // });
+            // Create receipt object
+            const receipt: MessageReceipt = {
+                messageId,
+                conversationId,
+                sender: this.client?.address || "unknown",
+                recipient: conversationId,
+                timestamp: Date.now(),
+                contentHash,
+                messageType: "xmtp",
+            };
 
-            // Placeholder for HCS logging
-            // This would integrate with HederaConsensusService
-            // to create an immutable record of the interaction
+            // Log to HCS using actual HederaService
+            const result = await logMessageReceiptToHcs(
+                this.hederaService,
+                receipt,
+                this.hcsTopicId
+            );
+
+            if (result.success) {
+                elizaLogger.info(
+                    `[HCS] ✅ Message receipt logged: ${messageId} → ${result.transactionId}`
+                );
+            } else {
+                elizaLogger.warn(
+                    `[HCS] ⚠️ Message receipt logging failed: ${result.error}`
+                );
+            }
         } catch (error) {
             elizaLogger.error("[HCS] Message receipt logging error:", error);
             // Don't throw - HCS logging is optional

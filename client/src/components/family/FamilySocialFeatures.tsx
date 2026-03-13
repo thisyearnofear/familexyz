@@ -322,18 +322,18 @@ export const FamilySocialFeatures: React.FC<FamilySocialFeaturesProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800 flex items-center space-x-2">
+          <h2 className="text-2xl font-bold text-foreground flex items-center space-x-2">
             <Users className="w-6 h-6 text-purple-600" />
             <span>Family Social Hub</span>
           </h2>
-          <p className="text-gray-600 mt-1">
+          <p className="text-muted-foreground mt-1">
             Share achievements, collaborate on challenges, and celebrate your family journey
           </p>
         </div>
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex space-x-2 bg-gradient-to-r from-purple-50 to-pink-50 p-2 rounded-lg border border-purple-200">
+      <div className="flex space-x-2 bg-gradient-to-r from-purple-50 to-pink-50 p-2 rounded-lg border border-purple-500/20">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -343,8 +343,8 @@ export const FamilySocialFeatures: React.FC<FamilySocialFeaturesProps> = ({
               onClick={() => setActiveTab(tab.id as any)}
               className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
                 isActive
-                  ? "bg-white text-purple-700 shadow-md border-2 border-purple-300"
-                  : "text-gray-700 hover:text-purple-700 hover:bg-white hover:bg-opacity-50"
+                  ? "bg-card text-purple-700 shadow-md border-2 border-purple-300"
+                  : "text-foreground hover:text-purple-700 hover:bg-card hover:bg-opacity-50"
               }`}
             >
               <Icon className="w-4 h-4" />

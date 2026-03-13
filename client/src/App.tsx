@@ -70,7 +70,7 @@ const MobileHeader = () => {
 const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
-            staleTime: Number.POSITIVE_INFINITY,
+            staleTime: 30_000,
         },
     },
 });

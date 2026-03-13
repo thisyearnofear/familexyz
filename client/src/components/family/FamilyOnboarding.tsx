@@ -331,7 +331,7 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
                           disabled={index > currentStep}
                           className={`relative z-10 flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold transition-all duration-200 border-2
                             ${index === currentStep
-                              ? "bg-white text-purple-600 border-white scale-110 shadow-lg"
+                              ? "bg-card text-purple-600 border-white scale-110 shadow-lg"
                               : index < currentStep
                                 ? "bg-purple-400 text-white border-purple-400 hover:bg-purple-300"
                                 : "bg-purple-900/50 text-white/40 border-white/10"
@@ -356,7 +356,7 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
             </div>
 
             {/* Step Content */}
-            <div className="p-8 bg-white">
+            <div className="p-8 bg-card">
               <AnimatePresence mode="wait">
                 {steps[currentStep] && (
                   <motion.div
@@ -380,7 +380,7 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
                           <Badge className="mb-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-base px-4 py-1">
                             {steps[currentStep]?.subtitle}
                           </Badge>
-                          <p className="text-gray-800 text-lg max-w-2xl mx-auto font-semibold">
+                          <p className="text-foreground text-lg max-w-2xl mx-auto font-semibold">
                             {steps[currentStep]?.description}
                           </p>
                         </div>
@@ -398,7 +398,7 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: "auto" }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg"
+                        className="mb-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg"
                       >
                         <div className="flex items-start space-x-3">
                           <Lightbulb className="w-5 h-5 text-blue-600 mt-0.5" />
@@ -428,13 +428,13 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
                   </div>
 
                   {currentStep !== 0 && (
-                  <div className="flex justify-between items-center px-8 pb-8 pt-4 border-t border-gray-100 bg-gray-50/50 rounded-b-xl">
+                  <div className="flex justify-between items-center px-8 pb-8 pt-4 border-t border-gray-100 bg-muted/50 rounded-b-xl">
                   <Button
                   variant="outline"
                   size="lg"
                   onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
                   disabled={currentStep === 0}
-                  className="flex items-center space-x-2 min-w-[120px] border-gray-300 hover:bg-gray-100 text-gray-700"
+                  className="flex items-center space-x-2 min-w-[120px] border-gray-300 hover:bg-muted text-foreground"
                   >
                   <ArrowLeft className="w-5 h-5" />
                   <span className="font-medium">Back</span>
@@ -446,7 +446,7 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
                       variant="ghost"
                       size="lg"
                       onClick={() => setCurrentStep(5)} // Skip to completion
-                      className="text-gray-500 hover:text-gray-700"
+                      className="text-muted-foreground hover:text-foreground"
                     >
                       Skip for now
                     </Button>
@@ -484,21 +484,21 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
 const WelcomeStep: React.FC<{ onNext: () => void; onSkip: () => void; onStartTour?: () => void }> = ({ onNext, onSkip, onStartTour }) => {
   return (
     <div className="text-center space-y-6">
-      <div className="bg-gradient-to-b from-purple-50 to-white p-6 rounded-2xl border border-purple-200 shadow-sm">
+      <div className="bg-gradient-to-b from-purple-50 to-white p-6 rounded-2xl border border-purple-500/20 shadow-sm">
         <div className="text-5xl mb-4">👨‍👩‍👧‍👦</div>
 
-        <h3 className="text-2xl font-bold text-gray-900 mb-2">
+        <h3 className="text-2xl font-bold text-foreground mb-2">
           Welcome to Your Family Journey
         </h3>
         <p className="text-purple-600 font-semibold text-sm mb-4 uppercase tracking-wide">
           AI-powered family wellness platform
         </p>
 
-        <p className="text-gray-800 text-base mb-6 max-w-xl mx-auto leading-relaxed">
+        <p className="text-foreground text-base mb-6 max-w-xl mx-auto leading-relaxed">
           Strengthen family bonds with AI-powered guidance designed specifically for how your family <span className="font-bold text-purple-700">communicates</span>, <span className="font-bold text-pink-600">grows</span>, and <span className="font-bold text-blue-600">connects</span>.
         </p>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-left mb-6">
+        <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 text-left mb-6">
           <h4 className="font-semibold text-blue-900 mb-3 flex items-center text-sm">
             <Lightbulb className="w-4 h-4 mr-2" />
             Key Features:
@@ -520,7 +520,7 @@ const WelcomeStep: React.FC<{ onNext: () => void; onSkip: () => void; onStartTou
         </div>
 
         <div className="space-y-3 max-w-md mx-auto">
-          <p className="text-xs text-gray-600 italic">
+          <p className="text-xs text-muted-foreground italic">
             Your family's personalized AI-powered wellness journey starts here
           </p>
 
@@ -531,12 +531,12 @@ const WelcomeStep: React.FC<{ onNext: () => void; onSkip: () => void; onStartTou
 
           <div className="flex gap-2">
             {onStartTour && (
-              <Button variant="outline" size="sm" onClick={onStartTour} className="flex-1 border-purple-200 text-purple-700 hover:bg-purple-50 font-semibold text-sm">
+              <Button variant="outline" size="sm" onClick={onStartTour} className="flex-1 border-purple-500/20 text-purple-700 hover:bg-purple-500/10 font-semibold text-sm">
                 <BookOpen className="w-4 h-4 mr-1" />
                 Take Tour
               </Button>
             )}
-            <Button variant="ghost" size="sm" onClick={onSkip} className="flex-1 text-gray-600 hover:text-gray-900 text-sm">
+            <Button variant="ghost" size="sm" onClick={onSkip} className="flex-1 text-muted-foreground hover:text-foreground text-sm">
               Skip
             </Button>
           </div>
@@ -566,10 +566,10 @@ const FamilyProfileStep: React.FC<{
   }, [familyName, members]);
 
   return (
-    <div className="bg-gradient-to-r from-gray-50 to-purple-50 border-2 border-purple-200 rounded-xl p-4">
+    <div className="bg-gradient-to-r from-gray-50 to-purple-50 border-2 border-purple-500/20 rounded-xl p-4">
       <div className="space-y-3">
         <div>
-          <label className="block text-xs font-bold text-gray-900 mb-1.5">
+          <label className="block text-xs font-bold text-foreground mb-1.5">
             Family Name
           </label>
           <input
@@ -577,12 +577,12 @@ const FamilyProfileStep: React.FC<{
             value={familyName}
             onChange={(e) => setFamilyName(e.target.value)}
             placeholder="The Johnson Family"
-            className="w-full p-2.5 border-2 border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white text-gray-900 font-medium text-sm"
+            className="w-full p-2.5 border-2 border-purple-500/20 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-card text-foreground font-medium text-sm"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-gray-900 mb-1.5">
+          <label className="block text-xs font-bold text-foreground mb-1.5">
             Family Members
           </label>
           <div className="space-y-2">
@@ -593,12 +593,12 @@ const FamilyProfileStep: React.FC<{
                   value={member.name}
                   onChange={(e) => updateMember(index, "name", e.target.value)}
                   placeholder="Name"
-                  className="flex-1 p-2 border-2 border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white text-gray-900 font-medium text-sm"
+                  className="flex-1 p-2 border-2 border-purple-500/20 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-card text-foreground font-medium text-sm"
                 />
                 <select
                   value={member.relationship}
                   onChange={(e) => updateMember(index, "relationship", e.target.value)}
-                  className="p-2 border-2 border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white text-gray-900 font-medium text-sm"
+                  className="p-2 border-2 border-purple-500/20 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-card text-foreground font-medium text-sm"
                 >
                   <option value="Parent">Parent</option>
                   <option value="Child">Child</option>
@@ -612,7 +612,7 @@ const FamilyProfileStep: React.FC<{
           <Button
             variant="outline"
             onClick={addMember}
-            className="w-full mt-2 border-2 border-dashed border-purple-300 hover:border-purple-400 hover:bg-purple-50 text-purple-700 font-semibold text-sm py-2"
+            className="w-full mt-2 border-2 border-dashed border-purple-300 hover:border-purple-400 hover:bg-purple-500/10 text-purple-700 font-semibold text-sm py-2"
           >
             + Add Family Member
           </Button>
@@ -653,14 +653,14 @@ const FamilyGoalsStep: React.FC<{
             className={`p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
               selectedGoals.includes(goal.id)
                 ? "border-purple-500 bg-purple-100 shadow-md"
-                : "border-purple-200 bg-white hover:border-purple-400 hover:bg-purple-50"
+                : "border-purple-500/20 bg-card hover:border-purple-400 hover:bg-purple-500/10"
             }`}
           >
             <div className="flex items-start space-x-2">
               <div className="text-2xl">{goal.emoji}</div>
               <div className="flex-1">
-                <h3 className="font-bold text-sm text-gray-900 leading-tight">{goal.label}</h3>
-                <p className="text-xs text-gray-700 mt-0.5">{goal.desc}</p>
+                <h3 className="font-bold text-sm text-foreground leading-tight">{goal.label}</h3>
+                <p className="text-xs text-foreground mt-0.5">{goal.desc}</p>
               </div>
               {selectedGoals.includes(goal.id) && (
                 <CheckCircle className="w-4 h-4 text-purple-600 flex-shrink-0" />
@@ -670,7 +670,7 @@ const FamilyGoalsStep: React.FC<{
         ))}
       </div>
 
-      <div className="text-center text-xs text-gray-700 font-medium bg-blue-50 border border-blue-200 rounded-lg p-2">
+      <div className="text-center text-xs text-foreground font-medium bg-blue-500/10 border border-blue-500/20 rounded-lg p-2">
         Select the goals that resonate with your family's needs
       </div>
     </div>
@@ -707,13 +707,13 @@ const AgentSelectionStep: React.FC<{
             className={`p-2 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
               selectedAgents.includes(agent.id)
                 ? "border-purple-500 bg-purple-100 shadow-md"
-                : "border-purple-200 bg-white hover:border-purple-400 hover:bg-purple-50"
+                : "border-purple-500/20 bg-card hover:border-purple-400 hover:bg-purple-500/10"
             }`}
           >
             <div className="text-center">
               <div className="text-2xl mb-1">{agent.emoji}</div>
-              <h3 className="font-bold text-xs text-gray-900 mb-0.5">{agent.name}</h3>
-              <p className="text-[10px] text-gray-700 leading-tight">{agent.specialty}</p>
+              <h3 className="font-bold text-xs text-foreground mb-0.5">{agent.name}</h3>
+              <p className="text-[10px] text-foreground leading-tight">{agent.specialty}</p>
 
               {selectedAgents.includes(agent.id) && (
                 <div className="mt-1 flex items-center justify-center">
@@ -725,7 +725,7 @@ const AgentSelectionStep: React.FC<{
         ))}
       </div>
 
-      <div className="text-center text-xs text-gray-700 font-medium bg-blue-50 border border-blue-200 rounded-lg p-2">
+      <div className="text-center text-xs text-foreground font-medium bg-blue-500/10 border border-blue-500/20 rounded-lg p-2">
         Choose 2-3 agents to start with - you can always add more later
       </div>
     </div>
@@ -739,7 +739,7 @@ const PreferencesStep: React.FC<{
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-bold text-gray-900 mb-2">
+        <label className="block text-sm font-bold text-foreground mb-2">
           Communication Style
         </label>
         <div className="grid grid-cols-3 gap-2">
@@ -754,12 +754,12 @@ const PreferencesStep: React.FC<{
               className={`p-2 rounded-lg border-2 cursor-pointer transition-all ${
                 preferences.communicationStyle === style.value
                   ? "border-purple-500 bg-purple-100"
-                  : "border-purple-200 bg-white hover:border-purple-400"
+                  : "border-purple-500/20 bg-card hover:border-purple-400"
               }`}
             >
               <div className="text-center">
                 <div className="text-2xl mb-1">{style.emoji}</div>
-                <h4 className="font-bold text-xs text-gray-900">{style.label}</h4>
+                <h4 className="font-bold text-xs text-foreground">{style.label}</h4>
               </div>
             </div>
           ))}
@@ -767,7 +767,7 @@ const PreferencesStep: React.FC<{
       </div>
 
       <div>
-        <label className="block text-sm font-bold text-gray-900 mb-2">
+        <label className="block text-sm font-bold text-foreground mb-2">
           Check-in Frequency
         </label>
         <div className="grid grid-cols-3 gap-2">
@@ -782,12 +782,12 @@ const PreferencesStep: React.FC<{
               className={`p-2 rounded-lg border-2 cursor-pointer transition-all ${
                 preferences.meetingFrequency === freq.value
                   ? "border-purple-500 bg-purple-100"
-                  : "border-purple-200 bg-white hover:border-purple-400"
+                  : "border-purple-500/20 bg-card hover:border-purple-400"
               }`}
             >
               <div className="text-center">
                 <div className="text-2xl mb-1">{freq.emoji}</div>
-                <h4 className="font-bold text-xs text-gray-900">{freq.label}</h4>
+                <h4 className="font-bold text-xs text-foreground">{freq.label}</h4>
               </div>
             </div>
           ))}
@@ -832,7 +832,7 @@ const WalletSetupStep: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-xl border border-indigo-100 text-center">
-        <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+        <div className="w-16 h-16 bg-card rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
           <Wallet className="w-8 h-8 text-indigo-600" />
         </div>
 
@@ -840,7 +840,7 @@ const WalletSetupStep: React.FC = () => {
           {isConnected ? "Wallet Connected!" : "Connect Family Wallet"}
         </h3>
 
-        <p className="text-gray-600 max-w-md mx-auto mb-6">
+        <p className="text-muted-foreground max-w-md mx-auto mb-6">
           {isConnected
             ? "Your family treasury is ready to go. You can manage funds and rewards from the dashboard."
             : "Link a Hedera wallet to unlock advanced AI features and create a reward system for your family."}
@@ -856,19 +856,19 @@ const WalletSetupStep: React.FC = () => {
             >
               {isConnecting ? "Connecting..." : "Connect HashPack"}
             </Button>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               Don't have a wallet? <a href="https://www.hashpack.app/" target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline">Get HashPack</a>
             </p>
           </div>
         ) : (
-          <div className="bg-white p-4 rounded-lg border border-indigo-100 max-w-xs mx-auto shadow-sm">
-             <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Balance</p>
+          <div className="bg-card p-4 rounded-lg border border-indigo-100 max-w-xs mx-auto shadow-sm">
+             <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-1">Balance</p>
              <div className="flex items-center justify-center gap-2">
                 <Coins className="w-5 h-5 text-yellow-500" />
-                <span className="text-2xl font-bold text-gray-900">{balance}</span>
-                <span className="text-sm text-gray-500 font-medium">HBAR</span>
+                <span className="text-2xl font-bold text-foreground">{balance}</span>
+                <span className="text-sm text-muted-foreground font-medium">HBAR</span>
              </div>
-             <div className="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-400 font-mono truncate">
+             <div className="mt-2 pt-2 border-t border-gray-100 text-xs text-muted-foreground font-mono truncate">
                {connection?.accountId}
              </div>
           </div>
@@ -876,19 +876,19 @@ const WalletSetupStep: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
-          <h4 className="font-bold text-gray-900 mb-2 flex items-center gap-2">
+        <div className="p-4 border border-gray-200 rounded-lg bg-muted">
+          <h4 className="font-bold text-foreground mb-2 flex items-center gap-2">
             <span className="text-xl">🧠</span> AI Intelligence
           </h4>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted-foreground">
             HBAR powers the advanced reasoning capabilities of your Family Agents.
           </p>
         </div>
-        <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
-          <h4 className="font-bold text-gray-900 mb-2 flex items-center gap-2">
+        <div className="p-4 border border-gray-200 rounded-lg bg-muted">
+          <h4 className="font-bold text-foreground mb-2 flex items-center gap-2">
             <span className="text-xl">🏆</span> Family Rewards
           </h4>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted-foreground">
             Create challenges and reward family members with tokens for achieving goals.
           </p>
         </div>
@@ -909,15 +909,15 @@ const CompletionStep: React.FC<{
         transition={{ type: "spring", duration: 0.5 }}
       >
         <div className="text-5xl mb-3">🎉</div>
-        <h3 className="text-2xl font-bold text-gray-900 mb-2">
+        <h3 className="text-2xl font-bold text-foreground mb-2">
           You're All Set!
         </h3>
-        <p className="text-gray-800 text-base font-medium mb-4 max-w-lg mx-auto">
+        <p className="text-foreground text-base font-medium mb-4 max-w-lg mx-auto">
           Your family profile is ready. Your AI agents are prepared to help strengthen your family bonds.
         </p>
       </motion.div>
 
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-left max-w-lg mx-auto">
+      <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 text-left max-w-lg mx-auto">
         <h4 className="font-bold text-blue-900 mb-3 text-sm">Your Family Profile Summary</h4>
 
         <div className="grid grid-cols-2 gap-3 text-sm">
@@ -963,21 +963,21 @@ export const FamilyGuidance: React.FC = () => {
             initial={{ opacity: 0, scale: 0.8, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8, y: 20 }}
-            className="bg-white rounded-2xl shadow-2xl p-6 mb-4 max-w-sm border border-gray-200"
+            className="bg-card rounded-2xl shadow-2xl p-6 mb-4 max-w-sm border border-gray-200"
           >
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center space-x-2">
                 <Lightbulb className="w-5 h-5 text-yellow-500" />
-                <h3 className="font-semibold text-gray-800">Family Tip</h3>
+                <h3 className="font-semibold text-foreground">Family Tip</h3>
               </div>
               <button
                 onClick={() => setShowGuidance(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-muted-foreground hover:text-muted-foreground"
               >
                 ×
               </button>
             </div>
-            <p className="text-gray-600 mb-4">
+            <p className="text-muted-foreground mb-4">
               Did you know? Families that have just 15 minutes of device-free conversation daily
               report 40% stronger emotional connections.
             </p>

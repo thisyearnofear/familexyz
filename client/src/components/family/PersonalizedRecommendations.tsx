@@ -330,10 +330,10 @@ export const PersonalizedRecommendations: React.FC<PersonalizedRecommendationsPr
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case "high": return "text-red-600 bg-red-50 border-red-200";
+      case "high": return "text-red-600 bg-red-500/10 border-red-200";
       case "medium": return "text-yellow-600 bg-yellow-50 border-yellow-200";
-      case "low": return "text-green-600 bg-green-50 border-green-200";
-      default: return "text-gray-600 bg-gray-50 border-gray-200";
+      case "low": return "text-green-600 bg-green-500/10 border-green-500/20";
+      default: return "text-muted-foreground bg-muted border-gray-200";
     }
   };
 
@@ -342,11 +342,11 @@ export const PersonalizedRecommendations: React.FC<PersonalizedRecommendationsPr
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800 flex items-center space-x-2">
+          <h2 className="text-2xl font-bold text-foreground flex items-center space-x-2">
             <Sparkles className="w-6 h-6 text-purple-600" />
             <span>Personalized Recommendations</span>
           </h2>
-          <p className="text-gray-600 mt-1">
+          <p className="text-muted-foreground mt-1">
             AI-powered suggestions tailored to your family's unique needs and interests
           </p>
         </div>
@@ -367,7 +367,7 @@ export const PersonalizedRecommendations: React.FC<PersonalizedRecommendationsPr
       {/* Filters */}
       <div className="flex flex-wrap gap-4">
         <div>
-          <label className="text-sm font-medium text-gray-700 mb-2 block">Category</label>
+          <label className="text-sm font-medium text-foreground mb-2 block">Category</label>
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
@@ -381,7 +381,7 @@ export const PersonalizedRecommendations: React.FC<PersonalizedRecommendationsPr
           </select>
         </div>
         <div>
-          <label className="text-sm font-medium text-gray-700 mb-2 block">Family Member</label>
+          <label className="text-sm font-medium text-foreground mb-2 block">Family Member</label>
           <select
             value={selectedMember}
             onChange={(e) => setSelectedMember(e.target.value)}
@@ -407,7 +407,7 @@ export const PersonalizedRecommendations: React.FC<PersonalizedRecommendationsPr
               transition={{ delay: index * 0.1 }}
             >
               <Card className={`h-full hover:shadow-lg transition-all ${
-                completedActivities.includes(rec.id) ? "opacity-75 bg-green-50" : ""
+                completedActivities.includes(rec.id) ? "opacity-75 bg-green-500/10" : ""
               }`}>
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
@@ -432,10 +432,10 @@ export const PersonalizedRecommendations: React.FC<PersonalizedRecommendationsPr
                 </CardHeader>
 
                 <CardContent className="space-y-4">
-                  <p className="text-gray-600 text-sm">{rec.description}</p>
+                  <p className="text-muted-foreground text-sm">{rec.description}</p>
 
                   {/* AI Personalization Reason */}
-                  <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                  <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
                     <div className="flex items-start space-x-2">
                       <Brain className="w-4 h-4 text-purple-600 mt-0.5" />
                       <div>
@@ -450,25 +450,25 @@ export const PersonalizedRecommendations: React.FC<PersonalizedRecommendationsPr
                   {/* Quick Info */}
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div className="flex items-center space-x-2">
-                      <Clock className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-600">{rec.duration}</span>
+                      <Clock className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">{rec.duration}</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Target className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-600 capitalize">{rec.difficulty}</span>
+                      <Target className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-muted-foreground capitalize">{rec.difficulty}</span>
                     </div>
                   </div>
 
                   {/* Impact Visualization */}
                   <div className="space-y-2">
-                    <p className="text-xs font-medium text-gray-700">Expected Impact:</p>
+                    <p className="text-xs font-medium text-foreground">Expected Impact:</p>
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       {Object.entries(rec.estimatedImpact).map(([key, value]) => (
                         <div key={key} className="flex items-center justify-between">
-                          <span className="capitalize text-gray-600">{key}:</span>
+                          <span className="capitalize text-muted-foreground">{key}:</span>
                           <div className="flex items-center space-x-1">
                             <Progress value={value} className="w-12 h-1" />
-                            <span className="text-gray-500">{value}%</span>
+                            <span className="text-muted-foreground">{value}%</span>
                           </div>
                         </div>
                       ))}
@@ -504,7 +504,7 @@ export const PersonalizedRecommendations: React.FC<PersonalizedRecommendationsPr
                         Mark Complete
                       </Button>
                     ) : (
-                      <Badge className="bg-green-100 text-green-800">
+                      <Badge className="bg-green-100 text-green-300">
                         <Trophy className="w-3 h-3 mr-1" />
                         Completed!
                       </Badge>
@@ -521,8 +521,8 @@ export const PersonalizedRecommendations: React.FC<PersonalizedRecommendationsPr
                         className="border-t pt-4 space-y-3"
                       >
                         <div>
-                          <h4 className="font-semibold text-gray-800 mb-2">Instructions:</h4>
-                          <ol className="list-decimal list-inside space-y-1 text-sm text-gray-600">
+                          <h4 className="font-semibold text-foreground mb-2">Instructions:</h4>
+                          <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
                             {rec.instructions.map((instruction, idx) => (
                               <li key={idx}>{instruction}</li>
                             ))}
@@ -531,8 +531,8 @@ export const PersonalizedRecommendations: React.FC<PersonalizedRecommendationsPr
 
                         {rec.materials && (
                           <div>
-                            <h4 className="font-semibold text-gray-800 mb-2">Materials Needed:</h4>
-                            <ul className="list-disc list-inside space-y-1 text-sm text-gray-600">
+                            <h4 className="font-semibold text-foreground mb-2">Materials Needed:</h4>
+                            <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
                               {rec.materials.map((material, idx) => (
                                 <li key={idx}>{material}</li>
                               ))}
@@ -540,7 +540,7 @@ export const PersonalizedRecommendations: React.FC<PersonalizedRecommendationsPr
                           </div>
                         )}
 
-                        <div className="flex items-center justify-between text-xs text-gray-500">
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
                           <span>Suggested by: {rec.aiAgent} Agent</span>
                           <div className="flex space-x-1">
                             {rec.tags.map((tag, idx) => (
@@ -562,9 +562,9 @@ export const PersonalizedRecommendations: React.FC<PersonalizedRecommendationsPr
 
       {filteredRecommendations.length === 0 && !isGenerating && (
         <div className="text-center py-12">
-          <Lightbulb className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-600 mb-2">No recommendations found</h3>
-          <p className="text-gray-500 mb-4">
+          <Lightbulb className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-muted-foreground mb-2">No recommendations found</h3>
+          <p className="text-muted-foreground mb-4">
             Try adjusting your filters or generate new recommendations
           </p>
           <Button onClick={generateRecommendations} variant="outline">

@@ -197,7 +197,7 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({ onComplete, onSkip }) =>
                 </div>
                 <div className="w-full bg-white/20 rounded-full h-2">
                   <div
-                    className="bg-white h-2 rounded-full transition-all duration-300"
+                    className="bg-card h-2 rounded-full transition-all duration-300"
                     style={{ width: `${progress}%` }}
                   ></div>
                 </div>
@@ -205,7 +205,7 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({ onComplete, onSkip }) =>
             </div>
 
             {/* Step Navigation */}
-            <div className="px-6 py-4 bg-gray-50 border-b">
+            <div className="px-6 py-4 bg-muted border-b">
               <div className="flex items-center justify-center space-x-3">
                 {/* Prev Button */}
                 <button
@@ -226,10 +226,10 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({ onComplete, onSkip }) =>
                         index === currentStep
                           ? "bg-purple-600 text-white scale-110 shadow-md"
                           : completedSteps.includes(index)
-                          ? "bg-green-500 text-white hover:bg-green-600"
+                          ? "bg-green-500/100 text-white hover:bg-green-600"
                           : index < currentStep
                           ? "bg-purple-200 text-purple-700 hover:bg-purple-300"
-                          : "bg-gray-200 text-gray-500"
+                          : "bg-muted text-muted-foreground"
                       }`}
                     >
                       {completedSteps.includes(index) ? (
@@ -279,13 +279,13 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({ onComplete, onSkip }) =>
                         {currentTourStep.highlight}
                       </Badge>
                     )}
-                    <p className="text-gray-100 text-lg max-w-2xl mx-auto font-medium">
+                    <p className="text-muted-foreground text-lg max-w-2xl mx-auto font-medium">
                       {currentTourStep.description}
                     </p>
                   </div>
 
                   {/* Key Tips */}
-                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+                  <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-6">
                     <h3 className="font-semibold text-blue-900 mb-3 flex items-center">
                       <Lightbulb className="w-5 h-5 mr-2" />
                       Key Features:
@@ -301,7 +301,7 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({ onComplete, onSkip }) =>
                   </div>
 
                   {/* Interactive Demo Area */}
-                  <div className="bg-gradient-to-r from-gray-50 to-purple-50 border-2 border-dashed border-purple-200 rounded-xl p-8">
+                  <div className="bg-gradient-to-r from-gray-50 to-purple-50 border-2 border-dashed border-purple-500/20 rounded-xl p-8">
                     <div className="text-center">
                       <div className="text-4xl mb-4">
                         {currentStep === 0 && "👨‍👩‍👧‍👦"}
@@ -311,7 +311,7 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({ onComplete, onSkip }) =>
                         {currentStep === 4 && "🏆"}
                         {currentStep === 5 && "📊"}
                       </div>
-                      <p className="text-gray-600 mb-4">
+                      <p className="text-muted-foreground mb-4">
                         {currentStep === 0 && "Your family's personalized AI-powered wellness journey starts here"}
                         {currentStep === 1 && "Each family member gets a tailored experience"}
                         {currentStep === 2 && "5 specialized AI agents ready to help your family grow"}
@@ -338,7 +338,7 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({ onComplete, onSkip }) =>
             </div>
 
             {/* Navigation */}
-            <div className="flex justify-between items-center p-6 bg-gray-50 border-t">
+            <div className="flex justify-between items-center p-6 bg-muted border-t">
               <Button
                 variant="outline"
                 onClick={prevStep}
@@ -350,7 +350,7 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({ onComplete, onSkip }) =>
               </Button>
 
               <div className="flex items-center space-x-4">
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-muted-foreground">
                   {currentTourStep.duration && `~${currentTourStep.duration} seconds`}
                 </span>
                 <Button

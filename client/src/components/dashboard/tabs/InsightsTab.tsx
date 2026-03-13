@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { EnhancedAnalytics } from "@/components/family/EnhancedAnalytics";
 import { PersonalizedRecommendations } from "@/components/family/PersonalizedRecommendations";
 import { AgentContribution } from "@/components/agents";
+import { BondScoreDashboard } from "../bond-score";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { TrendingUp, Heart } from "lucide-react";
 import type { FamilyStats } from "@/types/family";
 import type { FamilyMember } from "@/types/family";
 
@@ -42,6 +44,8 @@ const metricAgentMapping = [
 ];
 
 export const InsightsTab: React.FC<InsightsTabProps> = ({ familyStats, familyMembers }) => {
+  const [showBondScore, setShowBondScore] = useState(false);
+
   return (
     <motion.div
       key="insights"
@@ -52,7 +56,7 @@ export const InsightsTab: React.FC<InsightsTabProps> = ({ familyStats, familyMem
       className="space-y-6"
     >
       {/* Agent-attributed metric cards */}
-      <Card className="border-0 bg-white/80 backdrop-blur-sm">
+      <Card className="border-0 bg-card/80 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <TrendingUp className="w-5 h-5 text-purple-600" />
@@ -62,9 +66,9 @@ export const InsightsTab: React.FC<InsightsTabProps> = ({ familyStats, familyMem
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {metricAgentMapping.map((metric) => (
-              <div key={metric.label} className="p-4 bg-gray-50 rounded-lg border">
-                <p className="text-sm font-semibold text-gray-900 mb-1">{metric.label}</p>
-                <p className="text-2xl font-bold text-purple-700 mb-2">
+              <div key={metric.label} className="p-4 bg-muted rounded-lg border">
+                <p className="text-sm font-semibold text-foreground mb-1">{metric.label}</p>
+                <p className="text-2xl font-bold text-purple-400 mb-2">
                   {metric.label === "Family Health Forecast"
                     ? `${familyStats?.healthScore || 78}/100`
                     : metric.label === "Stability Index"
@@ -79,6 +83,22 @@ export const InsightsTab: React.FC<InsightsTabProps> = ({ familyStats, familyMem
           </div>
         </CardContent>
       </Card>
+
+      {/* Bond Score — embedded in Insights (CONSOLIDATION) */}
+      <div className="flex items-center justify-between">
+        <Button
+          variant={showBondScore ? "default" : "outline"}
+          size="sm"
+          onClick={() => setShowBondScore(!showBondScore)}
+          className={showBondScore ? "bg-purple-600 hover:bg-purple-700" : ""}
+        >
+          <Heart className="w-4 h-4 mr-2" />
+          {showBondScore ? "Hide Bond Score" : "View Bond Score"}
+        </Button>
+      </div>
+      {showBondScore && (
+        <BondScoreDashboard familyId="default-family" familyName="My Family" />
+      )}
 
       <EnhancedAnalytics stats={familyStats} history={undefined} />
       <PersonalizedRecommendations

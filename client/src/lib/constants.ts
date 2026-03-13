@@ -12,8 +12,13 @@
 export const API_CONFIG = {
   BASE_URL: import.meta.env.VITE_API_BASE_URL || (
     import.meta.env.MODE === 'production'
-      ? `http://157.180.36.156:3004`
-      : `http://localhost:3000`
+      ? window.location.origin   // Same origin in production — set VITE_API_BASE_URL to override
+      : 'http://localhost:3000'
+  ),
+  HEALTH_BASE_URL: import.meta.env.VITE_HEALTH_BASE_URL || (
+    import.meta.env.MODE === 'production'
+      ? `${window.location.protocol}//${window.location.hostname}:${import.meta.env.VITE_HEALTH_PORT || '3001'}`
+      : `http://localhost:${import.meta.env.VITE_HEALTH_PORT || '3001'}`
   ),
   TIMEOUT: Number(import.meta.env.VITE_API_TIMEOUT) || 10000,
   RETRY_ATTEMPTS: Number(import.meta.env.VITE_API_RETRY_ATTEMPTS) || 3,
@@ -91,24 +96,24 @@ export const FAMILY_COLORS = {
     growth: "from-blue-500 to-cyan-600",
   },
 
-  // Soft background colors for cards and sections
+  // Soft background colors for cards and sections (dark-mode compatible via opacity)
   backgrounds: {
-    wisdom: "bg-purple-50 border-purple-200",
-    intimacy: "bg-pink-50 border-pink-200",
-    generational: "bg-amber-50 border-amber-200",
-    presence: "bg-green-50 border-green-200",
-    growth: "bg-blue-50 border-blue-200",
-    celebration: "bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-100",
-    upcoming: "bg-purple-50 border-purple-200",
+    wisdom: "bg-purple-500/10 border-purple-500/20",
+    intimacy: "bg-pink-500/10 border-pink-500/20",
+    generational: "bg-amber-500/10 border-amber-500/20",
+    presence: "bg-green-500/10 border-green-500/20",
+    growth: "bg-blue-500/10 border-blue-500/20",
+    celebration: "bg-gradient-to-r from-blue-500/10 to-indigo-500/10 border-blue-500/20",
+    upcoming: "bg-purple-500/10 border-purple-500/20",
   },
 
-  // Text colors for different states
+  // Text colors for different states (semantic tokens)
   text: {
-    positive: "text-green-600",
-    negative: "text-red-600",
-    neutral: "text-gray-600",
-    accent: "text-purple-600",
-    muted: "text-gray-500",
+    positive: "text-green-500",
+    negative: "text-red-500",
+    neutral: "text-muted-foreground",
+    accent: "text-purple-400",
+    muted: "text-muted-foreground",
   }
 } as const;
 

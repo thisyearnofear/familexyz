@@ -34,13 +34,13 @@ export const EnhancedAnalytics: React.FC<EnhancedAnalyticsProps> = ({
     if (isLoading) {
         return (
             <div className="space-y-4">
-                <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                <div className="h-4 bg-muted rounded animate-pulse"></div>
                 <div
-                    className="h-4 bg-gray-200 rounded animate-pulse"
+                    className="h-4 bg-muted rounded animate-pulse"
                     style={{ animationDelay: "0.1s" }}
                 ></div>
                 <div
-                    className="h-4 bg-gray-200 rounded animate-pulse"
+                    className="h-4 bg-muted rounded animate-pulse"
                     style={{ animationDelay: "0.2s" }}
                 ></div>
             </div>
@@ -98,23 +98,23 @@ export const EnhancedAnalytics: React.FC<EnhancedAnalyticsProps> = ({
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="text-center p-4 bg-white rounded-lg border border-purple-200">
-                            <div className="text-2xl font-bold text-gray-900">
+                        <div className="text-center p-4 bg-card rounded-lg border border-purple-500/20">
+                            <div className="text-2xl font-bold text-foreground">
                                 {currentScore}%
                             </div>
-                            <div className="text-sm text-gray-600">
+                            <div className="text-sm text-muted-foreground">
                                 Current Score
                             </div>
                         </div>
-                        <div className="text-center p-4 bg-white rounded-lg border border-purple-200">
-                            <div className="text-2xl font-bold text-gray-900">
+                        <div className="text-center p-4 bg-card rounded-lg border border-purple-500/20">
+                            <div className="text-2xl font-bold text-foreground">
                                 {predictedScore}%
                             </div>
-                            <div className="text-sm text-gray-600">
+                            <div className="text-sm text-muted-foreground">
                                 Predicted (7 days)
                             </div>
                         </div>
-                        <div className="text-center p-4 bg-white rounded-lg border border-purple-200">
+                        <div className="text-center p-4 bg-card rounded-lg border border-purple-500/20">
                             <div className="flex items-center justify-center space-x-1">
                                 {getTrendIcon()}
                                 <span
@@ -123,7 +123,7 @@ export const EnhancedAnalytics: React.FC<EnhancedAnalyticsProps> = ({
                                     {getTrendText()}
                                 </span>
                             </div>
-                            <div className="text-sm text-gray-600">Trend</div>
+                            <div className="text-sm text-muted-foreground">Trend</div>
                         </div>
                     </div>
 
@@ -145,7 +145,7 @@ export const EnhancedAnalytics: React.FC<EnhancedAnalyticsProps> = ({
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="bg-white bg-opacity-70 backdrop-blur-sm p-4 rounded-xl border-2 border-indigo-300">
+                    <div className="bg-card bg-opacity-70 backdrop-blur-sm p-4 rounded-xl border-2 border-indigo-300">
                         <div className="flex items-start gap-3 mb-3">
                             <div className="flex -space-x-2">
                                 <span className="inline-flex items-center justify-center w-8 h-8 text-xl bg-purple-100 rounded-full border-2 border-white">🧠</span>
@@ -156,7 +156,7 @@ export const EnhancedAnalytics: React.FC<EnhancedAnalyticsProps> = ({
                                 <p className="text-sm font-bold text-indigo-900 mb-1">
                                     Wisdom, Intimacy & Presence agree:
                                 </p>
-                                <p className="text-sm text-gray-800 font-medium">
+                                <p className="text-sm text-foreground font-medium">
                                     "Your family is ready for deeper emotional connection. The combination of improved communication, quality time, and mindfulness creates the perfect foundation for growth."
                                 </p>
                             </div>
@@ -180,10 +180,10 @@ export const EnhancedAnalytics: React.FC<EnhancedAnalyticsProps> = ({
                 <CardContent>
                     <div className="flex items-center justify-between">
                         <div>
-                            <div className="text-2xl font-bold text-gray-900">
+                            <div className="text-2xl font-bold text-foreground">
                                 {volatility}
                             </div>
-                            <div className="text-sm text-gray-600">
+                            <div className="text-sm text-muted-foreground">
                                 Volatility Score (0-100)
                             </div>
                         </div>
@@ -229,7 +229,7 @@ export const EnhancedAnalytics: React.FC<EnhancedAnalyticsProps> = ({
                             </div>
                         </div>
                     </div>
-                    <div className="mt-2 text-sm text-gray-600">
+                    <div className="mt-2 text-sm text-muted-foreground">
                         {volatility > 50
                             ? "High variability detected. Consider establishing consistent routines."
                             : volatility > 30
@@ -261,52 +261,52 @@ export const EnhancedAnalytics: React.FC<EnhancedAnalyticsProps> = ({
                     </CardHeader>
                     <CardContent>
                         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                            <div className="text-center p-3 bg-white rounded-lg border border-green-200 hover:border-purple-300 transition-all cursor-pointer">
+                            <div className="text-center p-3 bg-card rounded-lg border border-green-500/20 hover:border-purple-300 transition-all cursor-pointer">
                                 <div className="text-3xl mb-1">💖</div>
-                                <div className="text-lg font-bold text-gray-900">
+                                <div className="text-lg font-bold text-foreground">
                                     {stats.intimacy?.affection ?? 0}
                                 </div>
-                                <div className="text-xs text-gray-600">
+                                <div className="text-xs text-muted-foreground">
                                     Affection
                                 </div>
                                 <div className="text-[10px] text-purple-600 mt-1">Intimacy</div>
                             </div>
-                            <div className="text-center p-3 bg-white rounded-lg border border-green-200 hover:border-purple-300 transition-all cursor-pointer">
+                            <div className="text-center p-3 bg-card rounded-lg border border-green-500/20 hover:border-purple-300 transition-all cursor-pointer">
                                 <div className="text-3xl mb-1">🧘</div>
-                                <div className="text-lg font-bold text-gray-900">
+                                <div className="text-lg font-bold text-foreground">
                                     {stats.presence?.attention ?? 0}
                                 </div>
-                                <div className="text-xs text-gray-600">
+                                <div className="text-xs text-muted-foreground">
                                     Attention
                                 </div>
                                 <div className="text-[10px] text-purple-600 mt-1">Presence</div>
                             </div>
-                            <div className="text-center p-3 bg-white rounded-lg border border-green-200 hover:border-purple-300 transition-all cursor-pointer">
+                            <div className="text-center p-3 bg-card rounded-lg border border-green-500/20 hover:border-purple-300 transition-all cursor-pointer">
                                 <div className="text-3xl mb-1">👵👦</div>
-                                <div className="text-lg font-bold text-gray-900">
+                                <div className="text-lg font-bold text-foreground">
                                     {stats.generational?.bridge ?? 0}
                                 </div>
-                                <div className="text-xs text-gray-600">
+                                <div className="text-xs text-muted-foreground">
                                     Bridge
                                 </div>
                                 <div className="text-[10px] text-purple-600 mt-1">Bridge</div>
                             </div>
-                            <div className="text-center p-3 bg-white rounded-lg border border-green-200 hover:border-purple-300 transition-all cursor-pointer">
+                            <div className="text-center p-3 bg-card rounded-lg border border-green-500/20 hover:border-purple-300 transition-all cursor-pointer">
                                 <div className="text-3xl mb-1">🧘</div>
-                                <div className="text-lg font-bold text-gray-900">
+                                <div className="text-lg font-bold text-foreground">
                                     {stats.presence?.distraction ?? 0}
                                 </div>
-                                <div className="text-xs text-gray-600">
+                                <div className="text-xs text-muted-foreground">
                                     Distraction
                                 </div>
                                 <div className="text-[10px] text-purple-600 mt-1">Presence</div>
                             </div>
-                            <div className="text-center p-3 bg-white rounded-lg border border-green-200 hover:border-purple-300 transition-all cursor-pointer">
+                            <div className="text-center p-3 bg-card rounded-lg border border-green-500/20 hover:border-purple-300 transition-all cursor-pointer">
                                 <div className="text-3xl mb-1">🌱</div>
-                                <div className="text-lg font-bold text-gray-900">
+                                <div className="text-lg font-bold text-foreground">
                                     {stats.growth?.growth ?? 0}
                                 </div>
-                                <div className="text-xs text-gray-600">
+                                <div className="text-xs text-muted-foreground">
                                     Growth
                                 </div>
                                 <div className="text-[10px] text-purple-600 mt-1">Growth</div>
@@ -337,7 +337,7 @@ export const EnhancedAnalytics: React.FC<EnhancedAnalyticsProps> = ({
                                 >
                                     {index + 1}
                                 </Badge>
-                                <span className="text-sm text-gray-800">
+                                <span className="text-sm text-foreground">
                                     {rec}
                                 </span>
                             </li>

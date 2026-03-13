@@ -112,24 +112,24 @@ export const FamilyProgressChart: React.FC<FamilyProgressChartProps> = ({
               {icon}
             </div>
             <div>
-              <h4 className="font-semibold text-gray-800">{dimension}</h4>
-              <p className="text-xs text-gray-600">{description}</p>
+              <h4 className="font-semibold text-foreground">{dimension}</h4>
+              <p className="text-xs text-muted-foreground">{description}</p>
             </div>
           </div>
           <div className="text-right">
-            <div className="text-sm font-bold text-gray-800">{current}/10</div>
-            <div className="text-xs text-gray-500">Goal: {target}/10</div>
+            <div className="text-sm font-bold text-foreground">{current}/10</div>
+            <div className="text-xs text-muted-foreground">Goal: {target}/10</div>
           </div>
         </div>
         
         <div className="space-y-2">
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="w-full bg-muted rounded-full h-2">
             <div 
               className={`h-2 rounded-full bg-gradient-to-r ${color} transition-all duration-500`}
               style={{ width: `${percentage}%` }}
             ></div>
           </div>
-          <div className="flex justify-between text-xs text-gray-500">
+          <div className="flex justify-between text-xs text-muted-foreground">
             <span>0</span>
             <span>Progress: {Math.round(percentage)}%</span>
             <span>10</span>
@@ -166,19 +166,19 @@ export const FamilyTimeline: React.FC<FamilyTimelineProps> = ({ events }) => {
               <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                 event.impact === 'positive' ? 'bg-green-100 text-green-600' :
                 event.impact === 'negative' ? 'bg-red-100 text-red-600' :
-                'bg-gray-100 text-gray-600'
+                'bg-muted text-muted-foreground'
               }`}>
                 {event.impact === 'positive' ? '⭐' : 
                  event.impact === 'negative' ? '⚠️' : '📅'}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-gray-800">{event.title}</div>
-                <div className="text-sm text-gray-600">{event.description}</div>
-                <div className="text-xs text-gray-500 mt-1">{event.date}</div>
+                <div className="text-sm font-medium text-foreground">{event.title}</div>
+                <div className="text-sm text-muted-foreground">{event.description}</div>
+                <div className="text-xs text-muted-foreground mt-1">{event.date}</div>
                 {event.score !== undefined && (
                   <div className="flex items-center space-x-1 mt-1">
                     <Target className="w-3 h-3" />
-                    <span className="text-xs text-gray-600">Score: {event.score}/10</span>
+                    <span className="text-xs text-muted-foreground">Score: {event.score}/10</span>
                   </div>
                 )}
               </div>
@@ -213,10 +213,10 @@ export const FamilyInsightsCard: React.FC<FamilyInsightsCardProps> = ({
             {icon}
           </div>
           <div className="flex-1">
-            <h3 className="font-semibold text-gray-800 mb-1">{title}</h3>
-            <p className="text-sm text-gray-600 mb-2">{description}</p>
+            <h3 className="font-semibold text-foreground mb-1">{title}</h3>
+            <p className="text-sm text-muted-foreground mb-2">{description}</p>
             {value && (
-              <div className="text-lg font-bold text-gray-800">{value}</div>
+              <div className="text-lg font-bold text-foreground">{value}</div>
             )}
           </div>
         </div>

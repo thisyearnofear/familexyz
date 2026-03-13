@@ -37,7 +37,7 @@ export const FamilyRadarChart = ({
     if (isLoading) {
         return (
             <div className="h-64 flex items-center justify-center">
-                <div className="animate-pulse text-gray-700">
+                <div className="animate-pulse text-foreground">
                     Loading insights...
                 </div>
             </div>
@@ -57,33 +57,33 @@ export const FamilyRadarChart = ({
 
             {/* Agent Action Suggestions */}
             <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="p-2 bg-purple-50 rounded border border-purple-200">
-                    <div className="font-semibold text-purple-900 flex items-center gap-1">
+                <div className="p-2 bg-purple-500/10 rounded border border-purple-500/20">
+                    <div className="font-semibold text-purple-300 flex items-center gap-1">
                         <Brain className="w-3 h-3" />
                         Wisdom
                     </div>
                     <div className="text-purple-800">Emotional guidance</div>
                 </div>
-                <div className="p-2 bg-pink-50 rounded border border-pink-200">
+                <div className="p-2 bg-pink-500/10 rounded border border-pink-500/20">
                     <div className="font-semibold text-pink-900 flex items-center gap-1">
                         <Heart className="w-3 h-3" />
                         Intimacy
                     </div>
                     <div className="text-pink-800">Relationship coaching</div>
                 </div>
-                <div className="p-2 bg-blue-50 rounded border border-blue-200">
+                <div className="p-2 bg-blue-500/10 rounded border border-blue-500/20">
                     <div className="font-semibold text-blue-900 flex items-center gap-1">
                         <Users className="w-3 h-3" />
                         Bridge
                     </div>
                     <div className="text-blue-800">Cross-generational</div>
                 </div>
-                <div className="p-2 bg-green-50 rounded border border-green-200">
+                <div className="p-2 bg-green-500/10 rounded border border-green-500/20">
                     <div className="font-semibold text-green-900 flex items-center gap-1">
                         <Leaf className="w-3 h-3" />
                         Presence
                     </div>
-                    <div className="text-green-800">Mindful wellness</div>
+                    <div className="text-green-300">Mindful wellness</div>
                 </div>
             </div>
         </div>

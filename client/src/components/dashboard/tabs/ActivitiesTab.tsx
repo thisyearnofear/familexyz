@@ -61,7 +61,7 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({ familyMembers }) =
         timestamp: new Date(Date.now() - 3600000),
         duration: 120,
         icon: <Gamepad2 className="w-5 h-5" />,
-        color: "from-blue-50 to-blue-100 border-blue-200",
+        color: "from-blue-50 to-blue-100 border-blue-500/20",
         impact: 5,
         recommendedBy: {
           agentId: "intimacy",
@@ -79,7 +79,7 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({ familyMembers }) =
         timestamp: new Date(Date.now() - 7200000),
         duration: 30,
         icon: <MessageCircle className="w-5 h-5" />,
-        color: "from-purple-50 to-purple-100 border-purple-200",
+        color: "from-purple-50 to-purple-100 border-purple-500/20",
         impact: 4,
         recommendedBy: {
           agentId: "wisdom",
@@ -97,7 +97,7 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({ familyMembers }) =
         timestamp: new Date(Date.now() - 14400000),
         duration: 45,
         icon: <Users className="w-5 h-5" />,
-        color: "from-green-50 to-green-100 border-green-200",
+        color: "from-green-50 to-green-100 border-green-500/20",
         impact: 4,
         recommendedBy: {
           agentId: "presence",
@@ -115,7 +115,7 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({ familyMembers }) =
         timestamp: new Date(Date.now() - 86400000),
         duration: 150,
         icon: <Coffee className="w-5 h-5" />,
-        color: "from-amber-50 to-amber-100 border-amber-200",
+        color: "from-amber-50 to-amber-100 border-amber-500/20",
         impact: 5,
         recommendedBy: {
           agentId: "bridge",
@@ -151,7 +151,7 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({ familyMembers }) =
         timestamp: new Date(Date.now() - 259200000),
         duration: 90,
         icon: <Utensils className="w-5 h-5" />,
-        color: "from-orange-50 to-orange-100 border-orange-200",
+        color: "from-orange-50 to-orange-100 border-orange-500/20",
         impact: 5,
         recommendedBy: {
           agentId: "intimacy",
@@ -166,7 +166,7 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({ familyMembers }) =
   }, [familyMembers]);
 
   const filters = [
-    { id: "all", label: "All Activities", color: "text-gray-700" },
+    { id: "all", label: "All Activities", color: "text-foreground" },
     { id: "connection", label: "Connection", color: "text-cyan-600" },
     { id: "communication", label: "Communication", color: "text-purple-600" },
     { id: "bonding", label: "Bonding", color: "text-blue-600" },
@@ -213,11 +213,11 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({ familyMembers }) =
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 flex items-center space-x-2">
+          <h2 className="text-2xl font-bold text-foreground flex items-center space-x-2">
             <Calendar className="w-6 h-6 text-purple-600" />
             <span>Family Activities</span>
           </h2>
-          <p className="text-gray-600 mt-1">
+          <p className="text-muted-foreground mt-1">
             Track and celebrate your family's moments together
           </p>
         </div>
@@ -229,7 +229,7 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({ familyMembers }) =
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200">
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-500/20">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
@@ -241,7 +241,7 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({ familyMembers }) =
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200">
+        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-500/20">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
@@ -253,12 +253,12 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({ familyMembers }) =
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200">
+        <Card className="bg-gradient-to-br from-green-50 to-green-100 border border-green-500/20">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-green-700 font-semibold">Time Together</p>
-                <p className="text-3xl font-bold text-green-800">{totalDuration}m</p>
+                <p className="text-3xl font-bold text-green-300">{totalDuration}m</p>
               </div>
               <Clock className="w-8 h-8 text-green-600 opacity-20" />
             </div>
@@ -274,8 +274,8 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({ familyMembers }) =
             onClick={() => setSelectedFilter(filter.id)}
             className={`transition-all ${
               selectedFilter === filter.id
-                ? "bg-white text-gray-900 border-2 border-purple-400 shadow-md font-semibold"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300"
+                ? "bg-card text-foreground border-2 border-purple-400 shadow-md font-semibold"
+                : "bg-muted text-foreground hover:bg-muted border border-border"
             }`}
           >
             {filter.label}
@@ -305,13 +305,13 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({ familyMembers }) =
                   <CardContent className="p-5">
                     <div className="flex items-start justify-between">
                       <div className="flex items-start space-x-4 flex-1 min-w-0">
-                        <div className="p-3 bg-white bg-opacity-70 rounded-lg flex-shrink-0">
+                        <div className="p-3 bg-card bg-opacity-70 rounded-lg flex-shrink-0">
                           {activity.icon}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center flex-wrap gap-2 mb-1">
-                            <h3 className="font-bold text-gray-900">{activity.title}</h3>
-                            <Badge className="bg-white bg-opacity-70 text-gray-800 text-xs font-semibold capitalize">
+                            <h3 className="font-bold text-foreground">{activity.title}</h3>
+                            <Badge className="bg-card bg-opacity-70 text-foreground text-xs font-semibold capitalize">
                               {activity.type}
                             </Badge>
                             {activity.recommendedBy && (
@@ -323,8 +323,8 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({ familyMembers }) =
                               />
                             )}
                           </div>
-                          <p className="text-sm text-gray-700 mb-2">{activity.description}</p>
-                          <div className="flex flex-wrap items-center gap-3 text-xs text-gray-700 font-medium">
+                          <p className="text-sm text-foreground mb-2">{activity.description}</p>
+                          <div className="flex flex-wrap items-center gap-3 text-xs text-foreground font-medium">
                             <span className="flex items-center space-x-1">
                               <Users className="w-3.5 h-3.5" />
                               <span>{getMemberNames(activity.members)}</span>
@@ -339,14 +339,14 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({ familyMembers }) =
                               <Zap className="w-3.5 h-3.5" />
                               <span>{activity.impact}/5 impact</span>
                             </span>
-                            <span className="text-gray-600">
+                            <span className="text-muted-foreground">
                               {formatTimeAgo(activity.timestamp)}
                             </span>
                           </div>
                         </div>
                       </div>
                       <ChevronDown
-                        className={`w-5 h-5 text-gray-600 flex-shrink-0 transition-transform ${
+                        className={`w-5 h-5 text-muted-foreground flex-shrink-0 transition-transform ${
                           expandedActivity === activity.id ? "rotate-180" : ""
                         }`}
                       />
@@ -363,11 +363,11 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({ familyMembers }) =
                         >
                           <div className="space-y-3">
                             {activity.recommendedBy && (
-                              <div className="bg-white bg-opacity-60 p-3 rounded-lg">
-                                <p className="text-sm text-gray-800 font-medium mb-2">
+                              <div className="bg-card bg-opacity-60 p-3 rounded-lg">
+                                <p className="text-sm text-foreground font-medium mb-2">
                                   <span className="text-purple-700 font-bold">{activity.recommendedBy.agentEmoji} {activity.recommendedBy.agentName}</span> recommends this because:
                                 </p>
-                                <p className="text-sm text-gray-700 italic">
+                                <p className="text-sm text-foreground italic">
                                   "{activity.recommendedBy.reason}"
                                 </p>
                                 <div className="mt-2">
@@ -381,7 +381,7 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({ familyMembers }) =
                               </div>
                             )}
                             <div className="flex justify-between items-center">
-                              <span className="text-sm font-semibold text-gray-800">
+                              <span className="text-sm font-semibold text-foreground">
                                 Impact Score
                               </span>
                               <div className="flex space-x-1">
@@ -391,13 +391,13 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({ familyMembers }) =
                                     className={`w-4 h-4 ${
                                       i < activity.impact
                                         ? "fill-yellow-400 text-yellow-400"
-                                        : "text-gray-300"
+                                        : "text-muted-foreground"
                                     }`}
                                   />
                                 ))}
                               </div>
                             </div>
-                            <p className="text-sm text-gray-800 font-medium">
+                            <p className="text-sm text-foreground font-medium">
                               This activity strengthens{" "}
                               <span className="font-bold">
                                 {activity.type === "connection"
@@ -417,14 +417,14 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({ familyMembers }) =
                             <div className="flex space-x-2">
                               <Button
                                 size="sm"
-                                className="flex-1 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg shadow-sm hover:shadow-md active:shadow-inner border border-gray-300 transition-all disabled:cursor-not-allowed"
+                                className="flex-1 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-foreground font-bold py-2 px-4 rounded-lg shadow-sm hover:shadow-md active:shadow-inner border border-border transition-all disabled:cursor-not-allowed"
                               >
                                 <Heart className="w-5 h-5 mr-1.5" />
                                 Like
                               </Button>
                               <Button
                                 size="sm"
-                                className="flex-1 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg shadow-sm hover:shadow-md active:shadow-inner border border-gray-300 transition-all disabled:cursor-not-allowed"
+                                className="flex-1 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-foreground font-bold py-2 px-4 rounded-lg shadow-sm hover:shadow-md active:shadow-inner border border-border transition-all disabled:cursor-not-allowed"
                               >
                                 <MessageCircle className="w-5 h-5 mr-1.5" />
                                 Comment
@@ -444,8 +444,8 @@ export const ActivitiesTab: React.FC<ActivitiesTabProps> = ({ familyMembers }) =
               animate={{ opacity: 1 }}
               className="text-center py-12"
             >
-              <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-600 mb-4">No activities found with this filter</p>
+              <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground mb-4">No activities found with this filter</p>
               <Button className="bg-gradient-to-r from-purple-600 via-purple-600 to-pink-600 hover:shadow-lg active:shadow-inner text-white font-bold text-base py-3 px-6 rounded-lg shadow-md disabled:cursor-not-allowed transition-all">
                 <Plus className="w-5 h-5 mr-2" />
                 Log Your First Activity

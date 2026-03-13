@@ -55,8 +55,8 @@ export const AgentsTab: React.FC<AgentsTabProps> = ({ agentsData, selectedAgent,
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-0">
-                <p className="text-xs text-gray-600 mb-2">{metadata.description}</p>
-                <Badge className="bg-green-100 text-green-800 border-green-200">Active</Badge>
+                <p className="text-xs text-muted-foreground mb-2">{metadata.description}</p>
+                <Badge className="bg-green-100 text-green-300 border-green-500/20">Active</Badge>
               </CardContent>
             </Card>
           );

@@ -21,7 +21,6 @@ import { SocialTab } from "./dashboard/tabs/SocialTab";
 import { MembersTab } from "./dashboard/tabs/MembersTab";
 import { AgentsTab } from "./dashboard/tabs/AgentsTab";
 import { SettingsTab } from "./dashboard/tabs/SettingsTab";
-import { BondScoreTab } from "./dashboard/tabs/BondScoreTab";
 import { FamilyTreasuryModal } from "./dashboard/FamilyTreasuryModal";
 
 interface EnhancedFamilyDashboardProps {}
@@ -76,12 +75,10 @@ export const EnhancedFamilyDashboard: React.FC<EnhancedFamilyDashboardProps> = (
 
   return (
     <div
-      className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-indigo-100 relative overflow-hidden"
+      className="min-h-screen bg-background relative overflow-hidden"
       role="main"
       aria-label="Enhanced Family Dashboard"
     >
-      {/* Subtle background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-50/30 via-transparent to-pink-50/30 pointer-events-none" />
 
       {/* Enhanced Header */}
       <div className="relative bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 text-white px-6 py-8 overflow-hidden">
@@ -159,8 +156,8 @@ export const EnhancedFamilyDashboard: React.FC<EnhancedFamilyDashboardProps> = (
           <Dialog open={showTreasuryModal} onOpenChange={() => setShowTreasuryModal(false)}>
             <DialogContent className="sm:max-w-md">
               <div className="p-6 text-center space-y-3">
-                <p className="text-red-600 font-semibold">Wallet connection unavailable</p>
-                <p className="text-sm text-gray-600">Please ensure HashPack or another supported wallet extension is installed.</p>
+                <p className="text-destructive font-semibold">Wallet connection unavailable</p>
+                <p className="text-sm text-muted-foreground">Please ensure HashPack or another supported wallet extension is installed.</p>
                 <Button variant="outline" size="sm" onClick={() => setShowTreasuryModal(false)}>Close</Button>
               </div>
             </DialogContent>
@@ -173,11 +170,11 @@ export const EnhancedFamilyDashboard: React.FC<EnhancedFamilyDashboardProps> = (
         />
       </ErrorBoundary>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
-        {/* Navigation Tabs */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 mb-6 shadow-lg">
-          <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+      {/* Main Content — pb-20 on mobile for fixed bottom nav */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20 md:pb-8 relative z-10">
+        {/* Navigation Tabs — desktop only */}
+        <div className="hidden md:block bg-card/80 backdrop-blur-sm rounded-xl p-4 mb-6 shadow-lg border border-border">
+          <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} variant="top" />
         </div>
 
         {/* Tab Content */}
@@ -216,10 +213,13 @@ export const EnhancedFamilyDashboard: React.FC<EnhancedFamilyDashboardProps> = (
             />
           )}
 
-          {activeTab === "bond-score" && <BondScoreTab />}
-
           {activeTab === "settings" && <SettingsTab />}
         </AnimatePresence>
+      </div>
+
+      {/* Mobile bottom navigation */}
+      <div className="md:hidden">
+        <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} variant="bottom" />
       </div>
     </div>
   );

@@ -57,7 +57,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
             {agentHighlights.map((highlight) => (
               <div
                 key={highlight.agentId}
-                className="bg-white bg-opacity-70 backdrop-blur-sm p-4 rounded-xl border border-purple-200 hover:border-purple-400 transition-all"
+                className="bg-card bg-opacity-70 backdrop-blur-sm p-4 rounded-xl border border-purple-500/20 hover:border-purple-400 transition-all"
               >
                 <div className="flex items-start justify-between mb-2">
                   <AgentBadge
@@ -67,10 +67,10 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                     size="sm"
                   />
                 </div>
-                <p className="text-sm font-semibold text-gray-900 mb-2">
+                <p className="text-sm font-semibold text-foreground mb-2">
                   {highlight.insight}
                 </p>
-                <p className="text-xs text-gray-700 mb-3">
+                <p className="text-xs text-foreground mb-3">
                   💡 {highlight.action}
                 </p>
                 <AskAgentButton
@@ -127,8 +127,8 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                     </span>
                   </div>
                   <div>
-                    <div className="font-medium text-gray-800">{member.name}</div>
-                    <div className="text-xs text-gray-600">{member.relationship}</div>
+                    <div className="font-medium text-foreground">{member.name}</div>
+                    <div className="text-xs text-muted-foreground">{member.relationship}</div>
                   </div>
                 </div>
               ))}

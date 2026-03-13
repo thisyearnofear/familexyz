@@ -18,6 +18,7 @@ import { NavLink, useLocation } from "react-router";
 import type { UUID } from "@elizaos/core";
 import { Book, Cog, Home, MessageSquareQuote } from "lucide-react";
 import ConnectionStatus from "./connection-status";
+import { useAgentInsights } from "@/hooks/useAgentInsights";
 
 export function AppSidebar() {
     const location = useLocation();
@@ -28,6 +29,7 @@ export function AppSidebar() {
     });
 
     const agents = query?.data?.data?.agents;
+    const { insights } = useAgentInsights();
 
     return (
         <Sidebar aria-label="Main navigation">
@@ -104,10 +106,11 @@ export function AppSidebar() {
                                             const agentName = agent.name.toLowerCase();
                                             const emoji = agentEmojis[agentName] || "🤖";
 
-                                            // Show notification dot for agents that have insights
-                                            // Matched by name against known family agent types
-                                            const familyAgentTypes = ["wisdom", "intimacy", "presence", "growth", "bridge", "generationalbridge"];
-                                            const hasNotification = familyAgentTypes.some(t => agentName.includes(t));
+                                            // Show notification dot only when agent has real insights from the backend
+                                            const agentInsight = insights.find(i => 
+                                                i.agentId === agent.id || i.agentName.toLowerCase() === agentName
+                                            );
+                                            const hasNotification = !!agentInsight;
 
                                             return (
                                                 <SidebarMenuItem key={agent.id} className="mb-3">
@@ -131,9 +134,7 @@ export function AppSidebar() {
                                                             </span>
                                                             {hasNotification && (
                                                                 <span className="ml-auto flex-shrink-0">
-                                                                    <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-purple-600 rounded-full">
-                                                                        {agentName === "wisdom" ? "2" : "1"}
-                                                                    </span>
+                                                                    <span className="inline-flex items-center justify-center w-2 h-2 bg-purple-500 rounded-full" />
                                                                 </span>
                                                             )}
                                                         </SidebarMenuButton>

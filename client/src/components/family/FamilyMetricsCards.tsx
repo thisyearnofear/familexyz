@@ -73,13 +73,13 @@ export const FamilyMetricsCards = ({
                     >
                         <CardHeader className="pb-2">
                             <div
-                                className="h-4 bg-gray-200 rounded animate-pulse"
+                                className="h-4 bg-muted rounded animate-pulse"
                                 style={{ animationDelay: `${i * 0.1}s` }}
                             />
                         </CardHeader>
                         <CardContent>
                             <div
-                                className="h-8 bg-gray-200 rounded animate-pulse"
+                                className="h-8 bg-muted rounded animate-pulse"
                                 style={{ animationDelay: `${i * 0.1}s` }}
                             />
                         </CardContent>
@@ -104,9 +104,9 @@ export const FamilyMetricsCards = ({
                 }
             />
             {stats?.latestTransactionId && (
-                <div className="col-span-1 sm:col-span-2 lg:col-span-4 bg-green-500/10 border border-green-500/20 rounded-lg p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                <div className="col-span-1 sm:col-span-2 lg:col-span-4 bg-green-500/100/10 border border-green-500/20 rounded-lg p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                        <div className="h-2 w-2 rounded-full bg-green-500" />
+                        <div className="h-2 w-2 rounded-full bg-green-500/100" />
                         <span className="text-sm font-medium text-green-700 dark:text-green-400">
                             Hedera Consensus Verified
                         </span>

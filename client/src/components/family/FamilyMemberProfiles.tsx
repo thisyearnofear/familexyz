@@ -91,11 +91,11 @@ export const FamilyMemberProfiles: React.FC<FamilyMemberProfilesProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800 flex items-center space-x-2">
+          <h2 className="text-2xl font-bold text-foreground flex items-center space-x-2">
             <Users className="w-6 h-6 text-purple-600" />
             <span>Family Member Profiles</span>
           </h2>
-          <p className="text-gray-600 mt-1">
+          <p className="text-muted-foreground mt-1">
             Personalize each family member's experience and preferences
           </p>
         </div>
@@ -137,14 +137,14 @@ export const FamilyMemberProfiles: React.FC<FamilyMemberProfilesProps> = ({
                         )}
                       </Avatar>
                       {member.id === currentUserId && (
-                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500/100 rounded-full border-2 border-white"></div>
                       )}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-800">{member.name}</h3>
-                      <p className="text-sm text-gray-600">{member.relationship}</p>
+                      <h3 className="font-semibold text-foreground">{member.name}</h3>
+                      <p className="text-sm text-muted-foreground">{member.relationship}</p>
                       {member.age && (
-                        <p className="text-xs text-gray-500">{member.age} years old</p>
+                        <p className="text-xs text-muted-foreground">{member.age} years old</p>
                       )}
                     </div>
                   </div>
@@ -190,10 +190,10 @@ export const FamilyMemberProfiles: React.FC<FamilyMemberProfilesProps> = ({
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+              className="bg-card rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
             >
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-800">Add Family Member</h3>
+                <h3 className="text-xl font-bold text-foreground">Add Family Member</h3>
                 <Button variant="ghost" size="sm" onClick={() => setShowAddForm(false)}>
                   <X className="w-4 h-4" />
                 </Button>

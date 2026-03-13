@@ -134,7 +134,7 @@ const StepIndicator = ({
           className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300 ${
             i + 1 <= currentStep
               ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg"
-              : "bg-gray-200 text-gray-500"
+              : "bg-muted text-muted-foreground"
           }`}
         >
           {i + 1 <= currentStep ? <Check className="w-4 h-4" /> : i + 1}
@@ -144,7 +144,7 @@ const StepIndicator = ({
             className={`w-8 h-1 mx-2 rounded-full transition-all duration-300 ${
               i + 1 < currentStep
                 ? "bg-gradient-to-r from-purple-500 to-pink-500"
-                : "bg-gray-200"
+                : "bg-muted"
             }`}
           />
         )}
@@ -165,7 +165,7 @@ const GoalCard = ({
   <Card
     className={`cursor-pointer transition-all duration-300 hover:shadow-lg ${
       isSelected
-        ? "ring-2 ring-purple-500 bg-purple-50 border-purple-200"
+        ? "ring-2 ring-purple-500 bg-purple-500/10 border-purple-500/20"
         : "hover:shadow-md border-gray-200"
     }`}
     onClick={onToggle}
@@ -174,8 +174,8 @@ const GoalCard = ({
       <div className="flex items-start space-x-3">
         <div className="text-2xl">{goal.icon}</div>
         <div className="flex-1">
-          <h3 className="font-semibold text-gray-800 mb-1">{goal.label}</h3>
-          <p className="text-sm text-gray-600">{goal.description}</p>
+          <h3 className="font-semibold text-foreground mb-1">{goal.label}</h3>
+          <p className="text-sm text-muted-foreground">{goal.description}</p>
         </div>
         {isSelected && (
           <div className="text-purple-500">
@@ -199,7 +199,7 @@ const AgentCard = ({
   <Card
     className={`cursor-pointer transition-all duration-300 hover:shadow-lg ${
       isSelected
-        ? "ring-2 ring-blue-500 bg-blue-50 border-blue-200"
+        ? "ring-2 ring-blue-500 bg-blue-500/10 border-blue-500/20"
         : "hover:shadow-md border-gray-200"
     }`}
     onClick={onToggle}
@@ -207,11 +207,11 @@ const AgentCard = ({
     <CardContent className="p-6">
       <div className="text-center">
         <div className="text-4xl mb-3">{agent.emoji}</div>
-        <h3 className="font-bold text-lg text-gray-800 mb-1">{agent.name}</h3>
-        <p className="text-sm font-medium text-gray-600 mb-3">
+        <h3 className="font-bold text-lg text-foreground mb-1">{agent.name}</h3>
+        <p className="text-sm font-medium text-muted-foreground mb-3">
           {agent.specialty}
         </p>
-        <p className="text-sm text-gray-600 mb-4">{agent.description}</p>
+        <p className="text-sm text-muted-foreground mb-4">{agent.description}</p>
 
         <div className="space-y-1">
           {agent.benefits.map((benefit, index: number) => (
@@ -337,7 +337,7 @@ export default function FamilyWelcome({
               Welcome to Your Family's AI Journey
             </h1>
           </div>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             Let's create a personalized experience that helps your family grow
             closer, communicate better, and create lasting memories together
           </p>
@@ -350,10 +350,10 @@ export default function FamilyWelcome({
             {currentStep === 1 && (
               <div className="space-y-6">
                 <div className="text-center mb-8">
-                  <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                  <h2 className="text-2xl font-bold text-foreground mb-2">
                     Tell Us About Your Family
                   </h2>
-                  <p className="text-gray-600">
+                  <p className="text-muted-foreground">
                     Every family is unique, and we'd love to know about yours
                   </p>
                 </div>
@@ -362,7 +362,7 @@ export default function FamilyWelcome({
                   <div>
                     <Label
                       htmlFor="familyName"
-                      className="text-sm font-medium text-gray-700"
+                      className="text-sm font-medium text-foreground"
                     >
                       What would you like to call your family? ✨
                     </Label>
@@ -381,7 +381,7 @@ export default function FamilyWelcome({
                   </div>
 
                   <div>
-                    <Label className="text-sm font-medium text-gray-700 mb-3 block">
+                    <Label className="text-sm font-medium text-foreground mb-3 block">
                       Who's in your family? 👨‍👩‍👧‍👦
                     </Label>
                     <div className="space-y-3">
@@ -404,7 +404,7 @@ export default function FamilyWelcome({
                                 e.target.value,
                               )
                             }
-                            className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            className="px-3 py-2 border border-border rounded-md text-sm"
                           >
                             <option value="Parent">Parent</option>
                             <option value="Child">Child</option>
@@ -430,10 +430,10 @@ export default function FamilyWelcome({
             {currentStep === 2 && (
               <div className="space-y-6">
                 <div className="text-center mb-8">
-                  <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                  <h2 className="text-2xl font-bold text-foreground mb-2">
                     What Are Your Family's Dreams?
                   </h2>
-                  <p className="text-gray-600">
+                  <p className="text-muted-foreground">
                     Choose the areas where you'd like to see your family grow
                     and flourish
                   </p>
@@ -450,7 +450,7 @@ export default function FamilyWelcome({
                   ))}
                 </div>
 
-                <div className="text-center text-sm text-gray-500">
+                <div className="text-center text-sm text-muted-foreground">
                   💡 Select as many goals as resonate with your family - you can
                   always adjust these later
                 </div>
@@ -460,10 +460,10 @@ export default function FamilyWelcome({
             {currentStep === 3 && (
               <div className="space-y-6">
                 <div className="text-center mb-8">
-                  <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                  <h2 className="text-2xl font-bold text-foreground mb-2">
                     Meet Your AI Family Team
                   </h2>
-                  <p className="text-gray-600">
+                  <p className="text-muted-foreground">
                     Choose the AI companions who will support your family's
                     journey
                   </p>
@@ -480,7 +480,7 @@ export default function FamilyWelcome({
                   ))}
                 </div>
 
-                <div className="text-center text-sm text-gray-500">
+                <div className="text-center text-sm text-muted-foreground">
                   🌟 We recommend starting with 2-3 agents and adding more as
                   your family gets comfortable
                 </div>
@@ -490,17 +490,17 @@ export default function FamilyWelcome({
             {currentStep === 4 && (
               <div className="space-y-6">
                 <div className="text-center mb-8">
-                  <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                  <h2 className="text-2xl font-bold text-foreground mb-2">
                     Almost Ready! 🎉
                   </h2>
-                  <p className="text-gray-600">
+                  <p className="text-muted-foreground">
                     A few final touches to personalize your experience
                   </p>
                 </div>
 
                 <div className="space-y-6">
                   <div>
-                    <Label className="text-sm font-medium text-gray-700 mb-3 block">
+                    <Label className="text-sm font-medium text-foreground mb-3 block">
                       How would you like your AI family to communicate? 💬
                     </Label>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -526,7 +526,7 @@ export default function FamilyWelcome({
                           className={`cursor-pointer transition-all duration-200 ${
                             profile.preferences.communicationStyle ===
                             style.value
-                              ? "ring-2 ring-purple-500 bg-purple-50"
+                              ? "ring-2 ring-purple-500 bg-purple-500/10"
                               : "hover:shadow-md"
                           }`}
                           onClick={() =>
@@ -540,10 +540,10 @@ export default function FamilyWelcome({
                           }
                         >
                           <CardContent className="p-4 text-center">
-                            <h3 className="font-medium text-gray-800">
+                            <h3 className="font-medium text-foreground">
                               {style.label}
                             </h3>
-                            <p className="text-sm text-gray-600 mt-1">
+                            <p className="text-sm text-muted-foreground mt-1">
                               {style.desc}
                             </p>
                           </CardContent>
@@ -553,7 +553,7 @@ export default function FamilyWelcome({
                   </div>
 
                   <div>
-                    <Label className="text-sm font-medium text-gray-700 mb-3 block">
+                    <Label className="text-sm font-medium text-foreground mb-3 block">
                       How often would you like family check-ins? 📅
                     </Label>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -578,7 +578,7 @@ export default function FamilyWelcome({
                           key={freq.value}
                           className={`cursor-pointer transition-all duration-200 ${
                             profile.preferences.meetingFrequency === freq.value
-                              ? "ring-2 ring-blue-500 bg-blue-50"
+                              ? "ring-2 ring-blue-500 bg-blue-500/10"
                               : "hover:shadow-md"
                           }`}
                           onClick={() =>
@@ -592,10 +592,10 @@ export default function FamilyWelcome({
                           }
                         >
                           <CardContent className="p-4 text-center">
-                            <h3 className="font-medium text-gray-800">
+                            <h3 className="font-medium text-foreground">
                               {freq.label}
                             </h3>
-                            <p className="text-sm text-gray-600 mt-1">
+                            <p className="text-sm text-muted-foreground mt-1">
                               {freq.desc}
                             </p>
                           </CardContent>
@@ -618,7 +618,7 @@ export default function FamilyWelcome({
                 <span>← Back</span>
               </Button>
 
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-muted-foreground">
                 Step {currentStep} of 4
               </div>
 
@@ -637,7 +637,7 @@ export default function FamilyWelcome({
         </Card>
 
         {/* Privacy Note */}
-        <div className="text-center mt-8 text-sm text-gray-500">
+        <div className="text-center mt-8 text-sm text-muted-foreground">
           🔒 Your family's privacy is our priority. All data is encrypted and
           never shared with third parties.
         </div>

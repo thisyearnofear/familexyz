@@ -25,8 +25,12 @@ const agentMetadata: Record<string, { icon: React.ReactNode; emoji: string; colo
 export const AgentsTab: React.FC<AgentsTabProps> = ({ agentsData, selectedAgent, onAgentSelect, familyId = "default" }) => {
   const [showPayouts, setShowPayouts] = useState(false);
 
+  // Debug logging
+  console.log('[AgentsTab] Received agentsData:', agentsData);
+
   // Show loading state
   if (!agentsData) {
+    console.log('[AgentsTab] No agentsData, showing loading');
     return (
       <motion.div
         key="agents"

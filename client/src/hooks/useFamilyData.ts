@@ -24,13 +24,19 @@ export const useAgents = () => {
     queryFn: async () => {
       try {
         const response = await apiClient.getAgents();
+        console.log('[useAgents] Raw response:', response);
+        
         if (response && response.data && response.data.agents) {
+          console.log('[useAgents] Returning response.data with', response.data.agents.length, 'agents');
           return response.data;
         } else if (Array.isArray(response)) {
+          console.log('[useAgents] Returning array response with', response.length, 'agents');
           return { agents: response, total: response.length };
         } else if (response && Array.isArray(response.agents)) {
+          console.log('[useAgents] Returning response.agents with', response.agents.length, 'agents');
           return response;
         } else {
+          console.warn('[useAgents] Unknown response format, returning empty');
           return { agents: [], total: 0 };
         }
       } catch (error) {

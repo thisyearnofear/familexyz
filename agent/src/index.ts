@@ -46,6 +46,7 @@ import { initializeDatabase } from "./database/initializer.js";
 import { getTokenForProvider, getSecret } from "./services/token-provider.js";
 import { createHttpServer } from "./server/http-server.js";
 import { patchDirectClientRoutes } from "./server/direct-client-routes.js";
+import { extendDirectClientWithTelegram } from "./integrations/telegram.js";
 
 // Phase 4a: Bond Scoring System
 import { runMigrations } from "./migrations/runner.js";
@@ -369,6 +370,10 @@ const hasValidRemoteUrls = () =>
  */
 const startAgents = async () => {
     const directClient = new DirectClient();
+    
+    // Extend DirectClient with Telegram endpoints
+    extendDirectClientWithTelegram(directClient);
+    
     let serverPort = Number.parseInt(settings.SERVER_PORT || "31337");
     const args = await parseArguments();
     const charactersArg = args.characters || args.character;

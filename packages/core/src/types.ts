@@ -1671,3 +1671,108 @@ export interface ChunkRow {
     id: string;
     // Add other properties if needed
 }
+
+// ============================================================================
+// Messaging Adapter Interfaces (Phase 2: Production Readiness)
+// ============================================================================
+
+/**
+ * Incoming message from a messaging platform
+ */
+export interface IncomingMessage {
+    /** Unique message identifier */
+    id: string;
+    /** Sender identifier */
+    from: string;
+    /** Sender username/handle */
+    fromUsername?: string;
+    /** Conversation/chat identifier */
+    conversationId: string;
+    /** Message text content */
+    text: string;
+    /** Timestamp */
+    timestamp: number;
+    /** Optional media attachments */
+    attachments?: Media[];
+    /** Platform-specific metadata */
+    metadata?: Record<string, unknown>;
+}
+
+/**
+ * Outgoing message to a messaging platform
+ */
+export interface OutgoingMessage {
+    /** Target conversation/chat identifier */
+    conversationId: string;
+    /** Optional reply-to message identifier */
+    inReplyTo?: string;
+    /** Message text content */
+    text: string;
+    /** Optional media attachments */
+    attachments?: Media[];
+    /** Platform-specific metadata */
+    metadata?: Record<string, unknown>;
+}
+
+/**
+ * Channel connection status
+ */
+export interface ChannelStatus {
+    /** Is the channel connected/active */
+    isConnected: boolean;
+    /** Connection error if any */
+    error?: string;
+    /** Last activity timestamp */
+    lastActivity?: number;
+    /** Platform-specific status details */
+    details?: Record<string, unknown>;
+}
+
+/**
+ * Channel configuration
+ */
+export interface ChannelConfig {
+    /** Channel identifier (bot token, API key, etc.) */
+    credentials: Record<string, string>;
+    /** Platform-specific configuration */
+    options?: Record<string, unknown>;
+}
+
+/**
+ * Family messaging adapter interface - single source of truth for all messaging platforms
+ * Follows DRY principle - implemented by Telegram, WhatsApp, XMTP, etc.
+ */
+export interface FamilyMessagingAdapter {
+    /** Adapter name/identifier */
+    readonly name: string;
+
+    /**
+     * Connect to the messaging platform
+     * @param config Channel configuration with credentials
+     */
+    connect(config: ChannelConfig): Promise<void>;
+
+    /**
+     * Disconnect from the messaging platform
+     */
+    disconnect(): Promise<void>;
+
+    /**
+     * Send a message to the platform
+     * @param message Outgoing message to send
+     * @returns Message ID of sent message
+     */
+    sendMessage(message: OutgoingMessage): Promise<string>;
+
+    /**
+     * Register message handler for incoming messages
+     * @param handler Callback function for incoming messages
+     */
+    onMessage(handler: (message: IncomingMessage) => void): void;
+
+    /**
+     * Get current connection status
+     * @returns Channel status information
+     */
+    getStatus(): ChannelStatus;
+}

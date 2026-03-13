@@ -1,191 +1,368 @@
-// Telegram Integration - Extends existing DirectClient
+/**
+ * Telegram Integration - Real Implementation
+ * 
+ * Replaces mock endpoints with actual grammy-based client
+ * Follows ENHANCEMENT FIRST: extends DirectClient properly
+ * Follows DRY: uses shared FamilyMessagingAdapter interface
+ */
+
 import { DirectClient } from "@elizaos/client-direct";
+import { TelegramFamilyClient, createTelegramClient } from "@elizaos/client-telegram";
+import type { AgentRuntime, IncomingMessage } from "@elizaos/core";
 import { elizaLogger } from "@elizaos/core";
 
-// Extend existing DirectClient with Telegram integration endpoints
-const oldStart = DirectClient.prototype.start;
-DirectClient.prototype.start = function (...args: any[]) {
-  
-  // Telegram Integration Status
-  this.app.get("/integrations/telegram/status", (req, res) => {
-    try {
-      // Check if Telegram client is configured
-      const botToken = process.env.TELEGRAM_BOT_TOKEN;
-      const isConfigured = !!botToken;
-      
-      // In a real implementation, check actual bot status
-      const status = {
-        isConnected: isConfigured,
-        botUsername: process.env.TELEGRAM_BOT_USERNAME || '@FamilyWisdomBot',
-        connectedGroups: isConfigured ? 1 : 0, // Mock data
-        lastActivity: isConfigured ? new Date() : null,
-        error: isConfigured ? null : 'Bot token not configured'
-      };
-      
-      res.json(status);
-    } catch (error) {
-      elizaLogger.error('Telegram status error:', error);
-      res.status(500).json({ 
-        error: "Failed to get status", 
-        detail: error.message 
-      });
-    }
-  });
+// Store Telegram client instance
+let telegramClient: TelegramFamilyClient | null = null;
+let runtimeInstance: AgentRuntime | null = null;
 
-  // Connect Telegram Bot
-  this.app.post("/integrations/telegram/connect", async (req, res) => {
+/**
+ * Initialize Telegram integration
+ * Called from agent startup when character has telegram client enabled
+ */
+export async function initializeTelegram(runtime: AgentRuntime): Promise<TelegramFamilyClient | null> {
     try {
-      const { botToken, botUsername, familyGroupId } = req.body;
-      
-      if (!botToken) {
-        return res.status(400).json({ error: "Bot token is required" });
-      }
-      
-      // In a real implementation, this would:
-      // 1. Validate the bot token with Telegram API
-      // 2. Set up webhook or polling
-      // 3. Initialize the existing TelegramClient
-      
-      elizaLogger.info(`Connecting Telegram bot: ${botUsername}`);
-      
-      // Mock successful connection
-      res.json({ 
-        success: true, 
-        message: "Telegram bot connected successfully",
-        botUsername: botUsername || '@FamilyWisdomBot'
-      });
-      
-    } catch (error) {
-      elizaLogger.error('Telegram connect error:', error);
-      res.status(500).json({ 
-        error: "Connection failed", 
-        detail: error.message 
-      });
-    }
-  });
+        const botToken = process.env.TELEGRAM_BOT_TOKEN;
 
-  // Get Family Groups
-  this.app.get("/integrations/telegram/groups", (req, res) => {
-    try {
-      // Mock family groups data
-      // In real implementation, this would query the database
-      const groups = [
-        {
-          id: 'group_123',
-          name: 'Smith Family',
-          memberCount: 4,
-          agentsEnabled: ['wisdom', 'intimacy', 'presence'],
-          lastActivity: new Date()
-        },
-        {
-          id: 'group_456', 
-          name: 'Extended Family',
-          memberCount: 8,
-          agentsEnabled: ['wisdom', 'generationalbridge'],
-          lastActivity: new Date(Date.now() - 24 * 60 * 60 * 1000) // 1 day ago
+        if (!botToken) {
+            elizaLogger.warn("[Telegram] Bot token not configured, skipping initialization");
+            return null;
         }
-      ];
-      
-      res.json(groups);
-    } catch (error) {
-      elizaLogger.error('Telegram groups error:', error);
-      res.status(500).json({ 
-        error: "Failed to get groups", 
-        detail: error.message 
-      });
-    }
-  });
 
-  // Configure Group Agents
-  this.app.put("/integrations/telegram/groups/:groupId/agents", async (req, res) => {
-    try {
-      const { groupId } = req.params;
-      const { agentIds } = req.body;
-      
-      if (!Array.isArray(agentIds)) {
-        return res.status(400).json({ error: "agentIds must be an array" });
-      }
-      
-      elizaLogger.info(`Configuring agents for group ${groupId}:`, agentIds);
-      
-      // In real implementation, this would:
-      // 1. Validate the group exists
-      // 2. Update database with agent configuration
-      // 3. Notify the Telegram client to update behavior
-      
-      res.json({ 
-        success: true, 
-        message: `Configured ${agentIds.length} agents for group ${groupId}`,
-        agentIds 
-      });
-      
-    } catch (error) {
-      elizaLogger.error('Telegram configure error:', error);
-      res.status(500).json({ 
-        error: "Configuration failed", 
-        detail: error.message 
-      });
-    }
-  });
+        elizaLogger.info("[Telegram] Initializing...");
 
-  // Send Test Message
-  this.app.post("/integrations/telegram/test", async (req, res) => {
-    try {
-      const { groupId, agentId, message } = req.body;
-      
-      if (!groupId || !agentId || !message) {
-        return res.status(400).json({ 
-          error: "groupId, agentId, and message are required" 
+        // Create Telegram client
+        telegramClient = createTelegramClient();
+
+        // Connect with bot token
+        await telegramClient.connect({
+            credentials: {
+                botToken,
+            },
+            options: {
+                webhookUrl: process.env.TELEGRAM_WEBHOOK_URL,
+                pollingInterval: parseInt(process.env.TELEGRAM_POLLING_INTERVAL || "1000"),
+            },
         });
-      }
-      
-      elizaLogger.info(`Sending test message to group ${groupId} from agent ${agentId}`);
-      
-      // In real implementation, this would:
-      // 1. Get the agent runtime
-      // 2. Send message through Telegram client
-      // 3. Return actual message status
-      
-      // Mock successful send
-      res.json({ 
-        success: true, 
-        message: "Test message sent successfully",
-        messageId: `msg_${Date.now()}`
-      });
-      
-    } catch (error) {
-      elizaLogger.error('Telegram test message error:', error);
-      res.status(500).json({ 
-        error: "Test message failed", 
-        detail: error.message 
-      });
-    }
-  });
 
-  // Disconnect Telegram
-  this.app.post("/integrations/telegram/disconnect", async (req, res) => {
+        // Register message handler to route to agent
+        telegramClient.onMessage(async (message: IncomingMessage) => {
+            await handleTelegramMessage(message, runtime);
+        });
+
+        // Store runtime for later use
+        runtimeInstance = runtime;
+
+        elizaLogger.info(`[Telegram] Initialized successfully (@${telegramClient.getStatus().details?.botUsername})`);
+
+        return telegramClient;
+    } catch (error) {
+        elizaLogger.error("[Telegram] Initialization failed:", error);
+        return null;
+    }
+}
+
+/**
+ * Handle incoming Telegram message
+ * Routes to appropriate agent based on message content
+ */
+async function handleTelegramMessage(message: IncomingMessage, runtime: AgentRuntime): Promise<void> {
     try {
-      elizaLogger.info('Disconnecting Telegram integration');
-      
-      // In real implementation, this would:
-      // 1. Stop the Telegram client
-      // 2. Clear webhook/polling
-      // 3. Update database status
-      
-      res.json({ 
-        success: true, 
-        message: "Telegram integration disconnected" 
-      });
-      
-    } catch (error) {
-      elizaLogger.error('Telegram disconnect error:', error);
-      res.status(500).json({ 
-        error: "Disconnect failed", 
-        detail: error.message 
-      });
-    }
-  });
+        const { text, from, conversationId, metadata } = message;
 
-  // Call original start method
-  return oldStart.apply(this, args);
-};
+        elizaLogger.debug(`[Telegram] Processing message from ${from}: ${text.substring(0, 50)}...`);
+
+        // Check if it's a direct agent question (/ask command)
+        if (metadata?.isDirectQuestion && metadata?.agentName) {
+            const agentName = metadata.agentName as string;
+            const question = text.replace(`/ask ${agentName}`, "").trim();
+
+            elizaLogger.info(`[Telegram] Direct question to ${agentName}: ${question}`);
+
+            // Route to specific agent
+            await routeToAgent(question, from, conversationId, runtime);
+            return;
+        }
+
+        // Regular message - let agent respond naturally
+        await routeToAgent(text, from, conversationId, runtime);
+    } catch (error) {
+        elizaLogger.error("[Telegram] Message handling error:", error);
+    }
+}
+
+/**
+ * Route message to agent runtime for processing
+ */
+async function routeToAgent(
+    text: string,
+    userId: string,
+    conversationId: string,
+    runtime: AgentRuntime
+): Promise<void> {
+    try {
+        // Ensure user connection exists
+        await runtime.ensureConnection(
+            userId,
+            conversationId,
+            userId,
+            userId,
+            "telegram"
+        );
+
+        // Create memory for the message
+        const messageId = `${conversationId}-${Date.now()}`;
+
+        const memory = {
+            id: messageId,
+            userId,
+            agentId: runtime.agentId,
+            roomId: conversationId,
+            content: {
+                text,
+                source: "telegram",
+            },
+            createdAt: Date.now(),
+        };
+
+        // Add to memory manager
+        await runtime.messageManager.createMemory(memory);
+
+        elizaLogger.debug(`[Telegram] Message stored in memory: ${messageId}`);
+
+        // Agent will process this message through its normal flow
+        // and respond via the Telegram client
+    } catch (error) {
+        elizaLogger.error("[Telegram] Route to agent error:", error);
+    }
+}
+
+/**
+ * Send message via Telegram client
+ * Used by agent runtimes to respond to Telegram messages
+ */
+export async function sendTelegramMessage(
+    conversationId: string,
+    text: string,
+    inReplyTo?: string
+): Promise<string> {
+    if (!telegramClient) {
+        throw new Error("Telegram client not initialized");
+    }
+
+    return await telegramClient.sendMessage({
+        conversationId,
+        text,
+        inReplyTo,
+    });
+}
+
+/**
+ * Get Telegram client instance
+ */
+export function getTelegramClient(): TelegramFamilyClient | null {
+    return telegramClient;
+}
+
+/**
+ * Get group mappings for API endpoints
+ */
+export function getGroupMappings() {
+    if (!telegramClient) {
+        return [];
+    }
+    return telegramClient.getGroupMappings();
+}
+
+/**
+ * Extend DirectClient with Telegram API endpoints
+ */
+export function extendDirectClientWithTelegram(directClient: DirectClient): void {
+    elizaLogger.info("[Telegram] Extending DirectClient with Telegram endpoints");
+
+    // Telegram Integration Status
+    directClient.app.get("/integrations/telegram/status", (req, res) => {
+        try {
+            if (!telegramClient) {
+                return res.json({
+                    isConnected: false,
+                    error: "Telegram client not initialized",
+                    connectedGroups: 0,
+                });
+            }
+
+            const status = telegramClient.getStatus();
+            const groupMappings = telegramClient.getGroupMappings();
+
+            res.json({
+                isConnected: status.isConnected,
+                botUsername: status.details?.botUsername || "@FamilyBot",
+                connectedGroups: groupMappings.length,
+                lastActivity: status.lastActivity ? new Date(status.lastActivity) : null,
+                error: status.error,
+            });
+        } catch (error) {
+            elizaLogger.error("[Telegram] Status endpoint error:", error);
+            res.status(500).json({
+                error: "Failed to get status",
+                detail: error instanceof Error ? error.message : "Unknown error",
+            });
+        }
+    });
+
+    // Connect Telegram Bot
+    directClient.app.post("/integrations/telegram/connect", async (req, res) => {
+        try {
+            const { botToken, botUsername } = req.body;
+
+            if (!botToken) {
+                return res.status(400).json({ error: "Bot token is required" });
+            }
+
+            // If client already exists, disconnect first
+            if (telegramClient) {
+                await telegramClient.disconnect();
+            }
+
+            // Create and connect new client
+            telegramClient = createTelegramClient();
+            await telegramClient.connect({
+                credentials: { botToken },
+            });
+
+            elizaLogger.info(`[Telegram] Connected bot: ${botUsername || "unknown"}`);
+
+            res.json({
+                success: true,
+                message: "Telegram bot connected successfully",
+                botUsername: botUsername || telegramClient.getStatus().details?.botUsername,
+            });
+        } catch (error) {
+            elizaLogger.error("[Telegram] Connect endpoint error:", error);
+            res.status(500).json({
+                error: "Connection failed",
+                detail: error instanceof Error ? error.message : "Unknown error",
+            });
+        }
+    });
+
+    // Get Family Groups
+    directClient.app.get("/integrations/telegram/groups", (req, res) => {
+        try {
+            const groups = getGroupMappings().map((mapping) => ({
+                id: mapping.familyId,
+                telegramId: mapping.telegramGroupId,
+                name: mapping.telegramGroupTitle,
+                memberCount: 0, // Would need to fetch from Telegram API
+                agentsEnabled: mapping.enabledAgents,
+                lastActivity: new Date(mapping.createdAt),
+            }));
+
+            res.json(groups);
+        } catch (error) {
+            elizaLogger.error("[Telegram] Groups endpoint error:", error);
+            res.status(500).json({
+                error: "Failed to get groups",
+                detail: error instanceof Error ? error.message : "Unknown error",
+            });
+        }
+    });
+
+    // Configure Group Agents
+    directClient.app.put("/integrations/telegram/groups/:groupId/agents", async (req, res) => {
+        try {
+            const { groupId } = req.params;
+            const { agentIds } = req.body;
+
+            if (!Array.isArray(agentIds)) {
+                return res.status(400).json({ error: "agentIds must be an array" });
+            }
+
+            // Find and update group mapping
+            const mappings = getGroupMappings();
+            const mapping = mappings.find((m) => m.familyId === groupId || m.telegramGroupId === groupId);
+
+            if (!mapping) {
+                return res.status(404).json({ error: "Group not found" });
+            }
+
+            // Update enabled agents
+            mapping.enabledAgents = agentIds;
+
+            elizaLogger.info(`[Telegram] Updated agents for group ${groupId}:`, agentIds);
+
+            res.json({
+                success: true,
+                message: `Configured ${agentIds.length} agents for group ${groupId}`,
+                agentIds,
+            });
+        } catch (error) {
+            elizaLogger.error("[Telegram] Configure endpoint error:", error);
+            res.status(500).json({
+                error: "Configuration failed",
+                detail: error instanceof Error ? error.message : "Unknown error",
+            });
+        }
+    });
+
+    // Send Test Message
+    directClient.app.post("/integrations/telegram/test", async (req, res) => {
+        try {
+            const { groupId, agentId, message } = req.body;
+
+            if (!groupId || !agentId) {
+                return res.status(400).json({
+                    error: "groupId and agentId are required",
+                });
+            }
+
+            if (!telegramClient) {
+                return res.status(500).json({
+                    error: "Telegram client not initialized",
+                });
+            }
+
+            // Send test message
+            const messageId = await sendTelegramMessage(
+                `telegram:${groupId}`,
+                message || "Hello! This is a test message from your family agent. I'm ready to help strengthen your family bonds! 🤖❤️"
+            );
+
+            elizaLogger.info(`[Telegram] Test message sent: ${messageId}`);
+
+            res.json({
+                success: true,
+                message: "Test message sent successfully",
+                messageId,
+            });
+        } catch (error) {
+            elizaLogger.error("[Telegram] Test message endpoint error:", error);
+            res.status(500).json({
+                error: "Test message failed",
+                detail: error instanceof Error ? error.message : "Unknown error",
+            });
+        }
+    });
+
+    // Disconnect Telegram
+    directClient.app.post("/integrations/telegram/disconnect", async (req, res) => {
+        try {
+            if (telegramClient) {
+                await telegramClient.disconnect();
+                telegramClient = null;
+            }
+
+            elizaLogger.info("[Telegram] Disconnected via API");
+
+            res.json({
+                success: true,
+                message: "Telegram integration disconnected",
+            });
+        } catch (error) {
+            elizaLogger.error("[Telegram] Disconnect endpoint error:", error);
+            res.status(500).json({
+                error: "Disconnect failed",
+                detail: error instanceof Error ? error.message : "Unknown error",
+            });
+        }
+    });
+}

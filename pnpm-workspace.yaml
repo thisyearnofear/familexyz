@@ -2,7 +2,7 @@ packages:
   - "packages/core"
   - "packages/config"
   - "packages/adapters/*"
-  - "packages/clients/direct"
+  - "packages/clients/*"
   - "packages/plugin-node"
   - "packages/plugin-web-search"
   - "packages/plugin-image-generation"

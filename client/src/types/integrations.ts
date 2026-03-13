@@ -1,10 +1,11 @@
 /**
  * Integration types - consolidated from services/
+ * Updated for Phase 2: Real Telegram Integration
  */
 
 export interface TelegramBotConfig {
   botToken: string;
-  botUsername: string;
+  botUsername?: string;
   webhookUrl?: string;
   familyGroupId?: string;
 }
@@ -19,10 +20,11 @@ export interface TelegramIntegrationStatus {
 
 export interface TelegramFamilyGroup {
   id: string;
+  telegramId?: string;
   name: string;
-  memberCount: number;
+  memberCount?: number;
   agentsEnabled: string[];
-  lastActivity: Date;
+  lastActivity?: Date;
 }
 
 // Payout types

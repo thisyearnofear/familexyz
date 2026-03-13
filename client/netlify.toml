@@ -1,6 +1,7 @@
 [build]
   # Build command - build workspace dependencies first, then client
-  command = "pnpm install --no-frozen-lockfile && pnpm run build --filter=@elizaos/hedera-wallet... && pnpm run build --filter=."
+  # Must run from repo root for pnpm filters to work correctly
+  command = "cd .. && pnpm install --no-frozen-lockfile && pnpm run build --filter=@elizaos/hedera-wallet... && cd client && pnpm run build"
 
   # Directory to publish (Vite default output)
   publish = "dist"

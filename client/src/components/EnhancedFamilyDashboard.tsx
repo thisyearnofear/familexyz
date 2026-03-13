@@ -199,7 +199,7 @@ export const EnhancedFamilyDashboard: React.FC<EnhancedFamilyDashboardProps> = (
 
           {activeTab === "agents" && (
             <AgentsTab
-              agentsData={agentsData}
+              agentsData={agentsData?.data || agentsData}
               selectedAgent={selectedAgent}
               onAgentSelect={setSelectedAgent}
             />

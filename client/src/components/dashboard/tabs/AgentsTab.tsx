@@ -5,7 +5,7 @@ import { PayoutDashboard } from "@/components/dashboard/payout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Brain, Heart, Users, Rocket, MessageCircle, Leaf, Coins } from "lucide-react";
+import { Brain, Heart, Users, Rocket, MessageCircle, Leaf, Coins, Bot } from "lucide-react";
 
 interface AgentsTabProps {
   agentsData?: { agents: any[]; total: number };
@@ -24,6 +24,41 @@ const agentMetadata: Record<string, { icon: React.ReactNode; emoji: string; colo
 
 export const AgentsTab: React.FC<AgentsTabProps> = ({ agentsData, selectedAgent, onAgentSelect, familyId = "default" }) => {
   const [showPayouts, setShowPayouts] = useState(false);
+
+  // Show loading state
+  if (!agentsData) {
+    return (
+      <motion.div
+        key="agents"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="flex items-center justify-center py-12"
+      >
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading agents...</p>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // Show empty state
+  if (!agentsData.agents || agentsData.agents.length === 0) {
+    return (
+      <motion.div
+        key="agents"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="flex items-center justify-center py-12"
+      >
+        <div className="text-center">
+          <Bot className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold mb-2">No Agents Available</h3>
+          <p className="text-muted-foreground">Agents will appear here when they are running.</p>
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div

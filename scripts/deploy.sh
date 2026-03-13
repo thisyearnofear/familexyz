@@ -22,7 +22,19 @@ echo "Preparing lean deployment in ${TEMP_DEPLOY}..."
 
 # Copy only essential files
 mkdir -p "${TEMP_DEPLOY}/agent"
-mkdir -p "${TEMP_DEPLOY}/packages"
+mkdir -p "${TEMP_DEPLOY}/packages/core"
+mkdir -p "${TEMP_DEPLOY}/packages/clients/direct"
+mkdir -p "${TEMP_DEPLOY}/packages/blockchain/hedera-core"
+mkdir -p "${TEMP_DEPLOY}/packages/config"
+mkdir -p "${TEMP_DEPLOY}/packages/adapters/sqlite"
+mkdir -p "${TEMP_DEPLOY}/packages/agent"
+mkdir -p "${TEMP_DEPLOY}/packages/family/metrics"
+mkdir -p "${TEMP_DEPLOY}/packages/family/nlp-utils"
+mkdir -p "${TEMP_DEPLOY}/packages/family/plugin-wisdom"
+mkdir -p "${TEMP_DEPLOY}/packages/family/plugin-intimacy"
+mkdir -p "${TEMP_DEPLOY}/packages/family/plugin-generational-bridge"
+mkdir -p "${TEMP_DEPLOY}/packages/family/plugin-presence"
+mkdir -p "${TEMP_DEPLOY}/packages/family/plugin-growth"
 
 # Agent source
 rsync -a \
@@ -42,16 +54,19 @@ if [ -d "${PROJECT_ROOT}/characters" ]; then
 fi
 
 # Essential packages (space-conscious - only what's needed for agent)
-ESSENTIAL_PKGS="core hedera-core client-direct adapters/sqlite family/metrics family/nlp-utils family/plugin-wisdom family/plugin-intimacy family/plugin-generational-bridge family/plugin-presence family/plugin-growth"
+ESSENTIAL_PKGS="core blockchain/hedera-core clients/direct adapters/sqlite config family/metrics family/nlp-utils family/plugin-wisdom family/plugin-intimacy family/plugin-generational-bridge family/plugin-presence family/plugin-growth family/plugin-savings"
+
+# Note: we include dist folder explicitly since many packages need it
 for pkg in $ESSENTIAL_PKGS; do
     if [ -d "${PROJECT_ROOT}/packages/${pkg}" ]; then
         echo "  - Including packages/${pkg}"
+        # First sync everything except node_modules
         rsync -a \
             --exclude 'node_modules' \
-            --exclude 'dist' \
             --exclude '__tests__' \
             --exclude '*.test.ts' \
             --exclude '*.md' \
+            --exclude '.turbo' \
             "${PROJECT_ROOT}/packages/${pkg}/" "${TEMP_DEPLOY}/packages/${pkg}/"
     fi
 done
@@ -61,10 +76,10 @@ if [ -d "${PROJECT_ROOT}/packages/agent" ]; then
     echo "  - Including packages/agent"
     rsync -a \
         --exclude 'node_modules' \
-        --exclude 'dist' \
         --exclude '__tests__' \
         --exclude '*.test.ts' \
         --exclude '*.md' \
+        --exclude '.turbo' \
         "${PROJECT_ROOT}/packages/agent/" "${TEMP_DEPLOY}/packages/agent/"
 fi
 

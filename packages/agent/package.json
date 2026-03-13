@@ -1,5 +1,5 @@
 {
-    "name": "@familexyz/agent",
+    "name": "@familexyz/agent-services",
     "version": "1.0.0",
     "description": "FamileXYZ Agent Services",
     "type": "module",
@@ -7,7 +7,7 @@
     "types": "./dist/index.d.ts",
     "exports": {
         ".": "./dist/index.js",
-        "./*": "./dist/*.js"
+        "./*": ["./dist/*.js", "./dist/*.cjs"]
     },
     "scripts": {
         "build": "tsup src/index.ts --format esm,cjs --out-dir dist",

@@ -157,11 +157,28 @@ export async function createHttpServer(config: HttpServerConfig): Promise<http.S
         res.end(JSON.stringify({ error: "Not found", pathname }));
     });
     
-    server.listen(port, "0.0.0.0", () => {
-        logServerStartup(port);
+    return new Promise<http.Server>((resolve, reject) => {
+        let retries = 0;
+        const maxRetries = 3;
+
+        server.on("error", (err: NodeJS.ErrnoException) => {
+            if (err.code === "EADDRINUSE" && retries < maxRetries) {
+                retries++;
+                const nextPort = port + retries;
+                elizaLogger.warn(`Health port ${port + retries - 1} in use, trying ${nextPort}`);
+                server.listen(nextPort, "0.0.0.0", () => {
+                    logServerStartup(nextPort);
+                    resolve(server);
+                });
+            } else {
+                reject(err);
+            }
+        });
+        server.listen(port, "0.0.0.0", () => {
+            logServerStartup(port);
+            resolve(server);
+        });
     });
-    
-    return server;
 }
 
 /**
@@ -419,10 +436,7 @@ function createRouteHandlers(primaryDb: IDatabaseAdapter | null) {
  */
 async function initializePayoutHandler(): Promise<void> {
     try {
-        const { PayoutService: PSvc } = await import("@familexyz/agent/services/PayoutService.js");
-        const { AnomalyDetectionService: ADSvc } = await import("@familexyz/agent/services/AnomalyDetectionService.js");
-        const { HederaPayoutLogger: HPL } = await import("@familexyz/agent/integrations/HederaPayoutLogger.js");
-        const { HederaTokenService: HTS } = await import("@familexyz/agent/integrations/HederaTokenService.js");
+        const { PayoutService: PSvc, AnomalyDetectionService: ADSvc, HederaPayoutLogger: HPL, HederaTokenService: HTS } = await import("@familexyz/agent-services");
         const { PayoutApiHandler } = await import("../api/index.js");
         
         const hcsTopicId = process.env.HEDERA_WISDOM_TOPIC_ID || "0.0.0";

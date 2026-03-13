@@ -207,7 +207,7 @@ async function startAgent(character: Character, directClient: DirectClient): Pro
         const cache = await initializeCache(
             process.env.CACHE_STORE ?? CacheStore.DATABASE,
             character,
-            "",
+            dataDir,
             db
         );
         

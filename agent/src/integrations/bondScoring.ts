@@ -8,7 +8,7 @@
 
 import { elizaLogger } from "@elizaos/core";
 import type { IDatabaseAdapter } from "@elizaos/core";
-import { BondScoreService } from "@familexyz/agent/services/BondScoreService.js";
+import { BondScoreService } from "@familexyz/agent-services";
 
 export interface SignalAggregationContext {
   familyId: string;

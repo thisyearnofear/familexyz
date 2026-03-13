@@ -7,7 +7,7 @@
 
 import { elizaLogger } from "@elizaos/core";
 import type { IDatabaseAdapter, IAgentRuntime } from "@elizaos/core";
-import { BondScoreService } from "@familexyz/agent/services/BondScoreService.js";
+import { BondScoreService } from "@familexyz/agent-services";
 import { aggregateAllSignals } from "../integrations/bondScoring.js";
 import type { SignalAggregationContext } from "../integrations/bondScoring.js";
 

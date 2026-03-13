@@ -1,7 +1,4 @@
-import type { PayoutService } from "@familexyz/agent/services/PayoutService.js";
-import type { AnomalyDetectionService } from "@familexyz/agent/services/AnomalyDetectionService.js";
-import type { HederaPayoutLogger } from "@familexyz/agent/integrations/HederaPayoutLogger.js";
-import type { HederaTokenService } from "@familexyz/agent/integrations/HederaTokenService.js";
+import type { PayoutService, AnomalyDetectionService, HederaPayoutLogger, HederaTokenService } from "@familexyz/agent-services";
 
 /**
  * PayoutApiHandler

@@ -18,17 +18,20 @@ familexyz/
 │       ├── pages/             # Page routes
 │       └── lib/               # Client utilities
 ├── packages/
+│   ├── agent/                 # @familexyz/agent-services (shared services)
 │   ├── family/                # Family-specific agents
 │   │   ├── plugin-wisdom/     # Wisdom agent
 │   │   ├── plugin-intimacy/   # Intimacy agent
 │   │   ├── plugin-generational-bridge/
 │   │   ├── plugin-presence/
 │   │   ├── plugin-growth/
+│   │   ├── plugin-savings/    # Savings agent
 │   │   ├── nlp-utils/         # NLP utilities
 │   │   └── metrics/           # Metrics tracking
 │   ├── blockchain/
 │   │   ├── hedera-core/       # Core Hedera services
 │   │   └── plugin-hedera-template/
+│   ├── config/                # Shared configuration (Zod-validated)
 │   ├── adapters/              # Database adapters
 │   └── clients/               # Platform clients
 ├── config/                     # Configuration files
@@ -461,7 +464,11 @@ client/src/components/dashboard/payout/
 
 ### Health Checks
 ```bash
+# Local development
 curl http://localhost:3001/health
+
+# Production (Hetzner VPS, ports 31337/31338)
+curl http://localhost:31338/health
 ```
 
 ### Logging Levels

@@ -45,7 +45,8 @@ export type WalletType =
   | "blade"
   | "kabila"
   | "metamask"
-  | "walletconnect";
+  | "walletconnect"
+  | "hashpack";
 
 export interface WalletConnectionEvent {
   type: "connected" | "disconnected" | "error" | "session_update";

@@ -175,6 +175,9 @@ export class HederaAuthService {
         case "walletconnect":
           connection = await this.connectWalletConnect();
           break;
+        case "hashpack":
+          connection = await this.connectHashPack();
+          break;
         default:
           throw new Error(`Wallet type ${walletType} not supported`);
       }
@@ -631,7 +634,7 @@ export class HederaAuthService {
       // Import WalletConnect v2 dynamically
       const { SignClient } = await import("@walletconnect/sign-client");
       const { getSdkError } = await import("@walletconnect/utils");
-      
+
       // Initialize WalletConnect client
       const signClient = await SignClient.init({
         projectId: this.config.wallet.projectId,
@@ -662,13 +665,13 @@ export class HederaAuthService {
 
       // Wait for session approval
       const session = await approval();
-      
+
       if (!session.namespaces.hedera?.accounts?.length) {
         throw new Error("No Hedera accounts found in WalletConnect session");
       }
 
       const accountId = session.namespaces.hedera.accounts[0].split(":")[2];
-      
+
       return {
         accountId,
         network: this.config.wallet.network,
@@ -687,6 +690,51 @@ export class HederaAuthService {
     }
   }
 
+  private async connectHashPack(): Promise<HederaWalletConnection> {
+    if (typeof window === 'undefined' || !(window as any).hashpack) {
+      throw new Error("HashPack Wallet not detected. Please install HashPack extension or mobile app.");
+    }
+
+    try {
+      const hashpack = (window as any).hashpack;
+
+      // Check if HashPack is installed and ready
+      if (!hashpack.isConnected) {
+        // Request connection
+        const connected = await hashpack.connect();
+        if (!connected) {
+          throw new Error("Failed to connect to HashPack");
+        }
+      }
+
+      // Get account ID
+      const accountId = hashpack.selectedAccount || hashpack.accountId;
+      if (!accountId) {
+        throw new Error("No account selected in HashPack");
+      }
+
+      // Get public key if available
+      const publicKey = hashpack.publicKey || undefined;
+
+      return {
+        accountId,
+        network: this.config.wallet.network,
+        publicKey,
+        walletType: "hashpack",
+        isConnected: true,
+        connectionState: "Connected" as any,
+        sessionData: {
+          accountIds: [accountId],
+          metadata: this.config.wallet,
+          network: this.config.wallet.network,
+        },
+      };
+    } catch (error) {
+      console.error("HashPack connection error:", error);
+      throw new Error(`Failed to connect to HashPack: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
   private async detectAvailableWallets(): Promise<void> {
     const wallets = [];
 
@@ -696,6 +744,17 @@ export class HederaAuthService {
         type: "blade" as WalletType,
         name: "Blade Wallet",
         icon: "/icons/blade.svg",
+        isAvailable: true,
+        isInstalled: true,
+      });
+    }
+
+    // Detect HashPack Wallet
+    if (typeof window !== 'undefined' && (window as any).hashpack) {
+      wallets.push({
+        type: "hashpack" as WalletType,
+        name: "HashPack",
+        icon: "/icons/hashpack.svg",
         isAvailable: true,
         isInstalled: true,
       });

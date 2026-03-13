@@ -11,6 +11,8 @@
     NODE_VERSION = "22"
     PNPM_VERSION = "9"
     PNPM_FLAGS = "--filter ."
+    VITE_API_BASE_URL = "https://api.famile.xyz"
+    VITE_HEALTH_PORT = "3005"
 
 # Redirect rules for SPA (Single Page Application)
 [[redirects]]

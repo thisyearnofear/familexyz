@@ -1,6 +1,6 @@
 {
     "name": "@elizaos/client-xmtp",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "main": "dist/index.js",
     "module": "dist/index.js",
     "type": "module",
@@ -20,8 +20,8 @@
     ],
     "dependencies": {
         "@elizaos/core": "workspace:*",
-        "@xmtp/xmtp-js": "13.0.4",
-        "viem": "2.21.58"
+        "@elizaos/hedera-core": "workspace:*",
+        "@xmtp/agent-sdk": "2.0.1"
     },
     "devDependencies": {
         "tsup": "8.3.5"

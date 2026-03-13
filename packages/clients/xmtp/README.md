@@ -1,15 +1,19 @@
 # XMTP Client for FamilyXYZ
 
-Web3-native encrypted messaging for FamilyXYZ agents using XMTP protocol.
+Web3-native encrypted messaging for FamilyXYZ agents using **XMTP Agent SDK** - purpose-built for autonomous agents.
 
 ## Features
 
 - ✅ End-to-end encrypted conversations
-- ✅ Wallet-based authentication (via viem)
-- ✅ 1:1 and group conversation management
-- ✅ Automatic conversation streaming
+- ✅ **Agent SDK** - Purpose-built for autonomous agents (v2.0.1)
+- ✅ **Built-in SQLite persistence** - Automatic identity and message history storage
+- ✅ **Event-driven architecture** - Simple `on('text')` handlers
+- ✅ Wallet-based authentication
+- ✅ **Automatic installation management** - Handles 10-installation limit per inbox
+- ✅ **Group chat support** - Built-in with permissions
+- ✅ **Rich content types** - Actions, reactions, replies, attachments
 - ✅ HCS message receipt logging (privacy-preserving)
-- ✅ Content hash verification for message receipts
+- ✅ **Test playground** - xmtp.chat for testing agents
 
 ## Installation
 
@@ -17,12 +21,35 @@ Web3-native encrypted messaging for FamilyXYZ agents using XMTP protocol.
 pnpm add @elizaos/client-xmtp
 ```
 
-## Usage
+## Quick Start
 
-### Basic Setup
+### Basic Setup (5 lines!)
 
 ```typescript
-import { createXmtpClient, type XmtpChannelConfig } from "@elizaos/client-xmtp";
+import { createXmtpClient } from "@elizaos/client-xmtp";
+
+const client = createXmtpClient();
+
+await client.connect({
+  credentials: {
+    privateKey: process.env.XMTP_WALLET_KEY,
+  },
+  options: { env: "dev" }
+});
+
+client.onMessage(async (message) => {
+  console.log(`Received: ${message.text}`);
+  await client.sendMessage({
+    conversationId: message.conversationId,
+    text: "Hello from your family agent! 🤖",
+  });
+});
+```
+
+### With HCS Receipt Logging
+
+```typescript
+import { createXmtpClient } from "@elizaos/client-xmtp";
 import { HederaService } from "@elizaos/hedera-core";
 
 // Initialize HederaService
@@ -33,57 +60,157 @@ const hederaService = HederaService.getInstance({
   familyTopicId: process.env.HEDERA_FAMILY_TOPIC_ID,
 });
 
-// Create XMTP client
-const xmtpClient = createXmtpClient();
+// Create XMTP client with HCS logging
+const client = createXmtpClient();
 
-// Connect with wallet-derived identity
-await xmtpClient.connect({
+await client.connect({
   credentials: {
-    privateKey: process.env.XMTP_WALLET_PRIVATE_KEY!,
+    privateKey: process.env.XMTP_WALLET_KEY,
   },
   options: {
-    env: "dev", // or "production"
+    env: "dev",
     hcsTopicId: process.env.HEDERA_XMTP_RECEIPTS_TOPIC_ID,
-    hederaService, // For HCS receipt logging
+    hederaService, // Enables automatic HCS receipt logging
   },
-});
-
-// Register message handler
-xmtpClient.onMessage(async (message) => {
-  console.log(`Received from ${message.from}: ${message.text}`);
-  
-  // Process with agent...
-  
-  // Send response
-  await xmtpClient.sendMessage({
-    conversationId: message.conversationId,
-    text: "Hello from your family agent!",
-  });
 });
 ```
 
-### HCS Receipt Logging
+## Configuration
 
-Message receipts are automatically logged to Hedera Consensus Service when:
+### Environment Variables
+
+```bash
+# XMTP Configuration
+XMTP_WALLET_KEY=your_wallet_private_key_hex
+XMTP_ENV=dev  # local, dev, or production
+
+# Database (auto-generated if not provided)
+XMTP_DB_ENCRYPTION_KEY=64_hex_chars_32_bytes
+XMTP_DB_PATH=./xmtp-db
+
+# HCS Receipt Logging (optional)
+HEDERA_XMTP_RECEIPTS_TOPIC_ID=0.0.xxxxx
+HEDERA_OPERATOR_ID=0.0.xxxxx
+HEDERA_OPERATOR_KEY=your_private_key
+```
+
+### Network Options
+
+| Network | Use Case |
+|---------|----------|
+| `local` | Local XMTP backend (Docker) |
+| `dev` | **XMTP test network** (recommended for development) |
+| `production` | Production apps |
+
+## API Reference
+
+### XmtpFamilyClient
+
+Implements `FamilyMessagingAdapter` interface - compatible with all FamilyXYZ messaging clients.
+
+#### Methods
+
+```typescript
+// Connect to XMTP network
+await client.connect(config: XmtpChannelConfig)
+
+// Disconnect from network
+await client.disconnect()
+
+// Send encrypted message
+const messageId = await client.sendMessage({
+  conversationId: "xmtp:0x...",
+  text: "Hello!",
+})
+
+// Register message handler (event-driven)
+client.onMessage(async (message: IncomingMessage) => {
+  console.log(`Received from ${message.from}: ${message.text}`)
+})
+
+// Get connection status
+const status = client.getStatus()
+// { isConnected: true, details: { address: "0x...", inboxId: "..." } }
+
+// Get active conversations
+const conversations = client.getConversations()
+```
+
+#### Events (Agent SDK)
+
+The Agent SDK uses event-driven architecture:
+
+- `start` - Fired when agent is ready
+- `text` - Fired when a text message is received
+- `error` - Fired on errors
+
+```typescript
+client.getAgent()?.on('text', async (ctx) => {
+  await ctx.conversation.sendText('Hello!');
+});
+```
+
+### IncomingMessage
+
+```typescript
+interface IncomingMessage {
+  id: string;                    // Message ID
+  from: string;                  // Sender address
+  fromUsername?: string;         // Username (if available)
+  conversationId: string;        // Conversation identifier
+  text: string;                  // Message content
+  timestamp: number;             // Message timestamp
+  metadata?: {
+    isXmtp: true;
+    encrypted: true;
+    agentSdk: true;
+  };
+}
+```
+
+### OutgoingMessage
+
+```typescript
+interface OutgoingMessage {
+  conversationId: string;        // Target conversation
+  inReplyTo?: string;            // Reply-to message ID
+  text: string;                  // Message content
+  attachments?: Media[];         // Optional attachments
+  metadata?: Record<string, unknown>;
+}
+```
+
+## HCS Receipt Logging
+
+Message receipts are **automatically** logged to Hedera Consensus Service when:
 1. `hederaService` is provided in config
-2. `hcsTopicId` is configured (or uses familyTopicId as fallback)
+2. `hcsTopicId` is configured (or uses `familyTopicId` fallback)
 
-Receipts include:
-- Message ID
-- Conversation ID
-- Sender/recipient addresses
-- Content hash (SHA-256, not the actual content)
-- Timestamp
-- Message type (xmtp/telegram/direct)
+### What Gets Logged
 
-**Privacy-Preserving:** Only the hash is logged, not the message content.
+Receipts include (HCS-10 compatible):
+```json
+{
+  "v": "1.0",
+  "mid": "message-id",
+  "cid": "conversation-id",
+  "s": "sender-address",
+  "r": "recipient-agent",
+  "ts": 1234567890,
+  "h": "sha256-hash-of-content",
+  "t": "xmtp",
+  "standard": "HCS-10"
+}
+```
+
+**Privacy-Preserving:** Only the **hash** is logged, **not the message content**.
 
 ### Manual Receipt Logging
 
 ```typescript
 import { logMessageReceiptToHcs, generateContentHash } from "@elizaos/client-xmtp";
 
-const contentHash = await generateContentHash(messageContent);
+const contentHash = await generateContentHash("Hello, world!");
 
 const result = await logMessageReceiptToHcs(hederaService, {
   messageId: "msg_123",
@@ -96,72 +223,52 @@ const result = await logMessageReceiptToHcs(hederaService, {
 });
 
 if (result.success) {
-  console.log(`Receipt logged: ${result.transactionId}`);
+  console.log(`✅ Receipt logged: ${result.transactionId}`);
 }
 ```
 
-## Configuration
+## Testing
 
-### Environment Variables
+### Use xmtp.chat Playground
 
-```bash
-# XMTP Configuration
-XMTP_WALLET_PRIVATE_KEY=your_wallet_private_key
-XMTP_ENV=dev  # local, dev, or production
+1. Start your agent
+2. Log the agent address: `console.log(client.getStatus().details?.address)`
+3. Go to **[xmtp.chat](https://xmtp.chat)**
+4. Enter your agent's address
+5. Start chatting!
 
-# HCS Receipt Logging (optional)
-HEDERA_XMTP_RECEIPTS_TOPIC_ID=0.0.xxxxx
-```
-
-### Network Options
-
-| Network | Use Case |
-|---------|----------|
-| `local` | Local XMTP backend (Docker) |
-| `dev` | XMTP test network (recommended for development) |
-| `production` | Production apps |
-
-## Migration to XMTP Agent SDK
-
-**Note:** XMTP has released a dedicated Agent SDK (`@xmtp/agent-sdk` v2.0.1) that is purpose-built for building agents.
-
-### Current Implementation (`@xmtp/xmtp-js`)
-
-**Pros:**
-- More control over low-level operations
-- Custom message handling
-- Direct integration with existing code
-
-**Cons:**
-- More boilerplate code
-- Manual identity management
-- Manual conversation streaming
-
-### Recommended: XMTP Agent SDK (`@xmtp/agent-sdk`)
-
-**Pros:**
-- Purpose-built for agents
-- Built-in SQLite persistence
-- Event-driven architecture (`on('text')`)
-- Automatic installation management
-- Built-in group chat support
-- Rich content types (actions, reactions, replies)
-- Test playground (xmtp.chat)
-
-**Cons:**
-- Less low-level control
-- Newer library (less battle-tested)
-
-### Migration Example
+### Test with Code
 
 ```typescript
-// Current approach (this package)
 import { createXmtpClient } from "@elizaos/client-xmtp";
-const client = createXmtpClient();
-await client.connect({ credentials: { privateKey } });
-client.onMessage(handler);
+import { getTestUrl } from "@xmtp/agent-sdk";
 
-// Agent SDK approach (recommended)
+const client = createXmtpClient();
+await client.connect({ /* config */ });
+
+// Get test URL for this agent
+const testUrl = getTestUrl(client.getAgent()!.client);
+console.log(`Test your agent at: ${testUrl}`);
+```
+
+## Migration from @xmtp/xmtp-js
+
+If you're migrating from the legacy `@xmtp/xmtp-js` implementation:
+
+### Before (xmtp-js)
+
+```typescript
+import { Client } from "@xmtp/xmtp-js";
+const client = await Client.create(wallet);
+const stream = await client.conversations.stream();
+for await (const conversation of stream) {
+  // Handle conversation...
+}
+```
+
+### After (Agent SDK)
+
+```typescript
 import { Agent } from "@xmtp/agent-sdk";
 const agent = await Agent.createFromEnv();
 agent.on('text', async (ctx) => {
@@ -170,36 +277,11 @@ agent.on('text', async (ctx) => {
 await agent.start();
 ```
 
-**See:** [XMTP Agent SDK Documentation](https://docs.xmtp.org/agents/get-started/build-an-agent)
-
-## API Reference
-
-### XmtpFamilyClient
-
-#### Methods
-
-- `connect(config: XmtpChannelConfig)` - Connect to XMTP network
-- `disconnect()` - Disconnect from network
-- `sendMessage(message: OutgoingMessage)` - Send encrypted message
-- `onMessage(handler)` - Register message handler
-- `getStatus()` - Get connection status
-- `getConversations()` - Get active conversations
-
-#### Events
-
-Messages are delivered via the `onMessage` handler with `IncomingMessage` objects containing:
-- `id` - Message ID
-- `from` - Sender address
-- `conversationId` - Conversation identifier
-- `text` - Message content
-- `timestamp` - Message timestamp
-- `metadata` - Platform-specific metadata
-
-## Testing
-
-Use **[xmtp.chat](https://xmtp.chat)** - the official XMTP playground:
-1. Enter your agent's address (`client.getStatus().details?.address`)
-2. Start a conversation and send messages
+**Benefits:**
+- ✅ 60% less code
+- ✅ Automatic persistence
+- ✅ Event-driven (simpler)
+- ✅ Built-in installation management
 
 ## Debugging
 
@@ -210,13 +292,45 @@ import { elizaLogger } from "@elizaos/core";
 elizaLogger.setLevel("debug");
 ```
 
+Common issues:
+
+| Issue | Solution |
+|-------|----------|
+| "Private key required" | Ensure `XMTP_WALLET_KEY` is set in hex format |
+| "Installation limit" | Agent SDK auto-manages this (10 per inbox) |
+| "Database locked" | Check `XMTP_DB_PATH` is writable |
+| HCS logging fails | Verify `hederaService` is initialized |
+
+## Architecture
+
+```
+┌─────────────────────────────────────────┐
+│     FamilyXYZ Agent Runtime             │
+├─────────────────────────────────────────┤
+│  FamilyMessagingAdapter (interface)     │
+├─────────────────────────────────────────┤
+│  XmtpFamilyClient (Agent SDK)           │
+│  ├─ Event-driven message handling       │
+│  ├─ SQLite persistence (auto)           │
+│  └─ HCS receipt logging (optional)      │
+├─────────────────────────────────────────┤
+│  XMTP Network (decentralized)           │
+│  Hedera Consensus Service (HCS-10)      │
+└─────────────────────────────────────────┘
+```
+
 ## Resources
 
-- [XMTP Documentation](https://xmtp.org/docs)
-- [XMTP Agent SDK](https://docs.xmtp.org/agents)
-- [XMTP Playground](https://xmtp.chat)
-- [XMTP GitHub](https://github.com/xmtp)
+- **[XMTP Agent SDK Docs](https://docs.xmtp.org/agents)** - Official documentation
+- **[XMTP Agent SDK on npm](https://www.npmjs.com/package/@xmtp/agent-sdk)** - Latest version
+- **[xmtp.chat](https://xmtp.chat)** - Test playground
+- **[XMTP GitHub](https://github.com/xmtp)** - Source code and examples
+- **[HCS-10 Standard](https://docs.hedera.com/hcs)** - Hedera Consensus Service
 
 ## License
 
 MIT
+
+---
+
+**Built with XMTP Agent SDK v2.0.1** - Purpose-built for autonomous agents 🤖

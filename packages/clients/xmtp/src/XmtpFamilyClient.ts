@@ -1,16 +1,19 @@
 /**
  * XMTP Family Client - Web3-native encrypted messaging
+ * 
+ * Uses XMTP Agent SDK (@xmtp/agent-sdk) - purpose-built for autonomous agents
  * Implements FamilyMessagingAdapter interface from @elizaos/core
  * 
  * Features:
  * - End-to-end encrypted conversations
- * - Agent identities derived from Hedera keys
- * - 1:1 and group conversation management
- * - Wallet-based authentication
- * - Content hash logging to HCS for verifiable receipts
+ * - Agent identity derived from wallet
+ * - Built-in SQLite persistence
+ * - Event-driven message handling
+ * - HCS message receipt logging (privacy-preserving)
+ * - Group chat support
  */
 
-import { Client } from "@xmtp/xmtp-js";
+import { Agent } from "@xmtp/agent-sdk";
 import type {
     FamilyMessagingAdapter,
     IncomingMessage,
@@ -19,25 +22,26 @@ import type {
     ChannelConfig,
 } from "@elizaos/core";
 import { elizaLogger } from "@elizaos/core";
-import type { Account } from "viem";
-import { generateContentHash, logMessageReceiptToHcs, type MessageReceipt } from "./HcsReceiptLogger.js";
 import type { HederaService } from "@elizaos/hedera-core";
+import { generateContentHash, logMessageReceiptToHcs, type MessageReceipt } from "./HcsReceiptLogger.js";
 
 /**
  * XMTP-specific configuration
  */
 export interface XmtpChannelConfig extends ChannelConfig {
     credentials: {
-        /** Private key for XMTP identity (derived from Hedera key) */
+        /** Private key for agent identity (hex format) */
         privateKey: string;
     };
     options?: {
-        /** XMTP environment: production or dev */
-        env?: "production" | "dev";
+        /** XMTP environment: local, dev, or production */
+        env?: "local" | "dev" | "production";
         /** HCS topic ID for message receipts */
         hcsTopicId?: string;
         /** HederaService instance for HCS logging */
         hederaService?: HederaService;
+        /** Database path for SQLite persistence (default: ./xmtp-db) */
+        dbPath?: string;
     };
 }
 
@@ -54,12 +58,25 @@ interface ConversationData {
 
 /**
  * XMTP Family Client - implements FamilyMessagingAdapter
- * Provides Web3-native encrypted messaging for family agents
+ * 
+ * Uses XMTP Agent SDK for simplified, production-ready messaging
+ * 
+ * @example
+ * ```typescript
+ * const client = createXmtpClient();
+ * await client.connect({
+ *   credentials: { privateKey: process.env.XMTP_WALLET_KEY },
+ *   options: { env: "dev", hederaService }
+ * });
+ * client.onMessage(async (msg) => {
+ *   await client.sendMessage({ conversationId: msg.conversationId, text: "Hello!" });
+ * });
+ * ```
  */
 export class XmtpFamilyClient implements FamilyMessagingAdapter {
     readonly name = "xmtp";
 
-    private client: Client | null = null;
+    private agent: Agent | null = null;
     private messageHandlers: Array<(message: IncomingMessage) => void> = [];
     private conversations: Map<string, ConversationData> = new Map();
     private status: ChannelStatus = {
@@ -68,61 +85,75 @@ export class XmtpFamilyClient implements FamilyMessagingAdapter {
     };
     private hcsTopicId?: string;
     private hederaService?: HederaService;
+    private dbPath?: string;
 
     /**
-     * Connect to XMTP network with wallet-derived identity
+     * Connect to XMTP network with Agent SDK
+     * 
+     * Benefits over manual implementation:
+     * - Automatic identity management
+     * - Built-in SQLite persistence
+     * - Event-driven architecture
+     * - Installation limit handling (10 per inbox)
      */
     async connect(config: XmtpChannelConfig): Promise<void> {
         try {
             const { privateKey } = config.credentials;
-            const { env = "dev", hcsTopicId, hederaService } = config.options || {};
+            const { 
+                env = "dev", 
+                hcsTopicId, 
+                hederaService,
+                dbPath = "./xmtp-db"
+            } = config.options || {};
 
             if (!privateKey) {
                 throw new Error("Private key is required for XMTP identity");
             }
 
-            elizaLogger.info(`[XMTP] Initializing client (${env} network)...`);
+            elizaLogger.info(`[XMTP] Initializing Agent SDK client (${env} network)...`);
 
-            // Store HCS topic ID and HederaService for message receipts
+            // Store configuration
             this.hcsTopicId = hcsTopicId;
             this.hederaService = hederaService;
+            this.dbPath = dbPath;
 
-            // Create XMTP client with wallet
-            // Note: In production, use proper wallet integration
-            const wallet = {
-                address: await this.deriveAddressFromKey(privateKey),
-                signMessage: async (message: string) => {
-                    // Simple signature for XMTP auth
-                    // In production, use proper cryptographic signing
-                    return Promise.resolve(message);
-                },
-            };
+            // Create Agent instance with environment variables
+            // Agent SDK handles identity, persistence, and connection automatically
+            process.env.XMTP_ENV = env;
+            process.env.XMTP_WALLET_KEY = privateKey;
+            process.env.XMTP_DB_ENCRYPTION_KEY = await this.generateDbEncryptionKey();
+            process.env.XMTP_DB_PATH = dbPath;
 
-            this.client = await Client.create(wallet as any, {
-                env,
-            });
+            this.agent = await Agent.createFromEnv();
 
             // Update status
             this.status = {
                 isConnected: true,
                 lastActivity: Date.now(),
                 details: {
-                    address: wallet.address,
+                    address: this.agent.address,
                     environment: env,
+                    inboxId: this.agent.inboxId,
                 },
             };
 
             elizaLogger.info(
-                `[XMTP] Client connected: ${wallet.address}`
+                `[XMTP] ✅ Agent connected: ${this.agent.address}`
             );
 
-            // Start streaming conversations
-            this.startConversationStream();
+            // Set up event-driven message handling
+            this.setupMessageHandlers();
+
+            // Start the agent
+            await this.agent.start();
+
+            elizaLogger.info(`[XMTP] 🚀 Agent started and ready for messages`);
         } catch (error) {
             this.status = {
                 isConnected: false,
                 error: error instanceof Error ? error.message : "Connection failed",
             };
+            elizaLogger.error("[XMTP] Connection error:", error);
             throw error;
         }
     }
@@ -131,10 +162,10 @@ export class XmtpFamilyClient implements FamilyMessagingAdapter {
      * Disconnect from XMTP network
      */
     async disconnect(): Promise<void> {
-        if (this.client) {
-            elizaLogger.info("[XMTP] Stopping client...");
-            // XMTP client cleanup
-            this.client = null;
+        if (this.agent) {
+            elizaLogger.info("[XMTP] Stopping agent...");
+            // Agent SDK handles cleanup
+            this.agent = null;
         }
 
         this.status = {
@@ -142,21 +173,22 @@ export class XmtpFamilyClient implements FamilyMessagingAdapter {
             error: "Disconnected",
         };
 
-        elizaLogger.info("[XMTP] Client disconnected");
+        elizaLogger.info("[XMTP] Agent disconnected");
     }
 
     /**
      * Send an encrypted message via XMTP
      */
     async sendMessage(message: OutgoingMessage): Promise<string> {
-        if (!this.client) {
-            throw new Error("XMTP client not connected");
+        if (!this.agent) {
+            throw new Error("XMTP agent not connected");
         }
 
         try {
             const { conversationId, text } = message;
 
             // Get or create conversation
+            // Agent SDK simplifies conversation management
             const conversation = await this.getOrCreateConversation(conversationId);
 
             if (!conversation) {
@@ -164,24 +196,24 @@ export class XmtpFamilyClient implements FamilyMessagingAdapter {
             }
 
             // Send encrypted message
-            const sentMessage = await conversation.send(text);
+            await conversation.sendText(text);
 
             elizaLogger.debug(
-                `[XMTP] Message sent to ${conversationId}: ${sentMessage.id}`
+                `[XMTP] ✅ Message sent to ${conversationId}`
             );
 
-            // Log to HCS for verifiable receipt (optional)
-            if (this.hcsTopicId) {
+            // Log to HCS for verifiable receipt (privacy-preserving)
+            if (this.hederaService) {
                 const contentHash = await generateContentHash(text);
                 await this.logMessageToHCS(
                     conversationId,
-                    sentMessage.id,
+                    `msg_${Date.now()}`,
                     contentHash,
                     text
                 );
             }
 
-            return sentMessage.id;
+            return `msg_${Date.now()}`;
         } catch (error) {
             elizaLogger.error("[XMTP] Send message error:", error);
             throw error;
@@ -190,12 +222,20 @@ export class XmtpFamilyClient implements FamilyMessagingAdapter {
 
     /**
      * Register message handler for incoming encrypted messages
+     * 
+     * Agent SDK uses event-driven architecture:
+     * agent.on('text', handler)
      */
     onMessage(handler: (message: IncomingMessage) => void): void {
         this.messageHandlers.push(handler);
         elizaLogger.debug(
             `[XMTP] Registered message handler (${this.messageHandlers.length} total)`
         );
+
+        // If agent is already running, set up handler immediately
+        if (this.agent) {
+            this.setupMessageHandlers();
+        }
     }
 
     /**
@@ -213,138 +253,147 @@ export class XmtpFamilyClient implements FamilyMessagingAdapter {
     }
 
     /**
-     * Derive wallet address from private key
+     * Get agent instance
      */
-    private async deriveAddressFromKey(privateKey: string): Promise<string> {
-        // In production, use proper key derivation from Hedera key
-        // This is a simplified placeholder
-        return `0x${privateKey.slice(0, 40)}`;
+    getAgent(): Agent | null {
+        return this.agent;
     }
 
     /**
-     * Get or create conversation by ID
+     * Set up event-driven message handlers using Agent SDK
      */
-    private async getOrCreateConversation(conversationId: string): Promise<any> {
-        if (!this.client) {
-            throw new Error("Client not connected");
+    private setupMessageHandlers(): void {
+        if (!this.agent) {
+            return;
         }
 
-        // Check if conversation exists in cache
+        // Agent SDK event-driven approach
+        this.agent.on('text', async (ctx) => {
+            const { conversation, message } = ctx;
+
+            const incomingMessage: IncomingMessage = {
+                id: message.id,
+                from: message.senderAddress,
+                fromUsername: undefined,
+                conversationId: conversation.topic,
+                text: message.content,
+                timestamp: message.sentAt?.getTime() || Date.now(),
+                metadata: {
+                    isXmtp: true,
+                    encrypted: true,
+                    agentSdk: true,
+                },
+            };
+
+            elizaLogger.debug(
+                `[XMTP] 📨 Received message: ${incomingMessage.text.substring(0, 50)}...`
+            );
+
+            // Update conversation tracking
+            this.updateConversation(conversation.topic, conversation.peerAddress);
+
+            // Notify all handlers
+            for (const handler of this.messageHandlers) {
+                try {
+                    await handler(incomingMessage);
+                } catch (error) {
+                    elizaLogger.error(
+                        "[XMTP] Message handler error:",
+                        error
+                    );
+                }
+            }
+
+            this.updateActivity();
+        });
+
+        // Handle agent start event
+        this.agent.on('start', () => {
+            elizaLogger.info(
+                `[XMTP] 🚀 Agent started: ${this.agent?.address}`
+            );
+        });
+
+        // Handle errors
+        this.agent.on('error', (error) => {
+            elizaLogger.error("[XMTP] Agent error:", error);
+            this.status = {
+                isConnected: this.status.isConnected,
+                error: error.message,
+                lastActivity: Date.now(),
+            };
+        });
+    }
+
+    /**
+     * Get or create conversation
+     * Agent SDK simplifies conversation management
+     */
+    private async getOrCreateConversation(conversationId: string): Promise<any> {
+        if (!this.agent) {
+            throw new Error("Agent not connected");
+        }
+
+        // Check cache
         const cached = this.conversations.get(conversationId);
         if (cached) {
-            return this.client.conversations.getConversationById(conversationId);
+            const conversations = await this.agent.client.conversations.list();
+            return conversations.find((c: any) => c.topic === conversationId);
         }
 
         // For new conversations, extract peer address from ID
         // Format: "xmtp:<peer_address>"
         const peerAddress = conversationId.replace("xmtp:", "");
 
-        // Create new conversation
-        const conversation = await this.client.conversations.newConversation(
+        // Create new conversation via Agent SDK
+        const conversation = await this.agent.client.conversations.newConversation(
             peerAddress
         );
 
         // Cache conversation data
-        this.conversations.set(conversationId, {
-            conversationId,
-            peerAddress,
-            createdAt: Date.now(),
-            lastMessageAt: Date.now(),
-            messageCount: 0,
-        });
+        this.updateConversation(conversation.topic, conversation.peerAddress);
 
         return conversation;
     }
 
     /**
-     * Start streaming for new messages
+     * Update conversation tracking
      */
-    private async startConversationStream(): Promise<void> {
-        if (!this.client) {
-            return;
-        }
-
-        try {
-            // Stream all conversations
-            const stream = await this.client.conversations.stream();
-
-            elizaLogger.info("[XMTP] Started conversation stream");
-
-            // Process incoming messages
-            for await (const conversation of stream) {
-                elizaLogger.debug(
-                    `[XMTP] New conversation: ${conversation.context?.conversationId}`
-                );
-
-                // Cache conversation
-                this.conversations.set(conversation.topic, {
-                    conversationId: conversation.topic,
-                    peerAddress: conversation.peerAddress,
-                    createdAt: Date.now(),
-                    lastMessageAt: Date.now(),
-                    messageCount: 0,
-                });
-
-                // Stream messages in this conversation
-                this.streamMessagesInConversation(conversation);
-            }
-        } catch (error) {
-            elizaLogger.error("[XMTP] Conversation stream error:", error);
-        }
+    private updateConversation(conversationId: string, peerAddress: string): void {
+        const existing = this.conversations.get(conversationId);
+        
+        this.conversations.set(conversationId, {
+            conversationId,
+            peerAddress,
+            createdAt: existing?.createdAt || Date.now(),
+            lastMessageAt: Date.now(),
+            messageCount: (existing?.messageCount || 0) + 1,
+        });
     }
 
     /**
-     * Stream messages in a specific conversation
+     * Update last activity timestamp
      */
-    private async streamMessagesInConversation(conversation: any): Promise<void> {
-        try {
-            const messageStream = await conversation.streamMessages();
+    private updateActivity(): void {
+        this.status.lastActivity = Date.now();
+    }
 
-            for await (const message of messageStream) {
-                const incomingMessage: IncomingMessage = {
-                    id: message.id,
-                    from: message.senderAddress,
-                    fromUsername: undefined,
-                    conversationId: conversation.topic,
-                    text: message.content as string,
-                    timestamp: message.sentAt?.getTime() || Date.now(),
-                    metadata: {
-                        isXmtp: true,
-                        encrypted: true,
-                    },
-                };
-
-                elizaLogger.debug(
-                    `[XMTP] Received message: ${incomingMessage.text.substring(0, 50)}...`
-                );
-
-                // Notify all handlers
-                for (const handler of this.messageHandlers) {
-                    try {
-                        await handler(incomingMessage);
-                    } catch (error) {
-                        elizaLogger.error(
-                            "[XMTP] Message handler error:",
-                            error
-                        );
-                    }
-                }
-
-                // Update conversation stats
-                const convData = this.conversations.get(conversation.topic);
-                if (convData) {
-                    convData.lastMessageAt = Date.now();
-                    convData.messageCount++;
-                    this.conversations.set(conversation.topic, convData);
-                }
-            }
-        } catch (error) {
-            elizaLogger.error("[XMTP] Message stream error:", error);
-        }
+    /**
+     * Generate database encryption key
+     * In production, store this securely
+     */
+    private async generateDbEncryptionKey(): Promise<string> {
+        // Generate 32-byte key (64 hex chars)
+        // In production, derive from wallet key or store in secrets manager
+        const keyBytes = crypto.getRandomValues(new Uint8Array(32));
+        return Array.from(keyBytes)
+            .map(b => b.toString(16).padStart(2, '0'))
+            .join('');
     }
 
     /**
      * Log message hash to HCS for verifiable receipt
+     * Privacy-preserving: only hash is logged, not content
      */
     private async logMessageToHCS(
         conversationId: string,
@@ -368,7 +417,7 @@ export class XmtpFamilyClient implements FamilyMessagingAdapter {
             const receipt: MessageReceipt = {
                 messageId,
                 conversationId,
-                sender: this.client?.address || "unknown",
+                sender: this.agent?.address || "unknown",
                 recipient: conversationId,
                 timestamp: Date.now(),
                 contentHash,

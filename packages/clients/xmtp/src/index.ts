@@ -1,8 +1,14 @@
 /**
  * XMTP Client for FamilyXYZ
  * 
- * Web3-native encrypted messaging using @xmtp/xmtp-js
+ * Web3-native encrypted messaging using XMTP Agent SDK
  * Implements FamilyMessagingAdapter interface
+ * 
+ * Features:
+ * - End-to-end encrypted conversations
+ * - Built-in SQLite persistence
+ * - Event-driven message handling
+ * - HCS message receipt logging
  */
 
 export {

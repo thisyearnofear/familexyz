@@ -10,14 +10,10 @@
 // ============================================================
 
 export const API_CONFIG = {
-  BASE_URL: import.meta.env.VITE_API_BASE_URL || (
-    import.meta.env.MODE === 'production'
-      ? window.location.origin   // Same origin in production — set VITE_API_BASE_URL to override
-      : 'http://localhost:3000'
-  ),
+  BASE_URL: import.meta.env.VITE_API_BASE_URL || 'https://api.famile.xyz',
   HEALTH_BASE_URL: import.meta.env.VITE_HEALTH_BASE_URL || (
     import.meta.env.MODE === 'production'
-      ? `${window.location.protocol}//${window.location.hostname}:${import.meta.env.VITE_HEALTH_PORT || '3001'}`
+      ? `https://api.famile.xyz`
       : `http://localhost:${import.meta.env.VITE_HEALTH_PORT || '3001'}`
   ),
   TIMEOUT: Number(import.meta.env.VITE_API_TIMEOUT) || 10000,

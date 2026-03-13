@@ -293,6 +293,41 @@ export function createApiRouter(
         );
     });
 
+    router.get("/agents/insights", (req, res) => {
+        // Return agent insights with basic metrics
+        const insights = Array.from(agents.values()).map((agent) => ({
+            agentId: agent.agentId,
+            agentName: agent.character.name,
+            agentEmoji: getAgentEmoji(agent.character.name),
+            insight: `Monitoring ${agent.character.name.toLowerCase()}'s activities`,
+            action: "Continue observing family interactions",
+            metrics: {
+                interactions: 0,
+                messages: 0,
+                uptime: process.uptime(),
+            },
+        }));
+        sendSuccessResponse(
+            res,
+            {
+                insights,
+                total: insights.length,
+            },
+            "Retrieved agent insights",
+        );
+    });
+
+    function getAgentEmoji(name: string): string {
+        const emojiMap: Record<string, string> = {
+            wisdom: "🧠",
+            intimacy: "💖",
+            generationalbridge: "👵👦",
+            presence: "🧘",
+            growth: "🚀",
+        };
+        return emojiMap[name.toLowerCase()] || "✨";
+    }
+
     router.get("/storage", async (req, res) => {
         try {
             const uploadDir = path.join(process.cwd(), "data", "characters");

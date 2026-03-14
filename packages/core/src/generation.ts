@@ -476,6 +476,33 @@ export async function generateText({
                 }
             }
             break;
+        case ModelProviderName.VENICE:
+            {
+                switch (modelClass) {
+                    case ModelClass.LARGE:
+                        {
+                            model =
+                                runtime.getSetting("LARGE_VENICE_MODEL") ||
+                                model;
+                        }
+                        break;
+                    case ModelClass.MEDIUM:
+                        {
+                            model =
+                                runtime.getSetting("MEDIUM_VENICE_MODEL") ||
+                                model;
+                        }
+                        break;
+                    case ModelClass.SMALL:
+                        {
+                            model =
+                                runtime.getSetting("SMALL_VENICE_MODEL") ||
+                                model;
+                        }
+                        break;
+                }
+            }
+            break;
     }
 
     elizaLogger.info("Selected model", { model });

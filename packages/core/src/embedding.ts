@@ -70,13 +70,17 @@ async function getRemoteEmbedding(
     input: string,
     options: EmbeddingOptions
 ): Promise<number[]> {
-    // Ensure endpoint ends with /v1 for OpenAI
-    const baseEndpoint = options.endpoint.endsWith("/v1")
-        ? options.endpoint
-        : `${options.endpoint}${options.isOllama ? "/v1" : ""}`;
+    // Ollama uses /api/embeddings, others use /v1/embeddings
+    const baseEndpoint = options.isOllama
+        ? options.endpoint // Ollama endpoint is already http://localhost:11434
+        : options.endpoint.endsWith("/v1")
+          ? options.endpoint
+          : `${options.endpoint}/v1`;
 
-    // Construct full URL
-    const fullUrl = `${baseEndpoint}/embeddings`;
+    // Construct full URL - Ollama uses /api/embeddings, others use /embeddings
+    const fullUrl = options.isOllama
+        ? `${options.endpoint}/api/embeddings`
+        : `${baseEndpoint}/embeddings`;
 
     const requestOptions = {
         method: "POST",

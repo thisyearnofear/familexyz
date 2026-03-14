@@ -161,7 +161,7 @@ export const models: Models = {
         endpoint: "https://api.x.ai/v1",
         model: {
             [ModelClass.SMALL]: {
-                name: settings.SMALL_GROK_MODEL || "grok-2-1212",
+                name: settings.SMALL_GROK_MODEL || "grok-4-1-fast",
                 stop: [],
                 maxInputTokens: 128000,
                 maxOutputTokens: 8192,
@@ -170,7 +170,7 @@ export const models: Models = {
                 temperature: 0.7,
             },
             [ModelClass.MEDIUM]: {
-                name: settings.MEDIUM_GROK_MODEL || "grok-2-1212",
+                name: settings.MEDIUM_GROK_MODEL || "grok-4-1-fast",
                 stop: [],
                 maxInputTokens: 128000,
                 maxOutputTokens: 8192,
@@ -179,7 +179,7 @@ export const models: Models = {
                 temperature: 0.7,
             },
             [ModelClass.LARGE]: {
-                name: settings.LARGE_GROK_MODEL || "grok-2-1212",
+                name: settings.LARGE_GROK_MODEL || "grok-4-1-fast",
                 stop: [],
                 maxInputTokens: 128000,
                 maxOutputTokens: 8192,
@@ -188,7 +188,7 @@ export const models: Models = {
                 temperature: 0.7,
             },
             [ModelClass.EMBEDDING]: {
-                name: settings.EMBEDDING_GROK_MODEL || "grok-2-1212", // not sure about this one
+                name: settings.EMBEDDING_GROK_MODEL || "grok-4-1-fast", // not sure about this one
             },
         },
     },

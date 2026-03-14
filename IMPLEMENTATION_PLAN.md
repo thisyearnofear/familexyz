@@ -556,11 +556,17 @@ SERVER_PORT=3004
 HEALTH_PORT=3005
 NODE_ENV=production
 
-# Venice AI (Chat)
+# Venice AI (Chat - Fallback)
 VENICE_API_KEY=your_key_here
-SMALL_VENICE_MODEL=llama-3.3-70b
-MEDIUM_VENICE_MODEL=llama-3.3-70b
-LARGE_VENICE_MODEL=llama-3.3-70b
+SMALL_VENICE_MODEL=qwen3-4b  # Fast fallback for simple queries
+MEDIUM_VENICE_MODEL=grok-4-1-fast  # Primary (via Grok provider)
+LARGE_VENICE_MODEL=grok-4-1-fast  # Primary (via Grok provider)
+
+# Grok AI (Primary Chat - Very Fast)
+GROK_API_KEY=your_grok_api_key_here  # Get from https://x.ai/api
+SMALL_GROK_MODEL=grok-4-1-fast
+MEDIUM_GROK_MODEL=grok-4-1-fast
+LARGE_GROK_MODEL=grok-4-1-fast
 
 # Ollama (Embeddings - Free)
 USE_OLLAMA_EMBEDDING=true
@@ -571,6 +577,24 @@ OLLAMA_SERVER_URL=http://localhost:11434
 CORS_ORIGINS=https://familexyz.netlify.app,https://famile.xyz
 TRUST_PROXY=true
 ```
+
+### Model Strategy
+
+**Primary Model: Grok 4.1 Fast**
+- Latency: Very fast (1-3 seconds)
+- Cost: $0.50/$1.25 per 1M tokens (input/output)
+- Quality: High, balances speed with advanced capabilities
+- Use case: All chat interactions
+
+**Fallback Model: Venice Small (qwen3-4b)**
+- Latency: Fastest available
+- Cost: $0.05/$0.15 per 1M tokens (cheapest)
+- Use case: Ultra-simple queries to minimize queue risks during peaks
+
+**Embeddings: Ollama (nomic-embed-text)**
+- Latency: ~1 second (local on VPS)
+- Cost: FREE (self-hosted)
+- Dimensions: 768
 
 ### PM2 Process
 ```bash

@@ -555,7 +555,7 @@ export const models: Models = {
 
             [ModelClass.EMBEDDING]: {
                 name: settings.OLLAMA_EMBEDDING_MODEL || "mxbai-embed-large",
-                dimensions: 1024,
+                dimensions: settings.OLLAMA_EMBEDDING_MODEL === "nomic-embed-text" ? 768 : 1024,
             },
         },
     },

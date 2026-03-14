@@ -1,4 +1,4 @@
-# Implementation Plan: Production Readiness - Phase 1 ✅
+# Implementation Plan: Production Readiness
 
 ## Objective
 Transform FamilyXYZ from prototype to production-ready application by fixing critical frontend issues, implementing real messaging integrations, and establishing proper authentication.
@@ -414,6 +414,11 @@ Verifiable proof of agent interactions without revealing content (PERFORMANT + C
 | **Phase 3a** — XMTP Client | ✅ Complete | 4 files | Web3 encrypted messaging |
 | **Phase 3b** — Dashboard UI | ✅ Complete | 1 file | Encrypted chat component |
 | **Phase 3c** — HCS Receipts | ✅ Complete | 1 file | Verifiable proof logging |
+| **Phase 4a** — Netlify Deploy | ✅ Complete | 2 files | Build config, env vars |
+| **Phase 4b** — CORS & Nginx | ✅ Complete | 3 files | API routing, security headers |
+| **Phase 4c** — Ollama Embeddings | ✅ Complete | 2 files | Free self-hosted 768-dim embeddings |
+| **Phase 4d** — Venice AI Chat | ✅ Complete | 2 files | llama-3.3-70b model, working chat |
+| **Phase 4e** — HashPack Wallet | ✅ Complete | 3 files | Wallet connection support |
 
 ---
 
@@ -450,5 +455,143 @@ pnpm lint
 **Phase 1 Complete:** Commit `0811907a` on `develop` branch.
 **Phase 2 Complete:** Commit `65984c2b` — Telegram integration ready for testing.
 **Phase 3 Complete:** XMTP integration with HCS receipt logging.
+**Phase 4 Complete:** Production deployment with Venice AI chat, Ollama embeddings, CORS, Netlify.
 
-**All Phases 1-3 Complete!** 🎉
+**All Phases 1-4 Complete!** 🎉
+
+---
+
+## Phase 4: Backend Production Deployment ✅ COMPLETED
+
+### Production Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Production Stack                         │
+├─────────────────────────────────────────────────────────────┤
+│ Frontend: Netlify (familexyz.netlify.app)                  │
+│ Backend:  Hetzner VPS (api.famile.xyz:443)                 │
+│ LLM:      Venice AI (llama-3.3-70b)                        │
+│ Embeddings: Ollama (nomic-embed-text, 768-dim, free)       │
+│ Database: SQLite (agent/data/db.sqlite)                    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 4a. Netlify Deployment ✅
+**Problem:** Build failures due to pnpm lockfile mismatch and workspace dependencies
+
+**Solutions:**
+- Fixed `pnpm-lock.yaml` sync with workspace packages
+- Added build command with workspace dependency building
+- Set environment variables: `VITE_API_BASE_URL=https://api.famile.xyz`
+- Updated `client/netlify.toml` with proper build configuration
+
+**Files Modified:**
+- `client/netlify.toml` - Build command and environment vars
+- `pnpm-lock.yaml` - Synced with workspace dependencies
+- `packages/auth/hedera-wallet/package.json` - Added bs58 dependency
+
+### 4b. CORS & Nginx Configuration ✅
+**Problem:** API requests blocked by CORS, nginx routing to wrong port
+
+**Solutions:**
+- Configured nginx to proxy all requests to backend on port 3004
+- Added CORS headers for `https://familexyz.netlify.app`
+- Fixed server ports: `SERVER_PORT=3004`, `HEALTH_PORT=3005`
+
+**Files Modified:**
+- `/etc/nginx/sites-available/api.famile.xyz` - Nginx proxy config
+- `/home/deploy/familexyz/shared/.env` - CORS_ORIGINS, port config
+- `client/src/lib/constants.ts` - API base URL defaults
+
+### 4c. Ollama Embeddings (Free, Self-Hosted) ✅
+**Problem:** Venice AI doesn't support embeddings, embedding dimension mismatch
+
+**Solutions:**
+- Installed Ollama on VPS with `nomic-embed-text` model (768 dimensions)
+- Fixed embedding.ts to use correct Ollama endpoint (`/api/embeddings`)
+- Cleared old memories database to avoid dimension mismatch
+- Configured: `USE_OLLAMA_EMBEDDING=true`
+
+**Files Modified:**
+- `packages/core/src/embedding.ts` - Ollama endpoint fix
+- Server: Installed Ollama, pulled nomic-embed-text model
+
+**Cost:** $0 (free, self-hosted on existing VPS)
+
+### 4d. Venice AI Chat Integration ✅
+**Problem:** Wrong model name (`llama-3.1-405b` doesn't exist), chat timing out
+
+**Solutions:**
+- Updated model to `llama-3.3-70b` (available on Venice AI)
+- Fixed models.ts default fallback model
+- Updated character files with correct model specification
+
+**Files Modified:**
+- `packages/core/src/models.ts` - Default model fallback
+- Server: Model config in .env
+
+**Test Result:** Wisdom agent responds with thoughtful family-oriented messages ✅
+
+### 4e. HashPack Wallet Support ✅
+**Problem:** Client calling `connectWallet("hashpack")` but wallet type not supported
+
+**Solutions:**
+- Added `"hashpack"` to `WalletType` union
+- Implemented `connectHashPack()` method in HederaAuthService
+- Updated wallet detection to recognize HashPack extension
+
+**Files Modified:**
+- `packages/auth/hedera-wallet/src/types/index.ts` - WalletType union
+- `packages/auth/hedera-wallet/src/services/HederaAuthService.ts` - Connection logic
+
+---
+
+## Server Configuration Summary
+
+### Environment Variables (.env)
+```bash
+# Server
+SERVER_PORT=3004
+HEALTH_PORT=3005
+NODE_ENV=production
+
+# Venice AI (Chat)
+VENICE_API_KEY=your_key_here
+SMALL_VENICE_MODEL=llama-3.3-70b
+MEDIUM_VENICE_MODEL=llama-3.3-70b
+LARGE_VENICE_MODEL=llama-3.3-70b
+
+# Ollama (Embeddings - Free)
+USE_OLLAMA_EMBEDDING=true
+OLLAMA_EMBEDDING_MODEL=nomic-embed-text
+OLLAMA_SERVER_URL=http://localhost:11434
+
+# CORS
+CORS_ORIGINS=https://familexyz.netlify.app,https://famile.xyz
+TRUST_PROXY=true
+```
+
+### PM2 Process
+```bash
+pm2 start ecosystem.config.cjs
+pm2 restart familexyz-agent --update-env
+```
+
+---
+
+## Verification Commands
+
+```bash
+# Test chat endpoint (server)
+curl -X POST 'http://localhost:3004/Wisdom/message' \
+  -F 'text=Hello' \
+  -F 'user=test'
+
+# Test Ollama embeddings
+curl http://localhost:11434/api/embeddings \
+  -d '{"model": "nomic-embed-text", "prompt": "test"}'
+
+# Check PM2 status
+pm2 status familexyz-agent
+```

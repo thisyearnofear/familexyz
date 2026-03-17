@@ -8,6 +8,8 @@ elizaLogger.info("Loading embedding settings:", {
     USE_OLLAMA_EMBEDDING: process.env.USE_OLLAMA_EMBEDDING,
     OLLAMA_EMBEDDING_MODEL:
         process.env.OLLAMA_EMBEDDING_MODEL || "mxbai-embed-large",
+    EMBEDDING_MODEL: process.env.EMBEDDING_MODEL,
+    EMBEDDING_DIMENSIONS: process.env.EMBEDDING_DIMENSIONS,
 });
 
 // Add this logging block
@@ -145,6 +147,8 @@ elizaLogger.info("Parsed settings:", {
     USE_OLLAMA_EMBEDDING_TYPE: typeof settings.USE_OLLAMA_EMBEDDING,
     OLLAMA_EMBEDDING_MODEL:
         settings.OLLAMA_EMBEDDING_MODEL || "mxbai-embed-large",
+    EMBEDDING_MODEL: settings.EMBEDDING_MODEL,
+    EMBEDDING_DIMENSIONS: settings.EMBEDDING_DIMENSIONS,
 });
 
 export default settings;

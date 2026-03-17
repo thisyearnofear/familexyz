@@ -43,17 +43,21 @@ export const getEmbeddingConfig = (): EmbeddingConfig => ({
                 : settings.USE_HEURIST_EMBEDDING?.toLowerCase() === "true"
                   ? getEmbeddingModelSettings(ModelProviderName.HEURIST)
                         .dimensions
-                  : 384, // BGE
+                  : (settings.EMBEDDING_DIMENSIONS
+                      ? parseInt(settings.EMBEDDING_DIMENSIONS, 10)
+                      : 1024), // BGE-m3 default
     model:
-        settings.USE_OPENAI_EMBEDDING?.toLowerCase() === "true"
-            ? getEmbeddingModelSettings(ModelProviderName.OPENAI).name
-            : settings.USE_OLLAMA_EMBEDDING?.toLowerCase() === "true"
-              ? getEmbeddingModelSettings(ModelProviderName.OLLAMA).name
-              : settings.USE_GAIANET_EMBEDDING?.toLowerCase() === "true"
-                ? getEmbeddingModelSettings(ModelProviderName.GAIANET).name
-                : settings.USE_HEURIST_EMBEDDING?.toLowerCase() === "true"
-                  ? getEmbeddingModelSettings(ModelProviderName.HEURIST).name
-                  : "BGE-small-en-v1.5",
+        settings.EMBEDDING_MODEL
+            ? settings.EMBEDDING_MODEL
+            : settings.USE_OPENAI_EMBEDDING?.toLowerCase() === "true"
+              ? getEmbeddingModelSettings(ModelProviderName.OPENAI).name
+              : settings.USE_OLLAMA_EMBEDDING?.toLowerCase() === "true"
+                ? getEmbeddingModelSettings(ModelProviderName.OLLAMA).name
+                : settings.USE_GAIANET_EMBEDDING?.toLowerCase() === "true"
+                  ? getEmbeddingModelSettings(ModelProviderName.GAIANET).name
+                  : settings.USE_HEURIST_EMBEDDING?.toLowerCase() === "true"
+                    ? getEmbeddingModelSettings(ModelProviderName.HEURIST).name
+                    : "text-embedding-bge-m3", // Venice AI compatible
     provider:
         settings.USE_OPENAI_EMBEDDING?.toLowerCase() === "true"
             ? "OpenAI"
@@ -145,27 +149,9 @@ export function getEmbeddingType(runtime: IAgentRuntime): "local" | "remote" {
 }
 
 export function getEmbeddingZeroVector(): number[] {
-    let embeddingDimension = 384; // Default BGE dimension
-
-    if (settings.USE_OPENAI_EMBEDDING?.toLowerCase() === "true") {
-        embeddingDimension = getEmbeddingModelSettings(
-            ModelProviderName.OPENAI
-        ).dimensions; // OpenAI dimension
-    } else if (settings.USE_OLLAMA_EMBEDDING?.toLowerCase() === "true") {
-        embeddingDimension = getEmbeddingModelSettings(
-            ModelProviderName.OLLAMA
-        ).dimensions; // Ollama mxbai-embed-large dimension
-    } else if (settings.USE_GAIANET_EMBEDDING?.toLowerCase() === "true") {
-        embeddingDimension = getEmbeddingModelSettings(
-            ModelProviderName.GAIANET
-        ).dimensions; // GaiaNet dimension
-    } else if (settings.USE_HEURIST_EMBEDDING?.toLowerCase() === "true") {
-        embeddingDimension = getEmbeddingModelSettings(
-            ModelProviderName.HEURIST
-        ).dimensions; // Heurist dimension
-    }
-
-    return Array(embeddingDimension).fill(0);
+    // Use getEmbeddingConfig to ensure consistent dimensions
+    const config = getEmbeddingConfig();
+    return Array(config.dimensions).fill(0);
 }
 
 /**

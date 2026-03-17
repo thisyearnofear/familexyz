@@ -5,10 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { FamilyLogo } from "@/components/FamilyLogo";
-import { GuidedTour } from "./GuidedTour";
 import {
   Heart,
-  Target,
   Users,
   Sparkles,
   ArrowRight,
@@ -17,13 +15,8 @@ import {
   Star,
   Trophy,
   Lightbulb,
-  Zap,
-  HelpCircle,
-  BookOpen,
-  Wallet,
-  Coins
+  HelpCircle
 } from "lucide-react";
-import { useWalletConnection } from "@elizaos/hedera-wallet/react";
 
 interface OnboardingStep {
   id: string;
@@ -73,7 +66,7 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
 
   const [currentStep, setCurrentStep] = useState(0);
   const [showHelp, setShowHelp] = useState(false);
-  const [showTour, setShowTour] = useState(false);
+  const [showSaved, setShowSaved] = useState(false);
   const [familyProfile, setFamilyProfile] = useState<FamilyProfile>({
     name: "",
     members: [],
@@ -99,6 +92,9 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
       currentStep,
       familyProfile
     }));
+    setShowSaved(true);
+    const timer = setTimeout(() => setShowSaved(false), 2000);
+    return () => clearTimeout(timer);
   }, [currentStep, familyProfile]);
 
   // Load saved progress on mount
@@ -134,24 +130,23 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
       component: (
         <WelcomeStep
           onNext={() => setCurrentStep(1)}
-          onSkip={() => setCurrentStep(5)}
-          onStartTour={() => setShowTour(true)}
+          onSkip={() => setCurrentStep(3)}
         />
       )
     },
     {
       id: "family",
-      title: "Tell Us About Your Family",
-      subtitle: "Create your family profile",
-      description: "Help us understand who's in your family and what matters most to you.",
+      title: "Set Up Your Family",
+      subtitle: "Tell us about your family",
+      description: "Create your family profile in just a few seconds.",
       icon: <Users className="w-8 h-8 text-blue-500" />,
       helpContent: {
         title: "Family Profile Setup",
-        description: "Creating detailed family profiles helps our AI agents provide more personalized guidance.",
+        description: "Quickly add your family name and yourself. You can add more members anytime in Settings.",
         tips: [
-          "Add interests and hobbies to get better activity recommendations",
-          "Age information helps tailor communication styles",
-          "You can add or remove family members anytime"
+          "Start with yourself - add other family members later",
+          "Your family name helps personalize the experience",
+          "You can always update this information later"
         ]
       },
       component: (
@@ -162,79 +157,26 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
       )
     },
     {
-      id: "goals",
-      title: "Set Your Family Goals",
-      subtitle: "What do you want to achieve together?",
-      description: "Choose the areas where you'd like to see your family grow and flourish.",
-      icon: <Target className="w-8 h-8 text-green-500" />,
-      helpContent: {
-        title: "Setting Family Goals",
-        description: "Goals help focus your family's growth journey and measure progress over time.",
-        tips: [
-          "Start with 2-3 goals to avoid overwhelming your family",
-          "Goals can be adjusted as your family's needs change",
-          "Each goal unlocks specific activities and guidance"
-        ]
-      },
-      component: (
-        <FamilyGoalsStep
-          selectedGoals={familyProfile.goals}
-          onGoalsChange={(goals) => setFamilyProfile(prev => ({...prev, goals}))}
-        />
-      )
-    },
-    {
       id: "agents",
-      title: "Meet Your AI Family Team",
-      subtitle: "Choose your AI companions",
-      description: "Select the AI agents who will support your family's unique journey.",
+      title: "Pick Your AI Team",
+      subtitle: "Choose your AI companions (optional)",
+      description: "Select AI agents to help your family grow. You can skip this and customize later.",
       icon: <Sparkles className="w-8 h-8 text-purple-500" />,
       helpContent: {
         title: "Your AI Family Team",
-        description: "Each agent specializes in different aspects of family wellness and growth.",
+        description: "Each agent specializes in different aspects of family wellness. Start with 2-3 or skip entirely.",
         tips: [
+          "You can skip this step and set it up later",
           "Start with 2-3 agents and add more as you get comfortable",
-          "Each agent has unique personality and expertise",
-          "You can chat with agents individually or in group sessions"
+          "You can customize your agent selection in Settings anytime"
         ]
       },
       component: (
         <AgentSelectionStep
           selectedAgents={familyProfile.agents}
           onAgentsChange={(agents) => setFamilyProfile(prev => ({...prev, agents}))}
+          isOptional={true}
         />
-      )
-    },
-    {
-      id: "preferences",
-      title: "Customize Your Experience",
-      subtitle: "Personalize your family's AI journey",
-      description: "Set preferences that match your family's communication style and values.",
-      icon: <Zap className="w-8 h-8 text-yellow-500" />,
-      component: (
-        <PreferencesStep
-          preferences={familyProfile.preferences}
-          onPreferencesChange={(prefs) => setFamilyProfile(prev => ({...prev, preferences: prefs}))}
-        />
-      )
-    },
-    {
-      id: "wallet",
-      title: "Setup Family Treasury",
-      subtitle: "Power your AI with Hedera",
-      description: "Connect a wallet to fund your Family Agent's intelligence and enable rewards.",
-      icon: <Wallet className="w-8 h-8 text-indigo-500" />,
-      helpContent: {
-        title: "Family Treasury",
-        description: "The Family Treasury uses HBAR to pay for AI inference and reward family members.",
-        tips: [
-          "You can skip this step and set it up later in Settings",
-          "HashPack is the recommended wallet for the best experience",
-          "Funds are used for AI processing and family rewards"
-        ]
-      },
-      component: (
-        <WalletSetupStep />
       )
     },
     {
@@ -253,19 +195,6 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
        )
     }
   ];
-
-  // Show guided tour if requested
-  if (showTour) {
-    return (
-      <GuidedTour
-        onComplete={() => {
-          setShowTour(false);
-          setCurrentStep(1);
-        }}
-        onSkip={() => setShowTour(false)}
-      />
-    );
-  }
 
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 z-50 overflow-hidden">
@@ -305,7 +234,14 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
               <div className="mt-6">
                 <div className="flex justify-between items-center mb-2">
                    <span className="text-sm font-medium text-white/90">Step {currentStep + 1} of {steps.length}</span>
-                   <span className="text-sm font-medium text-white/90">{Math.round((currentStep / (steps.length - 1)) * 100)}% Complete</span>
+                   <div className="flex items-center space-x-3">
+                     <span className="text-sm font-medium text-white/90">{Math.round((currentStep / (steps.length - 1)) * 100)}% Complete</span>
+                     {showSaved && (
+                       <span className="text-xs text-green-300 bg-green-500/20 px-2 py-0.5 rounded-full flex items-center">
+                         <CheckCircle className="w-3 h-3 mr-1" /> Saved
+                       </span>
+                     )}
+                   </div>
                 </div>
 
                 <div className="flex items-center space-x-3">
@@ -445,7 +381,7 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
                     <Button
                       variant="ghost"
                       size="lg"
-                      onClick={() => setCurrentStep(5)} // Skip to completion
+                      onClick={() => setCurrentStep(steps.length - 1)} // Skip to completion
                       className="text-muted-foreground hover:text-foreground"
                     >
                       Skip for now
@@ -481,7 +417,7 @@ export const FamilyOnboarding: React.FC<FamilyOnboardingProps> = ({ onComplete, 
   );
 };
 
-const WelcomeStep: React.FC<{ onNext: () => void; onSkip: () => void; onStartTour?: () => void }> = ({ onNext, onSkip, onStartTour }) => {
+const WelcomeStep: React.FC<{ onNext: () => void; onSkip: () => void }> = ({ onNext, onSkip }) => {
   return (
     <div className="text-center space-y-6">
       <div className="bg-gradient-to-b from-purple-50 to-white p-6 rounded-2xl border border-purple-500/20 shadow-sm">
@@ -530,12 +466,6 @@ const WelcomeStep: React.FC<{ onNext: () => void; onSkip: () => void; onStartTou
           </Button>
 
           <div className="flex gap-2">
-            {onStartTour && (
-              <Button variant="outline" size="sm" onClick={onStartTour} className="flex-1 border-purple-500/20 text-purple-700 hover:bg-purple-500/10 font-semibold text-sm">
-                <BookOpen className="w-4 h-4 mr-1" />
-                Take Tour
-              </Button>
-            )}
             <Button variant="ghost" size="sm" onClick={onSkip} className="flex-1 text-muted-foreground hover:text-foreground text-sm">
               Skip
             </Button>
@@ -622,65 +552,11 @@ const FamilyProfileStep: React.FC<{
   );
 };
 
-const FamilyGoalsStep: React.FC<{
-  selectedGoals: string[];
-  onGoalsChange: (goals: string[]) => void;
-}> = ({ selectedGoals, onGoalsChange }) => {
-  const goals = [
-    { id: "communication", label: "Better Communication", emoji: "💬", desc: "Help family members express themselves" },
-    { id: "bonding", label: "Stronger Bonds", emoji: "❤️", desc: "Create more meaningful moments together" },
-    { id: "conflict", label: "Peaceful Resolution", emoji: "🤝", desc: "Learn to navigate disagreements with love" },
-    { id: "traditions", label: "Family Traditions", emoji: "🏠", desc: "Build and preserve meaningful customs" },
-    { id: "growth", label: "Personal Growth", emoji: "🌱", desc: "Support each family member's journey" },
-    { id: "mindfulness", label: "Mindful Living", emoji: "🧘", desc: "Find balance in our digital world" }
-  ];
-
-  const toggleGoal = (goalId: string) => {
-    if (selectedGoals.includes(goalId)) {
-      onGoalsChange(selectedGoals.filter(id => id !== goalId));
-    } else {
-      onGoalsChange([...selectedGoals, goalId]);
-    }
-  };
-
-  return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-        {goals.map((goal) => (
-          <div
-            key={goal.id}
-            onClick={() => toggleGoal(goal.id)}
-            className={`p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-              selectedGoals.includes(goal.id)
-                ? "border-purple-500 bg-purple-100 shadow-md"
-                : "border-purple-500/20 bg-card hover:border-purple-400 hover:bg-purple-500/10"
-            }`}
-          >
-            <div className="flex items-start space-x-2">
-              <div className="text-2xl">{goal.emoji}</div>
-              <div className="flex-1">
-                <h3 className="font-bold text-sm text-foreground leading-tight">{goal.label}</h3>
-                <p className="text-xs text-foreground mt-0.5">{goal.desc}</p>
-              </div>
-              {selectedGoals.includes(goal.id) && (
-                <CheckCircle className="w-4 h-4 text-purple-600 flex-shrink-0" />
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="text-center text-xs text-foreground font-medium bg-blue-500/10 border border-blue-500/20 rounded-lg p-2">
-        Select the goals that resonate with your family's needs
-      </div>
-    </div>
-  );
-};
-
 const AgentSelectionStep: React.FC<{
   selectedAgents: string[];
   onAgentsChange: (agents: string[]) => void;
-}> = ({ selectedAgents, onAgentsChange }) => {
+  isOptional?: boolean;
+}> = ({ selectedAgents, onAgentsChange, isOptional }) => {
   const agents = [
     { id: "wisdom", name: "Wisdom", emoji: "🧠", specialty: "Emotional Intelligence" },
     { id: "intimacy", name: "Intimacy", emoji: "💖", specialty: "Relationship Coaching" },
@@ -725,174 +601,16 @@ const AgentSelectionStep: React.FC<{
         ))}
       </div>
 
-      <div className="text-center text-xs text-foreground font-medium bg-blue-500/10 border border-blue-500/20 rounded-lg p-2">
-        Choose 2-3 agents to start with - you can always add more later
-      </div>
-    </div>
-  );
-};
-
-const PreferencesStep: React.FC<{
-  preferences: any;
-  onPreferencesChange: (prefs: any) => void;
-}> = ({ preferences, onPreferencesChange }) => {
-  return (
-    <div className="space-y-4">
-      <div>
-        <label className="block text-sm font-bold text-foreground mb-2">
-          Communication Style
-        </label>
-        <div className="grid grid-cols-3 gap-2">
-          {[
-            { value: "formal", label: "Professional", emoji: "👔" },
-            { value: "warm", label: "Warm & Friendly", emoji: "🤗" },
-            { value: "casual", label: "Relaxed", emoji: "😊" }
-          ].map((style) => (
-            <div
-              key={style.value}
-              onClick={() => onPreferencesChange({ ...preferences, communicationStyle: style.value })}
-              className={`p-2 rounded-lg border-2 cursor-pointer transition-all ${
-                preferences.communicationStyle === style.value
-                  ? "border-purple-500 bg-purple-100"
-                  : "border-purple-500/20 bg-card hover:border-purple-400"
-              }`}
-            >
-              <div className="text-center">
-                <div className="text-2xl mb-1">{style.emoji}</div>
-                <h4 className="font-bold text-xs text-foreground">{style.label}</h4>
-              </div>
-            </div>
-          ))}
+      {isOptional && (
+        <div className="text-center text-xs text-muted-foreground bg-gray-500/10 border border-gray-500/20 rounded-lg p-2">
+          Optional - skip to continue or select agents now
         </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-bold text-foreground mb-2">
-          Check-in Frequency
-        </label>
-        <div className="grid grid-cols-3 gap-2">
-          {[
-            { value: "daily", label: "Daily", emoji: "📅" },
-            { value: "weekly", label: "Weekly", emoji: "📅" },
-            { value: "monthly", label: "Monthly", emoji: "📅" }
-          ].map((freq) => (
-            <div
-              key={freq.value}
-              onClick={() => onPreferencesChange({ ...preferences, meetingFrequency: freq.value })}
-              className={`p-2 rounded-lg border-2 cursor-pointer transition-all ${
-                preferences.meetingFrequency === freq.value
-                  ? "border-purple-500 bg-purple-100"
-                  : "border-purple-500/20 bg-card hover:border-purple-400"
-              }`}
-            >
-              <div className="text-center">
-                <div className="text-2xl mb-1">{freq.emoji}</div>
-                <h4 className="font-bold text-xs text-foreground">{freq.label}</h4>
-              </div>
-            </div>
-          ))}
+      )}
+      {!isOptional && (
+        <div className="text-center text-xs text-foreground font-medium bg-blue-500/10 border border-blue-500/20 rounded-lg p-2">
+          Choose 2-3 agents to start with - you can always add more later
         </div>
-      </div>
-    </div>
-  );
-};
-
-const WalletSetupStep: React.FC = () => {
-  const { isConnected, isConnecting, connectWallet, connection } = useWalletConnection();
-  const [balance, setBalance] = useState<string>("0");
-
-  useEffect(() => {
-    if (isConnected && connection?.accountId) {
-      fetch(
-        `https://testnet.mirrornode.hedera.com/api/v1/accounts/${connection.accountId}`
-      )
-        .then((res) => res.json())
-        .then((data) => {
-          if (data && data.balance) {
-            setBalance(
-              (data.balance.balance / 100_000_000).toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })
-            );
-          }
-        })
-        .catch((err) => console.error("Failed to fetch balance:", err));
-    }
-  }, [isConnected, connection?.accountId]);
-
-  const handleConnect = async () => {
-    try {
-      await connectWallet("hashpack");
-    } catch (error) {
-      console.error("Wallet connection failed:", error);
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-xl border border-indigo-100 text-center">
-        <div className="w-16 h-16 bg-card rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
-          <Wallet className="w-8 h-8 text-indigo-600" />
-        </div>
-
-        <h3 className="text-xl font-bold text-indigo-900 mb-2">
-          {isConnected ? "Wallet Connected!" : "Connect Family Wallet"}
-        </h3>
-
-        <p className="text-muted-foreground max-w-md mx-auto mb-6">
-          {isConnected
-            ? "Your family treasury is ready to go. You can manage funds and rewards from the dashboard."
-            : "Link a Hedera wallet to unlock advanced AI features and create a reward system for your family."}
-        </p>
-
-        {!isConnected ? (
-          <div className="space-y-3">
-            <Button
-              onClick={handleConnect}
-              disabled={isConnecting}
-              size="lg"
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-8 py-6 rounded-xl shadow-lg hover:shadow-xl transition-all"
-            >
-              {isConnecting ? "Connecting..." : "Connect HashPack"}
-            </Button>
-            <p className="text-xs text-muted-foreground">
-              Don't have a wallet? <a href="https://www.hashpack.app/" target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline">Get HashPack</a>
-            </p>
-          </div>
-        ) : (
-          <div className="bg-card p-4 rounded-lg border border-indigo-100 max-w-xs mx-auto shadow-sm">
-             <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-1">Balance</p>
-             <div className="flex items-center justify-center gap-2">
-                <Coins className="w-5 h-5 text-yellow-500" />
-                <span className="text-2xl font-bold text-foreground">{balance}</span>
-                <span className="text-sm text-muted-foreground font-medium">HBAR</span>
-             </div>
-             <div className="mt-2 pt-2 border-t border-gray-100 text-xs text-muted-foreground font-mono truncate">
-               {connection?.accountId}
-             </div>
-          </div>
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="p-4 border border-gray-200 rounded-lg bg-muted">
-          <h4 className="font-bold text-foreground mb-2 flex items-center gap-2">
-            <span className="text-xl">🧠</span> AI Intelligence
-          </h4>
-          <p className="text-sm text-muted-foreground">
-            HBAR powers the advanced reasoning capabilities of your Family Agents.
-          </p>
-        </div>
-        <div className="p-4 border border-gray-200 rounded-lg bg-muted">
-          <h4 className="font-bold text-foreground mb-2 flex items-center gap-2">
-            <span className="text-xl">🏆</span> Family Rewards
-          </h4>
-          <p className="text-sm text-muted-foreground">
-            Create challenges and reward family members with tokens for achieving goals.
-          </p>
-        </div>
-      </div>
+      )}
     </div>
   );
 };

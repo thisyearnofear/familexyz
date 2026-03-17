@@ -9,7 +9,6 @@ import {
   ArrowLeft,
   X,
   Play,
-  Pause,
   RotateCcw,
   CheckCircle,
   Lightbulb,
@@ -39,7 +38,6 @@ interface GuidedTourProps {
 export const GuidedTour: React.FC<GuidedTourProps> = ({ onComplete, onSkip }) => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
 
   const tourSteps: TourStep[] = [
@@ -59,13 +57,13 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({ onComplete, onSkip }) =>
     {
       id: "family-profiles",
       title: "Family Member Profiles",
-      description: "Build rich profiles for each family member to unlock personalized activities, recommendations, and communication tailored to their unique interests and style.",
+      description: "Build profiles for each family member to unlock personalized recommendations and communication tailored to their unique needs.",
       icon: <Users className="w-8 h-8 text-blue-500" />,
       highlight: "Personalized for each family member",
       tips: [
-        "Add interests, hobbies, and personality traits",
-        "Choose communication styles (visual, auditory, kinesthetic)",
-        "Set privacy preferences for each member"
+        "Add family members with their names and relationships",
+        "You can add more family members anytime in Settings",
+        "Update member information as your family grows"
       ],
       duration: 45
     },
@@ -146,7 +144,6 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({ onComplete, onSkip }) =>
   const restartTour = () => {
     setCurrentStep(0);
     setCompletedSteps([]);
-    setIsPlaying(false);
   };
 
   const currentTourStep = tourSteps[currentStep];

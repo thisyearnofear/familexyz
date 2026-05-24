@@ -2,12 +2,8 @@
 ### 🏆 Built for Hedera Hello Future: Ascension (Theme 1: AI & Agents)
 
 <div align="center">
-  <img src="./client/public/banner.jpg" alt="Family-Connection AI Agents Banner" width="100%" />
-</div>
 
-<div align="center">
-
-**[🎥 Watch Demo Video](#)** | **[📄 Technical Paper](https://arxiv.org/pdf/2501.06781)** | **[⛓️ Hedera Proofs](./docs/AGENTS.md)**
+**[📄 Technical Paper](https://arxiv.org/pdf/2501.06781)** | **[⛓️ Hedera Proofs](./docs/AGENTS.md)**
 
 </div>
 
@@ -19,8 +15,8 @@ Unlike passive chatbots, our agents—**Wisdom, Intimacy, GenerationalBridge, Pr
 ### 🔑 Key Features
 *   **Verifiable Agent Actions:** Agent decisions are logged to HCS Topic `0.0.7304500`.
 *   **Tokenized Incentives:** Families earn $FAM tokens (`0.0.7304501`) for completing connection challenges.
-*   **Privacy-First:** Powered by Venice.ai for secure, private inference.
-
+*   **Privacy-First:** Powered by Grok/Venice AI for secure, private inference.
+*   **Backend API:** REST API for agent interactions, health monitoring, and payout management.
 
 ## ✨ Five Family Agents
 
@@ -39,66 +35,73 @@ cd familexyz
 pnpm install
 
 # 2. Set up environment
-cp environments/development/.env.development .env
-# Edit .env with your API keys (Venice AI, OpenAI, Hedera credentials)
+cp .env.example .env
+# Edit .env with your API keys (Grok/Venice AI, Hedera credentials)
 
-# 3. Start the backend agents (required first)
-pnpm --filter agent start
+# 3. Build all packages
+pnpm build
 
-# 4. In a new terminal, start the frontend dashboard
-pnpm start:client
+# 4. Start the backend agent server
+pnpm start
 ```
 
-The dashboard will be available at `http://localhost:5173`
+The backend API will be available at `http://localhost:3004` with health check at `http://localhost:3005`.
 
 ### 🔧 Development Options
 
-**Terminal 1: Start Backend Agents**
+**Start Backend Agents (with debug logging)**
 
 ```bash
-pnpm --filter agent start
+pnpm start:debug
 ```
 
-Backend agents will initialize and listen for connections on port 3001.
-
-**Terminal 2: Start Frontend Dashboard**
+**Start with clean database**
 
 ```bash
-pnpm start:client
+pnpm cleanstart
 ```
 
-Frontend development server runs at `http://localhost:5173`
-
-**Alternative: Using Client Direct Interface**
-
-For testing agents without the web dashboard:
+**Start CLI Direct Client (for testing agents without API)**
 
 ```bash
-# Terminal 1: Start agents
-pnpm --filter agent start
-
-# Terminal 2: Start CLI client
-pnpm --filter "@elizaos/client-direct" start
+pnpm dev
 ```
 
 See [Development Guide](./docs/DEVELOPMENT.md) for detailed setup instructions.
 
-### 🎬 Running the Demo
+## 📡 API Endpoints
 
-To showcase the platform's capabilities and Hedera integration, you can run the automated simulation script:
+### Core Agent Endpoints
 
-1.  **Ensure Backend & Frontend are running** (see above).
-2.  **Run the simulation script** in a new terminal:
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/:agentId/message` | POST | Send message to agent |
+| `/:agentId/ag-ui` | POST | AG-UI protocol stream |
+| `/agents/insights` | GET | All agents' real-time insights |
+| `/agents/:agentId/insights` | GET | Single agent insights |
 
-```bash
-npx tsx scripts/simulate_family.ts
-```
+### Payout System APIs
 
-This will:
-*   Simulate a family scenario with multiple acts.
-*   Populate the dashboard with live data.
-*   **Trigger a real Hedera transaction** and verify it on-chain.
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/agents/:agentId/payouts` | GET | Agent payout history |
+| `/api/agents/:agentId/performance` | GET | Agent performance metrics |
+| `/api/families/:familyId/payouts` | GET | Family payout aggregation |
+| `/api/payouts/pending` | GET | Payouts awaiting execution |
+| `/api/payouts/calculate` | POST | Dry-run payout calculation |
 
+### Bond Scoring APIs
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/families/:familyId/bond-score` | GET | Current + 12-week history |
+
+### Health & Status
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/health` | GET | Server health status |
+| `/api/status` | GET | Full system status |
 
 ## 📚 Documentation
 
@@ -122,14 +125,14 @@ Family data protection is our top priority:
 
 ## 🌐 Platform Support
 
-- **🌐 Web Dashboard** - Family management interface
-- **🔜 Future Support** - Discord, Telegram, and WhatsApp integrations coming soon
+- **🔜 Future:** Frontend dashboard (TBD)
+- **📱 Telegram Integration** - Coming soon
+- **💬 XMTP Encrypted Messaging** - Coming soon
 
 ## 🛠️ Built For Developers
 
 - **📦 Monorepo architecture** with clear package organization
 - **🎯 TypeScript throughout** for type safety and better DX
-- **🔥 Hot reload development** for fast iteration
 - **🧪 Comprehensive testing** with Jest
 - **🐳 Docker support** for easy deployment
 - **⚙️ Environment templates** for all deployment scenarios

@@ -7,37 +7,30 @@
 ```
 familexyz/
 ├── agent/                      # Backend agent server
-│   └── src/
-│       ├── index.ts           # Main entry point
-│       ├── services/          # Core business logic
-│       ├── integrations/      # External integrations
-│       └── api/               # REST API handlers
-├── client/                     # Frontend dashboard (React/Vite)
-│   └── src/
-│       ├── components/        # React components
-│       ├── pages/             # Page routes
-│       └── lib/               # Client utilities
+│   ├── src/
+│   │   ├── index.ts           # Main entry point
+│   │   ├── services/          # Core business logic
+│   │   ├── integrations/      # External integrations
+│   │   └── api/               # REST API handlers
+│   └── data/                   # SQLite database
 ├── packages/
-│   ├── agent/                 # @familexyz/agent-services (shared services)
+│   ├── agent/                 # @elizaos/agent-services (shared services)
+│   ├── core/                  # @elizaos/core (core utilities)
+│   ├── core-lite/             # @familexyz/core-lite (lightweight core)
 │   ├── family/                # Family-specific agents
 │   │   ├── plugin-wisdom/     # Wisdom agent
 │   │   ├── plugin-intimacy/   # Intimacy agent
 │   │   ├── plugin-generational-bridge/
 │   │   ├── plugin-presence/
 │   │   ├── plugin-growth/
-│   │   ├── plugin-savings/    # Savings agent
-│   │   ├── nlp-utils/         # NLP utilities
-│   │   └── metrics/           # Metrics tracking
+│   │   └── nlp-utils/         # NLP utilities
 │   ├── blockchain/
-│   │   ├── hedera-core/       # Core Hedera services
-│   │   └── plugin-hedera-template/
+│   │   └── hedera-core/       # Core Hedera services
 │   ├── config/                # Shared configuration (Zod-validated)
 │   ├── adapters/              # Database adapters
-│   └── clients/               # Platform clients
-├── config/                     # Configuration files
-├── environments/               # Environment templates
-├── tests/                      # Integration tests
-└── docs/                       # Documentation
+│   └── clients/              # Platform clients (Telegram, XMTP)
+├── config/                    # Configuration files
+└── docs/                     # Documentation
 ```
 
 ### Core Technologies
@@ -48,8 +41,6 @@ familexyz/
 | **Node.js** | Runtime environment | 22+ |
 | **Hedera SDK** | Blockchain integration | Latest |
 | **SQLite** | Local data persistence | Latest |
-| **React** | Frontend framework | 18+ |
-| **Vite** | Frontend build tool | Latest |
 | **PNPM** | Package management | 9+ |
 | **Turbo** | Monorepo task runner | Latest |
 
@@ -76,7 +67,7 @@ BondScoreService (calculates 0-100)
 Weekly Scheduler (Sundays 00:00 UTC)
 ├─ Store scores to SQLite
 ├─ Log to Hedera HCS
-└─ Publish to dashboard
+└─ Publish via API
     ↓
 Agent Payout Calculations
 ├─ Score delta detection
@@ -121,9 +112,23 @@ Execute Transfer (HederaTokenService)
 
 ## 🔌 API Architecture
 
-### REST Endpoints
+### Server Ports
 
-#### Payout System APIs (Phase 4b)
+| Port | Purpose |
+|------|---------|
+| **3004** | Main REST API |
+| **3005** | Health check endpoint |
+
+### Core Agent Endpoints
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/:agentId/message` | POST | Send message to agent |
+| `/:agentId/ag-ui` | POST | AG-UI protocol SSE stream |
+| `/agents/insights` | GET | All agents' real-time insights |
+| `/agents/:agentId/insights` | GET | Single agent insight + metrics |
+
+### Payout System APIs
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
@@ -135,20 +140,18 @@ Execute Transfer (HederaTokenService)
 | `/api/payouts/anomalies` | GET | Anomaly review list (admin) |
 | `/api/payouts/dispute` | POST | File dispute against payout |
 
-#### Agent Insights APIs (Live Metrics)
-
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/agents/insights` | GET | All agents' real-time insights (port 3000) |
-| `/agents/:agentId/insights` | GET | Single agent insight + metrics (port 3000) |
-
-**Note:** Agent insight endpoints are served by DirectClient (port 3000) because they require access to agent runtimes. The frontend's `BASE_URL` already points to port 3000.
-
-#### Bond Scoring APIs (Phase 4a)
+### Bond Scoring APIs
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
 | `/api/families/:familyId/bond-score` | GET | Current + 12-week history |
+
+### Health & Status
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/health` | GET | Server health status (port 3005) |
+| `/api/status` | GET | Full system status |
 
 ---
 
@@ -185,7 +188,7 @@ CREATE TABLE family_bond_scores (
 );
 ```
 
-#### agent_payout_tracking (Phase 4b)
+#### agent_payout_tracking
 Tracks all agent payouts with full audit trail.
 
 ```sql
@@ -314,30 +317,6 @@ Weekly automated execution.
 
 ---
 
-## 🧩 Component Architecture
-
-### Frontend Components (Phase 4b)
-
-#### PayoutDashboard
-Main orchestrator component with tab navigation.
-
-**Tabs:**
-1. **History** - PayoutHistory component
-2. **Performance** - PerformanceMetrics component
-3. **Calculator** - PayoutCalculator component
-4. **Admin** - AnomalyReview component
-
-#### Custom Hooks
-
-| Hook | Purpose |
-|------|---------|
-| `usePayoutData(agentId, weeks?)` | Fetch agent history |
-| `useAgentPerformance(agentId)` | Fetch metrics |
-| `usePayoutCalculator()` | POST calculation |
-| `usePendingPayouts()` | Fetch pending list |
-
----
-
 ## 🧬 Agent Architecture
 
 ### Five Family Agents
@@ -357,6 +336,23 @@ Each agent is a specialized plugin with:
 | Generational Bridge | 👵👦 | Cross-age | Stories, traditions, history |
 | Presence | 🧘 | Mindfulness | Digital wellness, presence |
 | Growth | 🚀 | Development | Challenges, milestones, goals |
+
+### Agent Message Flow
+
+```
+Client Request
+    ↓
+POST /:agentId/message
+    ↓
+Agent Router (routes to correct agent)
+    ↓
+Agent Runtime (processes message)
+├─ Context composition
+├─ LLM inference (Grok/Venice)
+└─ Action execution
+    ↓
+Response (JSON or SSE stream)
+```
 
 ---
 
@@ -395,7 +391,6 @@ Each agent is a specialized plugin with:
 - Batch HCS submissions
 - Async/await for I/O
 - Query result caching
-- Memoized React components
 - Agent insights served from runtime metadata (zero DB overhead)
 
 ---
@@ -408,32 +403,21 @@ Each agent is a specialized plugin with:
 |------|-------|---------|
 | Unit | 29 | Individual service methods |
 | Integration | 13 | Full payout cycle |
-| Component | 15 | React rendering |
-| Hook | 18 | Custom hook logic |
-| E2E UI | 42 | User workflows |
 | E2E API | 37 | API endpoints |
-| **Total** | **154** | Comprehensive coverage |
+| **Total** | **79+** | Comprehensive coverage |
 
 ### Test Locations
 
 ```
-tests/
-├── e2e/
-│   ├── payout-dashboard.e2e.ts    (42 tests)
-│   └── payout-api.e2e.ts          (37 tests)
-
-packages/agent/src/
+agent/src/
 ├── __tests__/
 │   └── PayoutIntegration.test.ts  (13 tests)
 └── api/__tests__/
     └── PayoutApiHandler.test.ts   (29 tests)
 
-client/src/components/dashboard/payout/
-├── __tests__/
-│   ├── PayoutComponents.test.tsx  (15 tests)
-│   └── hooks/
-│       └── __tests__/
-│           └── usePayoutData.test.ts (18 tests)
+tests/
+└── e2e/
+    └── payout-api.e2e.ts          (37 tests)
 ```
 
 ---
@@ -447,15 +431,15 @@ client/src/components/dashboard/payout/
 
 ### Staging
 - Hedera testnet
-- PostgreSQL database
+- SQLite database
 - Docker containers
 - CI/CD pipeline
 
 ### Production
 - Hedera mainnet
-- PostgreSQL with backups
-- Kubernetes orchestration
-- Load balancer + CDN
+- SQLite with backups
+- PM2 process management
+- Nginx reverse proxy
 - Monitoring & alerting
 
 ---
@@ -465,10 +449,10 @@ client/src/components/dashboard/payout/
 ### Health Checks
 ```bash
 # Local development
-curl http://localhost:3001/health
+curl http://localhost:3005/health
 
-# Production (Hetzner VPS, ports 31337/31338)
-curl http://localhost:31338/health
+# Production (Hetzner VPS)
+curl http://localhost:3005/health
 ```
 
 ### Logging Levels
@@ -492,13 +476,10 @@ curl http://localhost:31338/health
 
 ```bash
 # Development
-cp environments/development/.env.development .env
-
-# Staging
-cp environments/staging/.env.staging .env
+cp .env.example .env
 
 # Production
-cp environments/production/.env.production .env
+cp .env.production.template .env
 ```
 
 ### Build Pipeline
@@ -513,61 +494,46 @@ pnpm build
 # Test
 pnpm test
 
-# Deploy
-pnpm deploy
+# Start
+pnpm start
 ```
 
 ---
 
-## 🌐 AG-UI Protocol (Agent-User Interaction)
+## 🌐 AG-UI Protocol
 
-FamilyXYZ implements the [AG-UI protocol](https://docs.ag-ui.com) for real-time, typed communication between agents and the frontend.
+FamilyXYZ implements the [AG-UI protocol](https://docs.ag-ui.com) for real-time, typed communication between agents and clients.
 
 ### Event Types
-
-All events follow the AG-UI spec and are defined in `client/src/types/agui.ts`.
 
 | Category | Events | Purpose |
 |----------|--------|---------|
 | Lifecycle | `RunStarted`, `RunFinished`, `RunError` | Stream lifecycle |
 | Steps | `StepStarted`, `StepFinished` | Agent reasoning progress |
 | Text | `TextMessageStart`, `TextMessageContent`, `TextMessageEnd` | Streamed response |
-| Tools | `ToolCallStart`, `ToolCallArgs`, `ToolCallEnd` | Frontend tool invocation |
+| Tools | `ToolCallStart`, `ToolCallArgs`, `ToolCallEnd` | Tool invocation |
 | State | `StateSnapshot`, `StateDelta` | Shared state (JSON Patch RFC 6902) |
-| Custom | `Custom` | Family-specific events (`family.*`) |
-
-### Frontend Tools (Human-in-the-Loop)
-
-Defined in `client/src/hooks/useFamilyTools.ts` and sent in the request body.
-
-| Tool | Purpose |
-|------|---------|
-| `confirmPayout` | Approve agent payouts before Hedera execution |
-| `setFamilyGoal` | Propose a new shared family goal |
-| `suggestActivity` | Recommend a bond-strengthening activity |
-
-When the agent invokes a frontend tool, the UI shows an approval card. The user can approve or reject.
+| Custom | `Custom` | Family-specific events |
 
 ### Endpoint
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
-| `/:agentId/ag-ui` | POST | SSE stream of AG-UI events (port 3000) |
+| `/:agentId/ag-ui` | POST | SSE stream of AG-UI events |
 
 **Request body:**
 ```json
 {
   "text": "How is our family doing?",
   "user": "user",
-  "tools": [{ "name": "confirmPayout", "description": "...", "parameters": {...} }],
   "context": {}
 }
 ```
 
 ### State Management
 
-- `StateSnapshot` emitted at run start with real `runtime.meta` data (familyMetrics, intimacyMetrics, etc.)
-- `StateDelta` uses JSON Patch RFC 6902 operations: `[{ "op": "replace", "path": "/family/overallHealth", "value": 82 }]`
+- `StateSnapshot` emitted at run start with real `runtime.meta` data
+- `StateDelta` uses JSON Patch RFC 6902 operations
 
 ---
 
@@ -576,5 +542,5 @@ When the agent invokes a frontend tool, the UI shows an approval card. The user 
 - [Hedera Documentation](https://docs.hedera.com/)
 - [Hedera AI Agent Kit](https://github.com/hashgraph/hedera-ai-agent-kit)
 - [HCS-10 Standard](https://hips.hedera.com/hip/hip-10)
-- [React Documentation](https://react.dev)
+- [AG-UI Protocol](https://docs.ag-ui.com)
 - [TypeScript Handbook](https://www.typescriptlang.org/docs/)

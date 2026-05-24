@@ -29,7 +29,6 @@
 - Teaches emotional awareness
 
 **Integration:**
-- Appears in Insights tab with emotional analysis
 - Contributes to sentiment trajectory signal
 - Earns payouts when family sentiment improves
 
@@ -50,7 +49,6 @@
 - Provides couple-specific insights
 
 **Integration:**
-- Activities tab features intimacy recommendations
 - Performance metrics show intimacy contributions
 - Earns payouts when response reciprocity improves
 
@@ -72,7 +70,6 @@
 
 **Integration:**
 - Drives generational interaction signal
-- Recommends bridge-building activities
 - Earns payouts when cross-age interactions increase
 
 ### Presence Agent (🧘)
@@ -93,7 +90,6 @@
 
 **Integration:**
 - Tracks presence consistency signal
-- Recommends digital wellness activities
 - Earns payouts when presence consistency improves
 
 ### Growth Agent (🚀)
@@ -114,73 +110,74 @@
 
 **Integration:**
 - Drives challenge completion signal
-- Recommends growth activities
 - Earns payouts when challenges complete
 
 ---
 
-## 🎯 Agent Integration in Dashboard
+## 📡 Agent API Integration
 
-### 1. Agent Badges on Metrics
-Every metric in the Insights tab shows which agent(s) contributed:
-```
-Family Health Forecast: 78/100 (🧠 Wisdom Contribution)
-Stability Index: 85/100 (🧘 Presence Contribution)
-Communication Depth: 82/100 (💖 Intimacy + 🧠 Wisdom)
-```
-**"Ask Agent" Button:** Click to ask agent follow-up questions
+### Agent Message Endpoint
 
-### 2. Agent-Curated Activities
-Activities tab shows:
-- Activity recommendation with agent badge
-- Agent reasoning (why recommended)
-- Expected impact on bond score
-- "Ask Agent" button for clarification
+Send messages to agents via REST API:
 
-### 3. Agent Highlights on Overview
-Three rotating agent insights displayed:
-- Card format with agent emoji
-- Actionable recommendation
-- Direct chat access
-
-### 4. Agent Reactions in Social
-When family members share achievements:
-- Agents leave celebratory reactions
-- Purple-themed reaction boxes
-- Agent-specific comment tone
-
-### 5. Notification Dots
-Left sidebar shows:
-- Agent emojis (🧠💖🧘👵👦🚀)
-- Purple notification dots on agents with new insights
-- Badge counts (e.g., "3" for unread Wisdom insights)
-- Animated pulse effect
-
-### 6. Multi-Agent Collaborative Insights
-Special "Team Consensus" card when multiple agents agree:
-```
-🧠 💖 🧘 Team Consensus
-Wisdom, Intimacy & Presence agree:
-"Your family's evening routines are
-strengthening all key relationships."
+```bash
+# Send message to Wisdom agent
+curl -X POST 'http://localhost:3004/Wisdom/message' \
+  -F 'text=How can we improve family communication?' \
+  -F 'user=test'
 ```
 
-### 7. Live Backend Insights API
-Agent insights are now served from real runtime metrics:
-- **Endpoint:** `GET /agents/insights` (DirectClient, port 3000)
-- **Per-agent:** `GET /agents/:agentId/insights`
-- **Data source:** `agent.runtime.meta` (familyMetrics, intimacyMetrics, etc.)
-- **Frontend hook:** `useAgentInsights()` fetches live data with 30s polling
-- **Fallback:** Static template insights when backend is unreachable
+### Agent Insights API
 
-### 8. AG-UI Protocol Chat
-Real-time agent chat via the AG-UI protocol (`POST /:agentId/ag-ui`):
-- **Typed events:** All event types defined in `client/src/types/agui.ts`
-- **Step progress:** `StepStarted` / `StepFinished` show reasoning pipeline (context composition, response generation, on-chain recording)
-- **State sync:** `StateSnapshot` at run start with live `runtime.meta`; `StateDelta` uses JSON Patch RFC 6902
-- **Frontend tools:** `confirmPayout`, `setFamilyGoal`, `suggestActivity` — defined in `client/src/hooks/useFamilyTools.ts` and sent in the request body
-- **Human-in-the-loop:** Tool approval cards render in the chat UI; user approves/rejects before execution
-- **Custom events:** `family.bond_score_update`, `family.payout_proposed`, `family.milestone_reached`
+Real-time agent insights from runtime metrics:
+
+```bash
+# Get all agents' insights
+curl http://localhost:3004/agents/insights
+
+# Get single agent insights
+curl http://localhost:3004/agents/Wisdom/insights
+```
+
+**Response format:**
+```json
+{
+  "agentId": "wisdom",
+  "metrics": {
+    "familyMetrics": { ... },
+    "intimacyMetrics": { ... }
+  },
+  "insights": [
+    {
+      "type": "sentiment_analysis",
+      "content": "Family sentiment has improved by 5%",
+      "timestamp": "2026-05-24T00:00:00Z"
+    }
+  ]
+}
+```
+
+### AG-UI Protocol
+
+Real-time agent chat via AG-UI protocol:
+
+```bash
+# Start AG-UI stream
+curl -X POST 'http://localhost:3004/Wisdom/ag-ui' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "text": "How is our family doing?",
+    "user": "user",
+    "context": {}
+  }'
+```
+
+**Event types:**
+- `RunStarted` / `RunFinished` — Stream lifecycle
+- `StepStarted` / `StepFinished` — Agent reasoning progress
+- `TextMessageContent` — Streamed response
+- `StateSnapshot` — Initial state with runtime metadata
+- `StateDelta` — State updates (JSON Patch RFC 6902)
 
 ---
 
@@ -255,6 +252,27 @@ When anomalies detected:
 #### Weekly Caps
 - **Per-Agent Weekly Cap:** $500 FAM
 - **Platform Weekly Cap:** $50,000 FAM
+
+### Payout API Endpoints
+
+```bash
+# Get agent payout history
+curl http://localhost:3004/api/agents/Wisdom/payouts
+
+# Get agent performance metrics
+curl http://localhost:3004/api/agents/Wisdom/performance
+
+# Get family payout aggregation
+curl http://localhost:3004/api/families/family_xyz/payouts
+
+# Get pending payouts
+curl http://localhost:3004/api/payouts/pending
+
+# Dry-run payout calculation
+curl -X POST http://localhost:3004/api/payouts/calculate \
+  -H 'Content-Type: application/json' \
+  -d '{"agentId": "wisdom", "familyId": "family_xyz", "scoreDelta": 5}'
+```
 
 ---
 

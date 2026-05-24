@@ -27,8 +27,8 @@ pnpm build
 ### Environment Configuration
 
 ```bash
-# Copy development template
-cp environments/development/.env.development.template .env
+# Copy environment template
+cp .env.example .env
 
 # Edit .env with your credentials
 nano .env
@@ -36,49 +36,47 @@ nano .env
 
 Required environment variables:
 
-- Venice AI API key (primary LLM provider)
-- OpenAI API key (fallback)
+- Grok AI API key (primary LLM provider)
+- Venice AI API key (fallback)
 - Hedera testnet credentials
-- Optional: Discord, Telegram, Twitter tokens
+- Optional: Ollama server URL (for embeddings)
 
 ---
 
 ## 🚀 Quick Start
 
-### Terminal 1: Start Backend Agents
+### Start Backend Server
 
 ```bash
-# Start all five family agents
-pnpm --filter agent start
-
-# Or with debug logging
-pnpm --filter agent start:debug
-
-# Or with clean database reset
-pnpm --filter agent run cleanstart
+# Start the backend agent server
+pnpm start
 ```
 
-The agents will initialize and listen on port 3001.
+The backend API will be available at:
+- **API:** `http://localhost:3004`
+- **Health:** `http://localhost:3005`
 
-### Terminal 2: Start Frontend Dashboard
+### Start with Debug Logging
 
 ```bash
-# Start web dashboard
-pnpm start:client
+# Start with verbose logging
+pnpm start:debug
 ```
 
-Dashboard available at `http://localhost:5173`
-
-### Alternative: CLI Direct Client
-
-For testing agents without the web dashboard:
+### Start with Clean Database
 
 ```bash
-# Terminal 1: Start agents
-pnpm --filter agent start
+# Remove existing database and start fresh
+pnpm cleanstart
+```
 
-# Terminal 2: Start CLI client
-pnpm --filter "@elizaos/client-direct" start
+### Start CLI Direct Client
+
+For testing agents via command line:
+
+```bash
+# Start CLI client
+pnpm dev
 ```
 
 ---
@@ -92,7 +90,7 @@ pnpm --filter "@elizaos/client-direct" start
 pnpm test
 
 # Run specific package tests
-cd packages/blockchain/hedera-core && pnpm test
+cd packages/agent && pnpm test
 ```
 
 ### Integration Tests
@@ -100,20 +98,28 @@ cd packages/blockchain/hedera-core && pnpm test
 ```bash
 # Run integration tests
 pnpm test:integration
-
-# Test specific components
-node tests/test-chat.js
 ```
 
-### E2E Tests
+### API Smoke Tests
 
 ```bash
-# Start app first
-# Then in new terminal:
+# Run API smoke tests
+pnpm smokeTests
+```
 
-npx cypress open          # Interactive mode
-npx cypress run           # Headless mode
-npx cypress run --spec "tests/e2e/payout-dashboard.e2e.ts"  # Specific suite
+### Test API Endpoints
+
+```bash
+# Test health endpoint
+curl http://localhost:3005/health
+
+# Test agent message
+curl -X POST 'http://localhost:3004/Wisdom/message' \
+  -F 'text=Hello' \
+  -F 'user=test'
+
+# Test agent insights
+curl http://localhost:3004/agents/insights
 ```
 
 ---
@@ -147,71 +153,61 @@ docker-compose down
 
 ## ☁️ Cloud Deployment
 
-### AWS EC2 Deployment
+### Hetzner VPS Deployment
 
 ```bash
-# 1. Create EC2 instance (Ubuntu 22.04, t3.medium)
+# 1. Create VPS (Ubuntu 22.04)
 # 2. SSH into instance
-ssh -i key.pem ubuntu@your-instance-ip
+ssh root@your-instance-ip
 
 # 3. Install dependencies
 sudo apt update
-sudo apt install -y nodejs npm git postgresql postgresql-contrib
+sudo apt install -y nodejs npm git
 
-# 4. Clone repository
-git clone https://github.com/thisyearnofear/familexyz.git
-cd familexyz
-
-# 5. Install Node.js 22
+# 4. Install Node.js 22
 curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
 sudo apt install -y nodejs
 
-# 6. Install PNPM
+# 5. Install PNPM
 npm install -g pnpm
+
+# 6. Clone repository
+git clone https://github.com/your-org/familexyz.git
+cd familexyz
 
 # 7. Install dependencies
 pnpm install
+pnpm build
 
 # 8. Configure environment
+cp .env.example .env
 nano .env  # Add credentials
 
-# 9. Build and start
-pnpm build
-pnpm --filter agent start &
-pnpm start:client &
+# 9. Start with PM2
+pm2 start ecosystem.config.cjs
+pm2 save
+pm2 startup
 ```
 
-### Digital Ocean App Platform
+### Nginx Configuration
 
-```bash
-# 1. Connect GitHub repository
-# 2. Add App Spec (app.yaml in root)
-# 3. Configure environment variables in dashboard
-# 4. Deploy on push to main
-```
+```nginx
+server {
+    listen 443 ssl;
+    server_name api.famile.xyz;
 
-### Heroku Deployment
+    ssl_certificate /path/to/cert.pem;
+    ssl_certificate_key /path/to/key.pem;
 
-```bash
-# 1. Install Heroku CLI
-brew install heroku/brew/heroku
-
-# 2. Login
-heroku login
-
-# 3. Create app
-heroku create familexyz
-
-# 4. Set environment variables
-heroku config:set HEDERA_OPERATOR_ID=your_id
-heroku config:set HEDERA_OPERATOR_KEY=your_key
-# ... other variables
-
-# 5. Deploy
-git push heroku main
-
-# 6. View logs
-heroku logs -t
+    location / {
+        proxy_pass http://localhost:3004;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
 ```
 
 ---
@@ -227,12 +223,11 @@ npm install -g pm2
 ### Start Services with PM2
 
 ```bash
-# Start from ecosystem.config.js
-pm2 start ecosystem.config.js
+# Start from ecosystem config
+pm2 start ecosystem.config.cjs
 
 # Or manually
-pm2 start "pnpm --filter agent start" --name "backend"
-pm2 start "pnpm start:client" --name "frontend"
+pm2 start "pnpm start" --name "familexyz-agent"
 ```
 
 ### Monitor Processes
@@ -245,14 +240,17 @@ pm2 status
 pm2 monit
 
 # View logs
-pm2 logs
+pm2 logs familexyz-agent
+
+# Restart
+pm2 restart familexyz-agent
 ```
 
 ---
 
 ## 📊 Database Setup
 
-### SQLite (Local Development)
+### SQLite (Default)
 
 Database automatically created on first run:
 
@@ -268,25 +266,7 @@ sqlite3 agent/data/db.sqlite "SELECT * FROM family_bond_scores LIMIT 5"
 
 # Reset database
 rm -rf agent/data/
-pnpm --filter agent start
-```
-
-### PostgreSQL (Production Ready)
-
-For production deployments:
-
-```bash
-# Install PostgreSQL
-brew install postgresql@15
-
-# Create database
-createdb familexyz
-
-# Set connection string in .env
-DATABASE_URL=postgresql://user:password@localhost:5432/familexyz
-
-# Run migrations
-pnpm --filter agent run migrate
+pnpm start
 ```
 
 ---
@@ -309,7 +289,7 @@ SSL_CERT_PATH=/path/to/cert.pem
 SSL_KEY_PATH=/path/to/key.pem
 
 # Enable CORS restrictions
-CORS_ALLOWED_ORIGINS=https://yourdomain.com
+CORS_ORIGINS=https://your-frontend-domain.com
 ```
 
 ---
@@ -321,12 +301,12 @@ CORS_ALLOWED_ORIGINS=https://yourdomain.com
 #### Port Already in Use
 
 ```bash
-# Backend (3001)
-lsof -i :3001
+# Backend API (3004)
+lsof -i :3004
 kill -9 <PID>
 
-# Frontend (5173)
-lsof -i :5173
+# Health endpoint (3005)
+lsof -i :3005
 kill -9 <PID>
 ```
 
@@ -373,4 +353,43 @@ sqlite3 agent/data/db.sqlite ".tables"
 
 # View environment
 cat .env | grep -E "^[^#]"
+
+# Check PM2 logs
+pm2 logs familexyz-agent --lines 100
+```
+
+---
+
+## 📡 API Reference
+
+### Health Check
+
+```bash
+curl http://localhost:3005/health
+```
+
+### Send Message to Agent
+
+```bash
+curl -X POST 'http://localhost:3004/Wisdom/message' \
+  -F 'text=How can we improve family communication?' \
+  -F 'user=test'
+```
+
+### Get Agent Insights
+
+```bash
+curl http://localhost:3004/agents/insights
+```
+
+### Get Bond Score
+
+```bash
+curl http://localhost:3004/api/families/family_xyz/bond-score
+```
+
+### Get Agent Payouts
+
+```bash
+curl http://localhost:3004/api/agents/Wisdom/payouts
 ```

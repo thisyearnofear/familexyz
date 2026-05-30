@@ -22,7 +22,7 @@ jobs:
               id: lockfile-check
               run: |
                   # Try to install with frozen lockfile
-                  if ! pnpm install --frozen-lockfile; then
+                  if ! pnpm install --frozen-lockfile --ignore-scripts; then
                       echo "::error::Lockfile is out of date. Please run 'pnpm install --no-frozen-lockfile' and commit the updated pnpm-lock.yaml"
                       echo "failed=true" >> $GITHUB_OUTPUT
                       exit 1

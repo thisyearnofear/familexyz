@@ -105,6 +105,7 @@ database/
 embedding-cache.json
 content_cache/
 cache/*
+packages/core/cache/
 packages/core/src/providers/cache
 packages/core/src/providers/cache/*
 tokencache/
@@ -196,3 +197,4 @@ personal-data/
 hedera-keys/
 consensus-topics/
 family-topics.json
+.blackboxcli/

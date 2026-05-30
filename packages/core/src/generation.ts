@@ -315,6 +315,181 @@ function getCloudflareGatewayBaseURL(
 }
 
 /**
+ * Gets the API key for a given model provider.
+ * Returns undefined if no key is configured.
+ */
+function getApiKeyForProvider(
+    runtime: IAgentRuntime,
+    provider: ModelProviderName | "fireworks"
+): string | undefined {
+    switch (provider) {
+        case ModelProviderName.VENICE:
+            return runtime.getSetting("VENICE_API_KEY") || runtime.token;
+        case ModelProviderName.GROK:
+            return runtime.getSetting("GROK_API_KEY");
+        case ModelProviderName.DEEPSEEK:
+            return runtime.getSetting("DEEPSEEK_API_KEY");
+        case ModelProviderName.GROQ:
+            return runtime.getSetting("GROQ_API_KEY");
+        case ModelProviderName.OPENAI:
+            return runtime.getSetting("OPENAI_API_KEY");
+        case ModelProviderName.ANTHROPIC:
+            return runtime.getSetting("ANTHROPIC_API_KEY");
+        case "fireworks":
+            return runtime.getSetting("FIREWORKS_API_KEY");
+        default:
+            return undefined;
+    }
+}
+
+/**
+ * Attempts to generate text using fallback providers when the primary provider fails.
+ * Only tries providers that have their API key configured.
+ */
+async function tryFallbackProviders({
+    runtime,
+    context,
+    modelClass,
+    tools,
+    onStepFinish,
+    maxSteps,
+    stop,
+    customSystemPrompt,
+    temperature,
+    max_response_length,
+    frequency_penalty,
+    presence_penalty,
+    experimental_telemetry,
+    primaryProvider,
+}: {
+    runtime: IAgentRuntime;
+    context: string;
+    modelClass: ModelClass;
+    tools: Record<string, Tool>;
+    onStepFinish?: (event: StepResult) => Promise<void> | void;
+    maxSteps: number;
+    stop?: string[];
+    customSystemPrompt?: string;
+    temperature: number;
+    max_response_length: number;
+    frequency_penalty: number;
+    presence_penalty: number;
+    experimental_telemetry?: TelemetrySettings;
+    primaryProvider: ModelProviderName;
+}): Promise<string | null> {
+    // Fireworks AI fallback (not in ModelProviderName enum, handled separately)
+    const fireworksKey = getApiKeyForProvider(runtime, "fireworks");
+    if (fireworksKey) {
+        elizaLogger.info("[Fallback] Trying Fireworks AI with deepseek-v4-pro");
+        try {
+            const openai = createOpenAI({
+                apiKey: fireworksKey,
+                baseURL: "https://api.fireworks.ai/inference/v1",
+                fetch: runtime.fetch,
+            });
+
+            const { text } = await aiGenerateText({
+                model: openai.languageModel("accounts/fireworks/models/deepseek-v4-pro"),
+                prompt: context,
+                system:
+                    runtime.character.system ??
+                    settings.SYSTEM_PROMPT ??
+                    undefined,
+                tools,
+                onStepFinish,
+                maxSteps,
+                temperature,
+                maxTokens: max_response_length,
+                frequencyPenalty: frequency_penalty,
+                presencePenalty: presence_penalty,
+                experimental_telemetry,
+                stop,
+            });
+
+            elizaLogger.info("[Fallback] Fireworks AI succeeded");
+            return text;
+        } catch (error) {
+            elizaLogger.warn("[Fallback] Fireworks AI failed:", error);
+        }
+    }
+
+    // Define fallback order — OpenAI-compatible providers only (simple code path)
+    const fallbackOrder: ModelProviderName[] = [
+        ModelProviderName.GROK,
+        ModelProviderName.DEEPSEEK,
+        ModelProviderName.GROQ,
+        ModelProviderName.OPENAI,
+    ];
+
+    for (const fbProvider of fallbackOrder) {
+        if (fbProvider === primaryProvider) continue;
+
+        const apiKey = getApiKeyForProvider(runtime, fbProvider);
+        if (!apiKey) {
+            elizaLogger.debug(
+                `[Fallback] Skipping ${fbProvider}: no API key configured`
+            );
+            continue;
+        }
+
+        const endpoint = getEndpoint(fbProvider);
+        if (!endpoint) {
+            elizaLogger.debug(
+                `[Fallback] Skipping ${fbProvider}: no endpoint configured`
+            );
+            continue;
+        }
+
+        const modelSettings = getModelSettings(fbProvider, modelClass);
+        if (!modelSettings) {
+            elizaLogger.debug(
+                `[Fallback] Skipping ${fbProvider}: no model settings`
+            );
+            continue;
+        }
+
+        elizaLogger.info(
+            `[Fallback] Trying ${fbProvider} with model ${modelSettings.name}`
+        );
+
+        try {
+            const openai = createOpenAI({
+                apiKey,
+                baseURL: endpoint,
+                fetch: runtime.fetch,
+            });
+
+            const { text } = await aiGenerateText({
+                model: openai.languageModel(modelSettings.name),
+                prompt: context,
+                system:
+                    runtime.character.system ??
+                    settings.SYSTEM_PROMPT ??
+                    undefined,
+                tools,
+                onStepFinish,
+                maxSteps,
+                temperature,
+                maxTokens: max_response_length,
+                frequencyPenalty: frequency_penalty,
+                presencePenalty: presence_penalty,
+                experimental_telemetry,
+                stop,
+            });
+
+            elizaLogger.info(`[Fallback] ${fbProvider} succeeded`);
+            return text;
+        } catch (error) {
+            elizaLogger.warn(`[Fallback] ${fbProvider} failed:`, error);
+            continue;
+        }
+    }
+
+    elizaLogger.error("[Fallback] All fallback providers exhausted");
+    return null;
+}
+
+/**
  * Send a message to the model for a text generateText - receive a string back and parse how you'd like
  * @param opts - The options for the generateText request.
  * @param opts.context The context of the message to be completed.
@@ -1319,7 +1494,34 @@ export async function generateText({
 
         return response;
     } catch (error) {
-        elizaLogger.error("Error in generateText", error);
+        elizaLogger.error(
+            `Primary provider ${provider} failed:`,
+            error
+        );
+
+        // Try fallback providers
+        const fallbackResponse = await tryFallbackProviders({
+            runtime,
+            context,
+            modelClass,
+            tools,
+            onStepFinish,
+            maxSteps,
+            stop,
+            customSystemPrompt,
+            temperature,
+            max_response_length,
+            frequency_penalty,
+            presence_penalty,
+            experimental_telemetry,
+            primaryProvider: provider,
+        });
+
+        if (fallbackResponse !== null) {
+            return fallbackResponse;
+        }
+
+        elizaLogger.error("All providers failed for generateText");
         throw error;
     }
 }

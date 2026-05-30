@@ -11,6 +11,21 @@ coverage
 .nyc_output
 *.log
 
+# CRITICAL: Exclude ALL node_modules (root + nested in packages/)
+**/node_modules
+**/node_modules/*
+
+# Cache directories (ML models, embeddings, etc.)
+packages/core/cache/
+packages/core/cache/*
+cache/
+.cache/
+
+# Build artifacts
+.turbo/
+.tsup/
+*.tsbuildinfo
+
 # Git
 .git
 .gitignore

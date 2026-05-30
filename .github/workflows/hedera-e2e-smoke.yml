@@ -21,7 +21,11 @@ jobs:
           version: 9
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Security audit
+        run: pnpm audit --audit-level=high
+        continue-on-error: true
 
       - name: Build hedera-core
         run: pnpm --filter @elizaos/hedera-core build

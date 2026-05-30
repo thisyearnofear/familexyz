@@ -17,6 +17,19 @@ Unlike passive chatbots, our agents—**Wisdom, Intimacy, GenerationalBridge, Pr
 *   **Tokenized Incentives:** Families earn $FAM tokens (`0.0.7304501`) for completing connection challenges.
 *   **Privacy-First:** Powered by Grok/Venice AI for secure, private inference.
 *   **Backend API:** REST API for agent interactions, health monitoring, and payout management.
+*   **Multi-Agent Coordination:** Five specialized agents work together across a family unit.
+
+### 🎯 Platform Vision
+FamilyXYZ is evolving into a **platform** where practitioners distribute research-backed agents to families:
+
+```
+CREATORS                          FAMILIES
+Dr. Gottman Institute      →      "Gottman Relationship"
+Attachment Research Lab    →      "Secure Attachment"
+Custom Agent Creator      →      "Family Wisdom"
+```
+
+**Trust through verification:** Hedera blockchain creates immutable audit trails. Practitioners are publicly accountable. Families have verifiable proof of engagement.
 
 ## ✨ Five Family Agents
 

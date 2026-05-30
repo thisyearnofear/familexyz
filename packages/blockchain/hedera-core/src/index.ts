@@ -19,6 +19,8 @@ export {
 
 // Main service class for easy access
 export { HederaService } from "./services/HederaService";
+export { HederaAgentKitService } from "./services/HederaAgentKitService";
+export type { HederaAgentKitTool } from "./services/HederaAgentKitService";
 
 // Version info
 export const VERSION = "0.1.0";

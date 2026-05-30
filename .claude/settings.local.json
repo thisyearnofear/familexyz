@@ -2,7 +2,19 @@
   "permissions": {
     "allow": [
       "WebFetch(domain:docs.gooddollar.org)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(ssh snel-bot *)",
+      "Bash(pnpm --filter @elizaos/core build)",
+      "Bash(scp *)",
+      "Bash(python3 -m json.tool)",
+      "Bash(python3 -c \"import json,sys; data=json.load\\(sys.stdin\\); [print\\(m['id']\\) for m in data.get\\('data',[]\\)]\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('dims:', len\\(d['data'][0]['embedding']\\) if 'data' in d else d\\)\")",
+      "Bash(xargs -I {} sh -c 'echo \"=== {} ===\" && grep -A 3 \"NAVIGATE\\\\|action\" {} | head -10')",
+      "Bash(pnpm build *)",
+      "Bash(npx tsc *)",
+      "Bash(node --import tsx -e ' *)",
+      "Bash(node *)",
+      "Bash(rsync *)"
     ],
     "deny": []
   }

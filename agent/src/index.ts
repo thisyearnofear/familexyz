@@ -37,8 +37,8 @@ import { fileURLToPath } from "url";
 import path from "path";
 import fs from "fs";
 import net from "net";
-import { HederaService } from "@elizaos/hedera-core";
-import type { HederaConfig, HederaFamilyMetrics } from "@elizaos/hedera-core";
+import { HederaService, HederaAgentKitService } from "@elizaos/hedera-core";
+import type { HederaConfig, HederaFamilyMetrics, HederaAgentKitTool } from "@elizaos/hedera-core";
 
 // Modular imports
 import { parseArguments, loadCharacters, loadCharacterFromOnchain, loadCharacterTryPath, jsonToCharacter } from "./character/loader.js";
@@ -46,7 +46,7 @@ import { initializeDatabase } from "./database/initializer.js";
 import { getTokenForProvider, getSecret } from "./services/token-provider.js";
 import { createHttpServer } from "./server/http-server.js";
 import { patchDirectClientRoutes } from "./server/direct-client-routes.js";
-import { extendDirectClientWithTelegram } from "./integrations/telegram.js";
+import { extendDirectClientWithTelegram, initializeTelegram } from "./integrations/telegram.js";
 
 // Phase 4a: Bond Scoring System
 import { runMigrations } from "./migrations/runner.js";
@@ -239,7 +239,7 @@ async function startAgent(character: Character, directClient: DirectClient): Pro
 }
 
 /**
- * Initialize Hedera service if configured
+ * Initialize Hedera services if configured
  */
 async function initializeHederaService(character: Character, runtime: AgentRuntime): Promise<void> {
     const hasOperatorCreds = !!process.env.HEDERA_OPERATOR_ID && !!process.env.HEDERA_OPERATOR_KEY;
@@ -269,6 +269,21 @@ async function initializeHederaService(character: Character, runtime: AgentRunti
         
         (runtime as any).hederaService = hederaService;
         elizaLogger.info("HederaService initialized and attached");
+        
+        // Initialize Hedera Agent Kit service and register tools
+        try {
+            const client = hederaService.getClient();
+            const agentKit = HederaAgentKitService.getInstance();
+            agentKit.initialize(client);
+            
+            const tools = agentKit.getTools();
+            for (const tool of tools) {
+                runtime.registerAction(tool as any);
+            }
+            elizaLogger.info(`Hedera Agent Kit initialized with ${tools.length} tools registered`);
+        } catch (agentKitError) {
+            elizaLogger.warn("Hedera Agent Kit initialization failed; continuing without it:", agentKitError);
+        }
         
         // Create consensus topic if needed
         await createConsensusTopicIfNeeded(character, hederaService);
@@ -392,11 +407,15 @@ const startAgents = async () => {
     }
     
     // Normalize characters
+    const envModelProvider = process.env.MODEL_PROVIDER as Character["modelProvider"] | undefined;
     characters = characters.map((char) => ({
         ...char,
         id: (char.id || stringToUuid(char.name)) as `${string}-${string}-${string}-${string}-${string}`,
         username: char.username || char.name,
         plugins: char.plugins || [],
+        modelProvider: char.modelProvider && char.modelProvider !== "llama_local"
+            ? char.modelProvider
+            : (envModelProvider || char.modelProvider),
     }));
     
     // Start agents
@@ -423,6 +442,15 @@ const startAgents = async () => {
             initializeWeeklyScheduler(primaryDb, primaryRuntime || undefined);
         } catch (error) {
             elizaLogger.warn("Failed to initialize bond score scheduler:", error);
+        }
+    }
+
+    // Initialize Telegram bot
+    if (primaryRuntime) {
+        try {
+            await initializeTelegram(primaryRuntime);
+        } catch (error) {
+            elizaLogger.warn("[Telegram] Failed to initialize Telegram integration:", error);
         }
     }
     

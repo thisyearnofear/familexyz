@@ -1,0 +1,25 @@
+diff --git a/package.json b/package.json
+index f2c7eedb46e7aa33a76e80dbe0f04700b84e3065..293b7b4d5c2f73800f692436d1ac07168e36532a 100644
+--- a/package.json
++++ b/package.json
+@@ -23,20 +23,16 @@
+   "main": "index.js",
+   "exports": {
+     ".": {
+-      "react-server": "./react.react-server.js",
+       "default": "./index.js"
+     },
+     "./package.json": "./package.json",
+     "./jsx-runtime": {
+-      "react-server": "./jsx-runtime.react-server.js",
+       "default": "./jsx-runtime.js"
+     },
+     "./jsx-dev-runtime": {
+-      "react-server": "./jsx-dev-runtime.react-server.js",
+       "default": "./jsx-dev-runtime.js"
+     },
+     "./compiler-runtime": {
+-      "react-server": "./compiler-runtime.js",
+       "default": "./compiler-runtime.js"
+     }
+   },

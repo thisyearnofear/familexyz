@@ -411,3 +411,46 @@ Manages FAM token distribution:
 - **Wisdom Topic:** [HashScan](https://hashscan.io/testnet/topic/0.0.7304500)
 - **FAM Token:** [HashScan](https://hashscan.io/testnet/token/0.0.7304501)
 - **Operator Account:** [HashScan](https://hashscan.io/testnet/account/0.0.6511978)
+
+---
+
+## 🌐 Agent Marketplace Vision
+
+### The Platform Shift
+FamilyXYZ is evolving from a product into a **platform** where practitioners distribute research-backed agents to families.
+
+### How It Works
+
+```
+CREATORS                          FAMILIES
+───────                           ───────
+Dr. Gottman Institute      →      Subscribe to
+Attachment Research Lab    →      "Gottman Relationship"
+Mindfulness Institute       →      "Secure Attachment"
+Custom Agent Creator       →      "Family Wisdom"
+
+┌─────────────────────────────────────────┐
+│           Agent Marketplace              │
+│  • Creator profiles & credentials      │
+│  • Research-backed agent descriptions   │
+│  • Family ratings & reviews             │
+│  • Subscription or one-time access      │
+└─────────────────────────────────────────┘
+```
+
+### Trust Layer
+The marketplace model builds trust through:
+- **Creator accountability** — Practitioners publicly stand behind methodology
+- **Research citations** — Agents reference peer-reviewed approaches
+- **Hedera verification** — Immutable audit trail for family milestones
+- **Credential verification** — Creator credentials publicly displayed
+
+### Tiered Access
+
+| Tier | Who | What They Get |
+|------|-----|---------------|
+| **Family** | End users | Access to curated agents, private family data |
+| **Pro** | Practitioners | Client management, outcome analytics, agent curation |
+| **Enterprise** | Employers | Wellness benefit integration, aggregated dashboards |
+
+**Critical:** Each layer only sees what participants explicitly share. Employers never see family conversations.

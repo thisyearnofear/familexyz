@@ -1,7 +1,7 @@
 #!/bin/bash
-# FamilyXYZ - Build Production Artifact (Lean)
-# Creates minimal artifact - just agent source + package.json
-# Server will install all dependencies
+# FamilyXYZ - Build Production Artifact (Lean + Dist)
+# Builds locally, then packages compiled dist + agent source for deployment.
+# Server only needs to install deps and start with tsx.
 
 set -e
 
@@ -9,52 +9,71 @@ echo "=========================================="
 echo "FamilyXYZ - Build Lean Artifact"
 echo "=========================================="
 
-# Configuration
 ARTIFACT_NAME="familexyz-agent-$(date +%Y%m%d-%H%M%S)"
 ARTIFACT_DIR="/tmp/familexyz-artifacts/${ARTIFACT_NAME}"
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
-echo "📦 Building artifact: ${ARTIFACT_NAME}"
+echo "Building artifact: ${ARTIFACT_NAME}"
 
-# Clean previous builds
 rm -rf /tmp/familexyz-artifacts
 mkdir -p "${ARTIFACT_DIR}"
 
-# Copy ONLY agent source
-echo "📦 Copying agent source..."
-mkdir -p "${ARTIFACT_DIR}"
-rsync -a \
-    --exclude 'node_modules' \
-    --exclude 'dist' \
-    --exclude '*.log' \
-    agent/src "${ARTIFACT_DIR}/"
+# Step 1: Copy agent source (preserve agent/ path)
+echo "Copying agent source..."
+mkdir -p "${ARTIFACT_DIR}/agent"
+rsync -a --exclude 'node_modules' --exclude '*.log' agent/src "${ARTIFACT_DIR}/agent/"
+cp agent/package.json "${ARTIFACT_DIR}/agent/"
 
-# Copy agent package.json
-cp agent/package.json "${ARTIFACT_DIR}/"
-
-# Copy root package files (for workspace resolution)
+# Step 2: Copy root workspace files
+echo "Copying workspace files..."
 cp package.json "${ARTIFACT_DIR}/"
 cp pnpm-lock.yaml "${ARTIFACT_DIR}/"
 cp pnpm-workspace.yaml "${ARTIFACT_DIR}/"
 
-# Copy only package source (no node_modules)
-echo "📦 Copying essential packages (source only)..."
+# Step 3: Copy built package dist files
+echo "Copying essential packages (source + dist)..."
 mkdir -p "${ARTIFACT_DIR}/packages"
 
-# Copy package source without node_modules or dist
-for pkg in core hedera-core client-direct plugin-node; do
-    if [ -d "packages/${pkg}" ]; then
-        echo "  - ${pkg}"
-        mkdir -p "${ARTIFACT_DIR}/packages/${pkg}"
-        rsync -a \
-            --exclude 'node_modules' \
-            --exclude 'dist' \
-            --exclude '*.log' \
-            "packages/${pkg}/" "${ARTIFACT_DIR}/packages/${pkg}/"
+# Map workspace package names to their actual file paths
+PKG_MAP=(
+  "core:core"
+  "config:config"
+  "plugin-node:plugin-node"
+  "agent:agent"
+  "blockchain/hedera-core:blockchain/hedera-core"
+  "clients/direct:clients/direct"
+  "clients/telegram:clients/telegram"
+  "adapters/sqlite:adapters/sqlite"
+  "family/plugin-wisdom:family/plugin-wisdom"
+  "family/plugin-intimacy:family/plugin-intimacy"
+  "family/plugin-generational-bridge:family/plugin-generational-bridge"
+  "family/plugin-presence:family/plugin-presence"
+  "family/plugin-growth:family/plugin-growth"
+  "family/plugin-savings:family/plugin-savings"
+  "family/metrics:family/metrics"
+  "family/nlp-utils:family/nlp-utils"
+)
+
+for entry in "${PKG_MAP[@]}"; do
+    pkg_path="${entry#*:}"
+    src="packages/${pkg_path}"
+    dst="${ARTIFACT_DIR}/packages/${pkg_path}"
+    if [ -d "${src}" ]; then
+        echo "  - ${src}"
+        mkdir -p "${dst}"
+        rsync -a --exclude 'node_modules' --exclude '*.log' "${src}/" "${dst}/"
+    else
+        echo "  [SKIP] ${src} not found"
     fi
 done
 
-# Create deployment metadata
+# Step 4: Copy characters
+if [ -d "characters" ]; then
+    echo "Copying character files..."
+    rsync -a characters "${ARTIFACT_DIR}/"
+fi
+
+# Step 5: Deployment metadata
 cat > "${ARTIFACT_DIR}/.deployment.json" << EOF
 {
   "artifact": "${ARTIFACT_NAME}",
@@ -63,17 +82,16 @@ cat > "${ARTIFACT_DIR}/.deployment.json" << EOF
 }
 EOF
 
-# Compress with better compression
-echo "📦 Compressing artifact..."
+# Compress
+echo "Compressing artifact..."
 cd /tmp/familexyz-artifacts
-tar -cf - "${ARTIFACT_NAME}" | gzip -9 > "${ARTIFACT_NAME}.tar.gz"
+tar -czf "${ARTIFACT_NAME}.tar.gz" "${ARTIFACT_NAME}"
 
-# Show size
 ARTIFACT_SIZE=$(du -h "${ARTIFACT_NAME}.tar.gz" | cut -f1)
 echo ""
 echo "=========================================="
-echo "✅ Build Complete!"
+echo "Build Complete!"
 echo "=========================================="
-echo "📦 Artifact: ${ARTIFACT_NAME}.tar.gz"
-echo "📊 Size: ${ARTIFACT_SIZE}"
+echo "Artifact: ${ARTIFACT_NAME}.tar.gz"
+echo "Size: ${ARTIFACT_SIZE}"
 echo ""

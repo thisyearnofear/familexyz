@@ -21,6 +21,7 @@
     "dependencies": {
         "@familexyz/agent-services": "workspace:*",
         "dotenv": "^16.4.5",
+        "grammy": "^1.34.0",
         "@elizaos/adapter-sqlite": "workspace:*",
         "@elizaos/client-direct": "workspace:*",
         "@elizaos/config": "workspace:*",

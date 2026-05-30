@@ -1,0 +1,35 @@
+{
+    "name": "@familexyz/core-lite",
+    "version": "0.1.0",
+    "type": "module",
+    "main": "./dist/index.js",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        "./package.json": "./package.json",
+        ".": {
+            "import": {
+                "default": "./dist/index.js"
+            }
+        }
+    },
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "build": "tsc",
+        "dev": "tsc --watch"
+    },
+    "dependencies": {
+        "@ai-sdk/openai": "1.0.5",
+        "ai": "3.4.33",
+        "js-sha1": "0.7.0",
+        "zod": "^3.25.28"
+    },
+    "devDependencies": {
+        "@types/bs58": "^5.0.0",
+        "@types/node": "22.8.4",
+        "bs58": "6.0.0",
+        "typescript": "5.6.3"
+    }
+}

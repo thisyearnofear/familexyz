@@ -209,6 +209,64 @@ Create `packages/clients/xmtp/`:
 
 ---
 
+### Phase 8: Platform & Marketplace 🔄 PLANNED
+**Priority:** HIGH | **Status:** Planned
+
+*Vision: Transform FamilyXYZ from a product into a platform where practitioners distribute research-backed agents to families.*
+
+#### 8a. Agent Marketplace ⬜
+- Creator profiles with credentials
+- Research-backed agent descriptions
+- Family ratings & reviews
+- Subscription or one-time access
+
+#### 8b. Practitioner Tier ⬜
+- Practitioner accounts with client management
+- Outcome analytics (aggregated, anonymized)
+- Research-backed agent curation
+
+#### 8c. Enterprise Distribution ⬜
+- Employer wellness benefit integration
+- Family account licensing
+- Usage dashboards (no content access)
+
+#### 8d. Trust Layer ⬜
+- Creator credential verification
+- Research citation requirements
+- Immutable audit trail for agent actions
+- On-chain verification of family milestones
+
+---
+
+## Competitive Positioning
+
+### Market Gap
+No platform occupies: **Research-Backed + Blockchain-Verified + Family-Focused + Marketplace**
+
+| Competitor | Family Focus | Marketplace | Research-Backed | Blockchain |
+|------------|:------------:|:-----------:|:--------------:|:---------:|
+| Replika | Individual | ❌ | ❌ | ❌ |
+| Relish | Couples | ❌ | ✅ | ❌ |
+| BetterHelp | Individual | ✅ Human | ✅ | ❌ |
+| Character.AI | Individual | ✅ AI | ❌ | ❌ |
+| **FamilyXYZ** | ✅ Core | 🔜 | ✅ | ✅ |
+
+### Unfair Advantages
+1. **Multi-agent family coordination** — No competitor coordinates multiple AI agents across a family unit
+2. **Hedera-verified "Wisdom Blocks"** — Immutable audit trail creates trust layer competitors lack
+3. **HCS-10 compliant messaging** — Interoperability with Hedera ecosystem
+4. **FAM token incentive system** — On-chain economy of emotional wealth
+5. **Practitioner-to-family distribution** — Network effects (creators → families → creators)
+
+### Brand Positioning
+**"The emotional intelligence platform for families"** — Consumer + practitioners served by same platform.
+
+- Families get expert-curated agents (better than generic AI)
+- Practitioners get distribution + monetization
+- Enterprise gets "family wellness benefits" they can offer
+
+---
+
 ## Dependencies & External References
 
 ### LLM Providers
@@ -285,7 +343,7 @@ CORS_ORIGINS=https://your-frontend-domain.com
 
 ---
 
-**Last Updated:** May 24, 2026
+**Last Updated:** May 30, 2026
 **Current Phase:** Backend-Only API Server
-**Next Milestone:** Phase 5 — Messaging Integrations
-**Next Review:** Phase 5 Completion
+**Next Milestone:** Phase 8 — Platform & Marketplace
+**Next Review:** Bounty submission (May 31)

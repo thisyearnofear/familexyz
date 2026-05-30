@@ -8,7 +8,7 @@
         "build": "tsup src/index.ts --format esm,cjs"
     },
     "dependencies": {
-        "@elizaos/core": "1.7.2",
+        "@elizaos/core": "workspace:*",
         "@elizaos/hedera-core": "workspace:*",
         "@hashgraph/sdk": "^2.50.0",
         "node-cache": "5.1.2"

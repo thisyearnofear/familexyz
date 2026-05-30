@@ -8,6 +8,33 @@
 
 ---
 
+## 🎯 Strategic Direction
+
+### Current Focus: Week 2 Hedera AI Agent Bounty
+**Deadline:** Sunday May 31 at 11:59 PM UTC
+**Prize:** $750 HBAR
+**Requirement:** Build a plugin + agent using ≥2 non-query Hedera tools with real transaction capability
+
+### Why This Serves the Platform Vision
+The bounty accelerates our path to the agent marketplace:
+- **Hedera plugin format** enables third-party agent publishing
+- **Ecosystem credibility** attracts first creators
+- **Demo video** demonstrates the trust layer to practitioners
+
+### What We're Building
+A **FamilyXYZ Hedera Plugin** that wraps existing HCS/HTS services:
+- `transferTokens` — FAM token rewards for family challenges
+- `submitMessage` — HCS consensus logging
+- Real transaction execution on testnet
+
+### Strategic Framing
+**"FamilyXYZ: The First Hedera-Verified Family Wellness Platform"**
+- Not just a plugin submission
+- Proof of concept for the marketplace trust layer
+- Demonstrates real-world transaction capability
+
+---
+
 ## 🎯 Project Title
 
 **FamilyXYZ: A Verifiable Multi-Agent Marketplace Where Autonomous AI Agents Earn FAM Tokens for Measurable Family Bond Improvements**

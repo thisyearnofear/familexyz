@@ -2,7 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "url";
 import elizaLogger from "./logger";
 
-type FlagEmbedding = {
+type FlagEmbeddingClass = {
     init: (options: {
         cacheDir: string;
         model: string;
@@ -12,19 +12,24 @@ type FlagEmbedding = {
     }>;
 };
 
-let FlagEmbeddingModule: FlagEmbedding | null = null;
+type FastembedModule = {
+    FlagEmbedding: FlagEmbeddingClass;
+    EmbeddingModel: Record<string, string>;
+};
 
-async function loadFastembed(): Promise<FlagEmbedding> {
-    if (!FlagEmbeddingModule) {
+let cachedModule: FastembedModule | null = null;
+
+async function loadFastembed(): Promise<FastembedModule> {
+    if (!cachedModule) {
         const module = await import("fastembed");
-        FlagEmbeddingModule = module as unknown as FlagEmbedding;
+        cachedModule = module as unknown as FastembedModule;
     }
-    return FlagEmbeddingModule;
+    return cachedModule;
 }
 
 class LocalEmbeddingModelManager {
     private static instance: LocalEmbeddingModelManager | null;
-    private model: ReturnType<FlagEmbedding["init"]> | null = null;
+    private model: ReturnType<FlagEmbeddingClass["init"]> | null = null;
     private initPromise: Promise<void> | null = null;
     private initializationLock = false;
 
@@ -94,10 +99,10 @@ class LocalEmbeddingModelManager {
 
             elizaLogger.debug("Initializing BGE embedding model...");
 
-            const FastEmbed = await loadFastembed();
-            this.model = await FastEmbed.init({
+            const { FlagEmbedding, EmbeddingModel } = await loadFastembed();
+            this.model = await FlagEmbedding.init({
                 cacheDir: cacheDir,
-                model: "BGESmallENV15",
+                model: EmbeddingModel.BGESmallENV15,
                 maxLength: 512,
             });
 

@@ -24,6 +24,7 @@ echo "Preparing lean deployment in ${TEMP_DEPLOY}..."
 mkdir -p "${TEMP_DEPLOY}/agent"
 mkdir -p "${TEMP_DEPLOY}/packages/core"
 mkdir -p "${TEMP_DEPLOY}/packages/clients/direct"
+mkdir -p "${TEMP_DEPLOY}/packages/clients/telegram"
 mkdir -p "${TEMP_DEPLOY}/packages/blockchain/hedera-core"
 mkdir -p "${TEMP_DEPLOY}/packages/config"
 mkdir -p "${TEMP_DEPLOY}/packages/adapters/sqlite"
@@ -39,10 +40,12 @@ mkdir -p "${TEMP_DEPLOY}/packages/family/plugin-growth"
 # Agent source
 rsync -a \
     --exclude 'node_modules' \
+    --exclude '**/node_modules' \
     --exclude 'dist' \
     --exclude '*.log' \
     --exclude '__tests__' \
     --exclude '*.test.ts' \
+    --exclude '.turbo' \
     "${PROJECT_ROOT}/agent/src/" "${TEMP_DEPLOY}/agent/src/"
 
 # Agent package.json
@@ -54,7 +57,7 @@ if [ -d "${PROJECT_ROOT}/characters" ]; then
 fi
 
 # Essential packages (space-conscious - only what's needed for agent)
-ESSENTIAL_PKGS="core blockchain/hedera-core clients/direct adapters/sqlite config family/metrics family/nlp-utils family/plugin-wisdom family/plugin-intimacy family/plugin-generational-bridge family/plugin-presence family/plugin-growth family/plugin-savings"
+ESSENTIAL_PKGS="core blockchain/hedera-core clients/direct clients/telegram adapters/sqlite config family/metrics family/nlp-utils family/plugin-wisdom family/plugin-intimacy family/plugin-generational-bridge family/plugin-presence family/plugin-growth family/plugin-savings"
 
 # Note: we include dist folder explicitly since many packages need it
 for pkg in $ESSENTIAL_PKGS; do
@@ -63,10 +66,14 @@ for pkg in $ESSENTIAL_PKGS; do
         # First sync everything except node_modules
         rsync -a \
             --exclude 'node_modules' \
+            --exclude '**/node_modules' \
+            --exclude 'cache' \
+            --exclude '**/cache' \
             --exclude '__tests__' \
             --exclude '*.test.ts' \
             --exclude '*.md' \
             --exclude '.turbo' \
+            --exclude '*.tsbuildinfo' \
             "${PROJECT_ROOT}/packages/${pkg}/" "${TEMP_DEPLOY}/packages/${pkg}/"
     fi
 done
@@ -76,6 +83,7 @@ if [ -d "${PROJECT_ROOT}/packages/agent" ]; then
     echo "  - Including packages/agent"
     rsync -a \
         --exclude 'node_modules' \
+        --exclude '**/node_modules' \
         --exclude '__tests__' \
         --exclude '*.test.ts' \
         --exclude '*.md' \
@@ -88,6 +96,14 @@ cp "${PROJECT_ROOT}/package.json" "${TEMP_DEPLOY}/"
 cp "${PROJECT_ROOT}/pnpm-lock.yaml" "${TEMP_DEPLOY}/"
 cp "${PROJECT_ROOT}/pnpm-workspace.yaml" "${TEMP_DEPLOY}/"
 cp "${PROJECT_ROOT}/tsconfig.json" "${TEMP_DEPLOY}/" 2>/dev/null || true
+
+# .npmrc for pnpm workspace hoisting (required for @elizaos/* packages)
+cat > "${TEMP_DEPLOY}/.npmrc" << 'NPMRCEOF'
+public-hoist-pattern[]=*@elizaos*
+NPMRCEOF
+
+# pnpm workspace config (hoist @elizaos packages for workspace linking)
+echo 'public-hoist-pattern[]=*@elizaos*' > "${TEMP_DEPLOY}/.npmrc"
 
 # .env files (don't copy secrets)
 if [ -f "${PROJECT_ROOT}/.env.production" ]; then
@@ -118,6 +134,13 @@ fi
 echo "[2/5] Syncing lean deployment to VPS..."
 rsync -avz --delete \
     --exclude 'node_modules' \
+    --exclude '**/node_modules' \
+    --exclude '**/node_modules/*' \
+    --exclude 'cache' \
+    --exclude '**/cache' \
+    --exclude '.turbo' \
+    --exclude '*.log' \
+    --exclude '*.tsbuildinfo' \
     "${TEMP_DEPLOY}/" "${VPS_USER}@${VPS_HOST}:${VPS_TARGET}/current/"
 
 # Cleanup temp
@@ -134,9 +157,47 @@ if ! command -v pnpm &> /dev/null; then
     curl -fsSL https://get.pnpm.io/v6.js | node - add --global pnpm >/dev/null 2>&1
 fi
 
-# Install only production dependencies
-echo 'Running pnpm install...'
-pnpm install --frozen-lockfile --prod 2>&1 | tail -10
+# Fix PM2 if broken (common issue with symlinked node_modules)
+if [ ! -f /usr/local/lib/node_modules/pm2/lib/ProcessContainerFork.js ]; then
+    echo 'Fixing broken PM2 installation...'
+    sudo rm -rf /usr/local/lib/node_modules/pm2 2>/dev/null || true
+    sudo mkdir -p /usr/local/lib/node_modules
+    if [ -d ~/.pm2/modules/pm2-logrotate/node_modules/pm2 ]; then
+        sudo cp -r ~/.pm2/modules/pm2-logrotate/node_modules/pm2 /usr/local/lib/node_modules/
+        sudo cp -r ~/.pm2/modules/pm2-logrotate/node_modules/@pm2 /usr/local/lib/node_modules/pm2/node_modules/ 2>/dev/null || true
+        sudo cp -r ~/.pm2/modules/pm2-logrotate/node_modules/* /usr/local/lib/node_modules/pm2/node_modules/ 2>/dev/null || true
+    fi
+fi
+
+# Install production dependencies only (exclude devDependencies)
+echo 'Running pnpm install (production only)...'
+pnpm install --prod --force 2>&1 | tail -10
+
+# Install tsx separately (needed for PM2 to run TypeScript)
+echo 'Installing tsx for TypeScript execution...'
+pnpm add tsx -w --prod 2>&1 | tail -5
+
+# Fix tsx symlink (pnpm --prod doesn't create .bin symlinks properly)
+if [ ! -f node_modules/.bin/tsx ] && [ -d node_modules/.pnpm/tsx@*/node_modules/tsx/bin ]; then
+    echo 'Fixing tsx symlink...'
+    TSX_BIN=\$(find node_modules/.pnpm -name 'tsx.js' -path '*/tsx/bin/*' 2>/dev/null | head -1)
+    if [ -n \"\$TSX_BIN\" ]; then
+        ln -sf \"\$TSX_BIN\" node_modules/.bin/tsx
+    fi
+fi
+
+# Rebuild native modules (better-sqlite3@11.6.0)
+# Note: pnpm rebuild targets the hoisted version (9.6.0), not 11.6.0
+# that workspace packages resolve to. Must use node-gyp directly.
+echo 'Rebuilding better-sqlite3@11.6.0 native binary...'
+NODE_GYP=$(find node_modules/.pnpm -name 'node-gyp.js' -path '*/node-gyp/bin/*' 2>/dev/null | head -1)
+BETTER_SQLITE3_DIR="node_modules/.pnpm/better-sqlite3@11.6.0/node_modules/better-sqlite3"
+if [ -n "$NODE_GYP" ] && [ -d "$BETTER_SQLITE3_DIR" ]; then
+    node "$NODE_GYP" --directory "$BETTER_SQLITE3_DIR" rebuild --release 2>&1 | grep -E '(gyp info ok|gyp ERR|error:)' || true
+    echo 'Native module rebuild complete'
+else
+    echo 'Warning: Could not find node-gyp or better-sqlite3@11.6.0 directory'
+fi
 "
 
 # Step 4: Copy shared files
@@ -150,13 +211,17 @@ echo "[5/5] Starting application with PM2..."
 ssh "${VPS_USER}@${VPS_HOST}" "
 cd ${VPS_TARGET}/current
 
-# Create PM2 ecosystem config (using exotic ports 31337/31338)
+# Create PM2 ecosystem config with absolute paths
 cat > ecosystem.config.js << 'PM2EOF'
+const path = require('path');
+const TARGET = '/home/deploy/familexyz';
 module.exports = {
   apps: [{
     name: 'familexyz-agent',
+    cwd: path.join(TARGET, 'current'),
     script: './agent/src/index.ts',
-    interpreter: 'tsx',
+    args: '--characters="./characters/wisdom.character.json"',
+    interpreter: path.join(TARGET, 'current', 'node_modules', '.bin', 'tsx'),
     instances: 1,
     exec_mode: 'fork',
     env: {
@@ -164,9 +229,9 @@ module.exports = {
       SERVER_PORT: '31337',
       HEALTH_PORT: '31338',
     },
-    error_file: '../shared/logs/error.log',
-    out_file: '../shared/logs/out.log',
-    log_file: '../shared/logs/combined.log',
+    error_file: path.join(TARGET, 'shared', 'logs', 'error.log'),
+    out_file: path.join(TARGET, 'shared', 'logs', 'out.log'),
+    log_file: path.join(TARGET, 'shared', 'logs', 'combined.log'),
     time: true,
     merge_logs: true,
     autorestart: true,
@@ -176,17 +241,16 @@ module.exports = {
 };
 PM2EOF
 
-# Load environment
-export \$(cat ../shared/.env | xargs 2>/dev/null || true)
+# Load environment variables from shared .env
+# Using set -a / source / set +a to handle comments and spaces correctly
+set -a
+. ../shared/.env 2>/dev/null || . /home/deploy/familexyz/shared/.env 2>/dev/null || true
+set +a
 
-# Start or restart PM2
-if pm2 describe familexyz-agent > /dev/null 2>&1; then
-    echo 'Restarting existing PM2 process...'
-    pm2 restart familexyz-agent
-else
-    echo 'Starting new PM2 process...'
-    pm2 start ecosystem.config.js
-fi
+# Always start fresh with updated ecosystem config (delete+start picks up config changes)
+pm2 delete familexyz-agent 2>/dev/null || true
+echo 'Starting fresh PM2 process...'
+pm2 start ecosystem.config.js
 
 # Save PM2 process list
 pm2 save

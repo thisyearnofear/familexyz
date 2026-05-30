@@ -1,0 +1,53 @@
+{
+  "name": "@elizaos/familyxyz-hedera-plugin",
+  "version": "0.1.0",
+  "description": "FamilyXYZ Hedera Agent Kit plugin for family rewards, consensus logging, and payout management",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --clean",
+    "dev": "tsup src/index.ts --format esm --watch",
+    "clean": "rm -rf dist",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@elizaos/core": "workspace:*",
+    "@elizaos/hedera-core": "workspace:*",
+    "@hashgraph/sdk": "^2.49.2",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.5",
+    "typescript": "^5.6.3",
+    "@types/node": "^20.0.0",
+    "jest": "^29.0.0",
+    "@types/jest": "^29.0.0"
+  },
+  "keywords": [
+    "eliza",
+    "family",
+    "hedera",
+    "ai-agent",
+    "family-rewards",
+    "hcs",
+    "hts"
+  ],
+  "author": "FamilyXYZ",
+  "license": "MIT",
+  "private": true,
+  "engines": {
+    "node": ">=22 <23"
+  }
+}

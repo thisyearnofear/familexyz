@@ -14,7 +14,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { Book, Cog, Home, Beaker, ExternalLink, Send, Hash, ShieldCheck } from "lucide-react";
+import { Book, Cog, Home, Beaker, ExternalLink, Send, Hash, ShieldCheck, Newspaper, Sun } from "lucide-react";
 
 const info = { version: "0.1.0" };
 
@@ -22,7 +22,7 @@ const agents = [
     { id: "wisdom", name: "Wisdom", emoji: "\uD83E\uDDE0" },
     { id: "intimacy", name: "Intimacy", emoji: "\uD83D\uDC96" },
     { id: "presence", name: "Presence", emoji: "\uD83E\uDDD8" },
-    { id: "generational", name: "Generational", emoji: "\uD83D\uDC68\u200D\uD83D\uDC69\u200D\uD83D\uDC67\u200D\uD83D\uDC66" },
+    { id: "bridge", name: "Bridge", emoji: "\uD83E\uDDD3" },
     { id: "growth", name: "Growth", emoji: "\uD83C\uDF31" },
 ];
 
@@ -43,7 +43,7 @@ export function AppSidebar() {
                                 </div>
                                 <div className="flex flex-col gap-0.5 leading-none">
                                     <span className="font-semibold">
-                                        FamilyXYZ
+                                        famile.xyz
                                     </span>
                                     <span>v{info?.version}</span>
                                 </div>
@@ -53,25 +53,22 @@ export function AppSidebar() {
                 </SidebarMenu>
                 <SidebarMenu>
                     <SidebarMenuItem>
+                        <Link href="/">
+                            <SidebarMenuButton
+                                isActive={pathname === "/"}
+                            >
+                                <Sun className="h-5 w-5 mr-2" />
+                                Today&apos;s Council
+                            </SidebarMenuButton>
+                        </Link>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
                         <Link href="/dashboard">
                             <SidebarMenuButton
                                 isActive={pathname === "/dashboard"}
                             >
                                 <Home className="h-5 w-5 mr-2" />
                                 Dashboard
-                            </SidebarMenuButton>
-                        </Link>
-                    </SidebarMenuItem>
-                    <SidebarMenuItem>
-                        <Link href="/hackathon">
-                            <SidebarMenuButton
-                                isActive={pathname === "/hackathon"}
-                            >
-                                <Beaker className="h-5 w-5 mr-2" />
-                                <span>Hackathon</span>
-                                <span className="ml-2 px-1.5 py-0.5 text-[10px] bg-purple-100 text-purple-700 rounded font-bold uppercase">
-                                    New
-                                </span>
                             </SidebarMenuButton>
                         </Link>
                     </SidebarMenuItem>
@@ -160,6 +157,13 @@ export function AppSidebar() {
                             <a href="/docs" target="_blank">
                                 <Book className="h-4 w-4" /> Documentation
                             </a>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton asChild>
+                            <Link href="/hackathon">
+                                <Beaker className="h-4 w-4" /> Dev Lab
+                            </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                     <SidebarMenuItem>

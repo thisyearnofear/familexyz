@@ -8,6 +8,7 @@ export default function ChatPage() {
     const params = useParams();
     const searchParams = useSearchParams();
     const agentId = params.agentId as string;
+    const context = searchParams.get("context") || undefined;
     const useProtocol = searchParams.get("protocol") === "ag-ui";
 
     if (!agentId) return <div>No data.</div>;
@@ -16,5 +17,5 @@ export default function ChatPage() {
         return <AGUIChatInterface />;
     }
 
-    return <ChatInterface initialAgentId={agentId} />;
+    return <ChatInterface initialAgentId={agentId} context={context} />;
 }

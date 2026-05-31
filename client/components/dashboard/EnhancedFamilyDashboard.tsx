@@ -1,17 +1,19 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { AgentActivityFeed } from './AgentActivityFeed';
 import { BondScoreChart } from './BondScoreChart';
+import Link from 'next/link';
 
 const AGENT_LIST = [
-    { id: 'wisdom', name: 'Wisdom', emoji: '\uD83E\uDDE0', desc: 'Philosophy & EQ' },
-    { id: 'intimacy', name: 'Intimacy', emoji: '\uD83D\uDC96', desc: 'Relationships' },
-    { id: 'presence', name: 'Presence', emoji: '\uD83E\uDDD8', desc: 'Mindfulness' },
-    { id: 'growth', name: 'Growth', emoji: '\uD83C\uDF31', desc: 'Challenges' },
-    { id: 'bridge', name: 'Bridge', emoji: '\uD83E\uDDD3', desc: 'Generational' },
-    { id: 'savings', name: 'Savings', emoji: '\uD83D\uDCB0', desc: 'FAM tokens' },
+    { id: 'wisdom', name: 'Wisdom', emoji: '\uD83E\uDDE0', desc: 'Philosophy & EQ', color: 'from-purple-500 to-indigo-500', tagline: 'Alain de Botton on life, love, and family' },
+    { id: 'intimacy', name: 'Intimacy', emoji: '\uD83D\uDC96', desc: 'Relationships', color: 'from-pink-500 to-rose-500', tagline: 'Esther Perel on connection and desire' },
+    { id: 'presence', name: 'Presence', emoji: '\uD83E\uDDD8', desc: 'Mindfulness', color: 'from-teal-500 to-emerald-500', tagline: 'Thich Nhat Hanh on being here now' },
+    { id: 'growth', name: 'Growth', emoji: '\uD83C\uDF31', desc: 'Challenges', color: 'from-amber-500 to-orange-500', tagline: 'James Clear on habits that compound' },
+    { id: 'bridge', name: 'Bridge', emoji: '\uD83E\uDDD3', desc: 'Generational', color: 'from-blue-500 to-cyan-500', tagline: 'StoryCorps on family narratives' },
+    { id: 'savings', name: 'Savings', emoji: '\uD83D\uDCB0', desc: 'FAM tokens', color: 'from-green-500 to-emerald-500', tagline: 'Coming soon' },
 ];
+
+const ACTIVE_AGENTS = AGENT_LIST.filter(a => a.id !== 'savings');
 
 interface AgentStatus {
     id: string;
@@ -25,14 +27,10 @@ export const EnhancedFamilyDashboard: React.FC = () => {
         AGENT_LIST.map(a => ({ id: a.id, name: a.name, status: 'IDLE', emoji: a.emoji }))
     );
     const [bondScore, setBondScore] = useState(85);
-    const [sseStatus, setSseStatus] = useState<'connecting' | 'connected' | 'error' | 'idle'>('idle');
     const [bondHistory, setBondHistory] = useState<number[]>([62, 65, 68, 72, 75, 78, 82, 85]);
 
     useEffect(() => {
-        setSseStatus('connecting');
         const eventSource = new EventSource('/api/agents');
-
-        eventSource.onopen = () => setSseStatus('connected');
         eventSource.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
@@ -41,25 +39,18 @@ export const EnhancedFamilyDashboard: React.FC = () => {
                         const updated = [...prev];
                         for (const incoming of data.agents) {
                             const idx = updated.findIndex(a => a.id === incoming.id);
-                            if (idx >= 0) {
-                                updated[idx] = { ...updated[idx], status: incoming.status };
-                            }
+                            if (idx >= 0) updated[idx] = { ...updated[idx], status: incoming.status };
                         }
                         return updated;
                     });
-                    setSseStatus('connected');
                 }
-            } catch { }
+            } catch {}
         };
-        eventSource.onerror = () => setSseStatus('error');
-
         return () => eventSource.close();
     }, []);
 
     useEffect(() => {
-        setSseStatus('connecting');
         const es = new EventSource('/api/agents/primary/stream');
-        es.onopen = () => setSseStatus('connected');
         es.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
@@ -67,50 +58,40 @@ export const EnhancedFamilyDashboard: React.FC = () => {
                     setBondScore(data.data.value);
                     if (data.data?.history) setBondHistory(data.data.history);
                 }
-            } catch { }
+            } catch {}
         };
-        es.onerror = () => setSseStatus('error');
         return () => es.close();
     }, []);
 
     const activeCount = agents.filter(a => a.status !== 'IDLE').length;
-
-    const bondColor = bondScore >= 80 ? 'text-green-400' :
-                      bondScore >= 60 ? 'text-amber-400' : 'text-red-400';
+    const bondColor = bondScore >= 80 ? 'text-green-400' : bondScore >= 60 ? 'text-amber-400' : 'text-red-400';
 
     return (
         <div className="min-h-screen bg-background">
-            <div className="relative bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 text-white px-6 py-8 overflow-hidden">
+            <div className="relative bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 px-6 py-8 overflow-hidden">
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent" />
                 <div className="max-w-7xl mx-auto relative z-10">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div>
                             <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white drop-shadow-lg">
                                 Family Connection Hub
                             </h1>
-                            <p className="text-xs sm:text-sm lg:text-base text-white/90 drop-shadow mt-1">
-                                AI-powered family wellness and growth platform
+                            <p className="text-xs sm:text-sm lg:text-base text-white/80 drop-shadow mt-1">
+                                Your family&apos;s personalized agent council
                             </p>
                         </div>
-                        <div className="flex items-center gap-3">
-                <a
-                    href="https://t.me/familexyzbot"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 bg-blue-500/20 backdrop-blur-sm rounded-full px-4 py-2 text-sm text-blue-200 hover:bg-blue-500/30 transition-colors"
-                >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M11.944 0A12 12 0 000 12a12 12 0 0012 12 12 12 0 0012-12A12 12 0 0012 0a12 12 0 00-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 01.171.325c.016.127.087.669.087.669l-1.677 7.88c-.145.684-.55.838-.924.514l-2.547-1.99-1.232 1.19c-.136.128-.25.234-.523.234-.334 0-.432-.232-.432-.232l-.977-3.231-2.81-.978c-.607-.21-.61-.604-.124-.894l10.895-4.205c.271-.1.503-.07.678.044z"/>
-                    </svg>
-                    <span className="hidden sm:inline">Open in Telegram</span>
-                    <span className="sm:hidden">Telegram</span>
-                </a>
-                <div className="flex items-center space-x-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2">
-                    <span className="w-2 h-2 bg-green-300 rounded-full animate-pulse" />
-                    <span className="font-semibold text-white text-sm">
-                        System Online
-                    </span>
-                </div>
-            </div>
+                        <a
+                            href="https://t.me/familexyzbot"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 text-sm text-white hover:bg-white/20 transition-colors"
+                        >
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M11.944 0A12 12 0 000 12a12 12 0 0012 12 12 12 0 0012-12A12 12 0 0012 0a12 12 0 00-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 01.171.325c.016.127.087.669.087.669l-1.677 7.88c-.145.684-.55.838-.924.514l-2.547-1.99-1.232 1.19c-.136.128-.25.234-.523.234-.334 0-.432-.232-.432-.232l-.977-3.231-2.81-.978c-.607-.21-.61-.604-.124-.894l10.895-4.205c.271-.1.503-.07.678.044z"/>
+                            </svg>
+                            <span className="hidden sm:inline">Open in Telegram</span>
+                            <span className="sm:hidden">Telegram</span>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -125,9 +106,9 @@ export const EnhancedFamilyDashboard: React.FC = () => {
                             {bondScore}%
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                            {bondScore >= 80 ? 'Excellent bond strength' :
-                             bondScore >= 60 ? 'Steady improvement' :
-                             'Room for growth'}
+                            {bondScore >= 80 ? 'Strong connection — keep nurturing it' :
+                             bondScore >= 60 ? 'Building momentum — stay consistent' :
+                             'Room to grow — small steps add up'}
                         </p>
                     </div>
                     <div className="bg-card border rounded-xl p-6">
@@ -140,27 +121,19 @@ export const EnhancedFamilyDashboard: React.FC = () => {
                         <p className="text-xs text-muted-foreground mt-1">
                             {activeCount > 0
                                 ? agents.filter(a => a.status !== 'IDLE').map(a => a.name).join(', ')
-                                : 'All agents idle'}
+                                : 'All agents ready to help'}
                         </p>
                     </div>
                     <div className="bg-card border rounded-xl p-6">
                         <h3 className="text-sm font-medium text-muted-foreground mb-2">
-                            Agent Statuses
+                            Today&apos;s Council
                         </h3>
-                        <div className="flex flex-wrap gap-2">
-                            {agents.map(agent => (
-                                <span
-                                    key={agent.id}
-                                    className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full border ${
-                                        agent.status !== 'IDLE'
-                                            ? 'bg-purple-500/20 border-purple-500/30 text-purple-300'
-                                            : 'bg-muted border-border text-muted-foreground'
-                                    }`}
-                                >
-                                    {agent.emoji} {agent.name}
-                                </span>
-                            ))}
-                        </div>
+                        <p className="text-3xl font-bold text-amber-400">
+                            New
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            5 perspectives on today&apos;s story
+                        </p>
                     </div>
                 </div>
 
@@ -173,9 +146,9 @@ export const EnhancedFamilyDashboard: React.FC = () => {
                         }))}
                     />
                     <div className="bg-card border rounded-xl p-6">
-                        <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
+                        <h3 className="text-lg font-semibold mb-4">Your Agents</h3>
                         <div className="grid grid-cols-2 gap-3">
-                            {AGENT_LIST.map(agent => (
+                            {ACTIVE_AGENTS.map(agent => (
                                 <a
                                     key={agent.id}
                                     href={`/chat/${agent.id}`}
@@ -198,41 +171,44 @@ export const EnhancedFamilyDashboard: React.FC = () => {
                             <h2 className="text-lg font-semibold mb-1">
                                 Today&apos;s Council
                             </h2>
-                            <p className="text-muted-foreground text-sm">
-                                One story from the zeitgeist, five agent perspectives.
-                                Updated daily.
+                            <p className="text-muted-foreground text-sm max-w-lg">
+                                One story from the zeitgeist, five distinct perspectives.
+                                Wisdom, Intimacy, Presence, Growth, and Bridge weigh in.
                             </p>
                         </div>
-                        <a
+                        <Link
                             href="/today"
                             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-600 text-white text-sm font-medium hover:bg-amber-700 transition-colors whitespace-nowrap"
                         >
                             Read Today&apos;s Take
-                        </a>
+                        </Link>
                     </div>
                 </div>
 
                 <div className="bg-card border rounded-xl p-6">
-                    <AgentActivityFeed
-                        agentId="primary"
-                        maxHeight="360px"
-                    />
-                </div>
-
-                <div className="bg-card border rounded-xl p-6">
-                    <h2 className="text-lg font-semibold mb-4">
-                        Hackathon Demo
-                    </h2>
-                    <p className="text-muted-foreground mb-4">
-                        Explore the full agent workspace with drag-and-drop input,
-                        multi-agent content transformation, and real-time SSE streaming.
-                    </p>
-                    <a
-                        href="/hackathon"
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 transition-colors"
-                    >
-                        \uD83D\uDE80 Launch Demo
-                    </a>
+                    <h3 className="text-lg font-semibold mb-4">Meet Your Agents</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {AGENT_LIST.map(agent => (
+                            <a
+                                key={agent.id}
+                                href={`/chat/${agent.id}`}
+                                className={`bg-gradient-to-br ${agent.color} p-[1px] rounded-xl overflow-hidden group`}
+                            >
+                                <div className="bg-card rounded-[11px] p-4 h-full group-hover:bg-card/80 transition-colors">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <span className="text-2xl">{agent.emoji}</span>
+                                        <div>
+                                            <p className="font-semibold text-sm">{agent.name}</p>
+                                            <p className="text-xs text-muted-foreground">{agent.desc}</p>
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground/80 leading-relaxed">
+                                        {agent.tagline}
+                                    </p>
+                                </div>
+                            </a>
+                        ))}
+                    </div>
                 </div>
             </div>
         </div>

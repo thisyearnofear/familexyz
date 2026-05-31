@@ -20,13 +20,35 @@ interface Message {
 
 interface ChatInterfaceProps {
     initialAgentId: string;
+    context?: string;
 }
+
+const CONTEXT_WELCOME: Record<string, string> = {
+    today: "I see you just came from today's Daily Council. Want to explore today's story through my lens? Ask me anything about it.",
+};
+
+const SUGGESTIONS: Record<string, string[]> = {
+    today: [
+        "Tell me more about today's story through your lens",
+        "How does this apply to our family?",
+        "What would you focus on here?",
+    ],
+};
+
+const DEFAULT_SUGGESTIONS = [
+    "How can we communicate better as a family?",
+    "Suggest a family activity for this weekend",
+    "Help me resolve a conflict with empathy",
+    "What's our family bond score trend?",
+];
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     initialAgentId,
+    context,
 }) => {
     const [agentId, setAgentId] = useState(initialAgentId);
     const [messages, setMessages] = useState<Message[]>([]);
+    const [contextSeen, setContextSeen] = useState(!!context);
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [streamingContent, setStreamingContent] = useState("");
@@ -148,16 +170,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                             <span className="text-5xl mb-4">{profile.emoji}</span>
                             <h2 className="text-xl font-semibold mb-2">Chat with {profile.name}</h2>
                             <p className="text-muted-foreground max-w-md mb-8">
-                                Ask for advice, share how you&apos;re feeling, or explore ways to
-                                strengthen your family connections.
+                                {contextSeen
+                                    ? CONTEXT_WELCOME[context || ''] || "Ask for advice, share how you're feeling, or explore ways to strengthen your family connections."
+                                    : "Ask for advice, share how you're feeling, or explore ways to strengthen your family connections."
+                                }
                             </p>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-lg">
-                                {[
-                                    "How can we communicate better as a family?",
-                                    "Suggest a family activity for this weekend",
-                                    "Help me resolve a conflict with empathy",
-                                    "What's our family bond score trend?",
-                                ].map((suggestion) => (
+                                {(contextSeen ? SUGGESTIONS[context || ''] || DEFAULT_SUGGESTIONS : DEFAULT_SUGGESTIONS).map((suggestion) => (
                                     <button
                                         key={suggestion}
                                         onClick={() => { setInput(suggestion); }}

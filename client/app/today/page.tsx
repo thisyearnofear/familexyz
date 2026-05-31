@@ -1,7 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from "next/navigation";
+import { Share2, Check, ChevronDown, MessageCircle } from "lucide-react";
 
 interface DailyTake {
     date: string;
@@ -20,10 +22,92 @@ interface DailyTake {
     generatedAt: number;
 }
 
+const AGENT_COLORS: Record<string, string> = {
+    Wisdom: '#7c3aed',
+    Intimacy: '#ec4899',
+    Presence: '#14b8a6',
+    Growth: '#f59e0b',
+    Bridge: '#3b82f6',
+};
+
+const AGENT_SLUGS: Record<string, string> = {
+    Wisdom: 'wisdom',
+    Intimacy: 'intimacy',
+    Presence: 'presence',
+    Growth: 'growth',
+    Bridge: 'bridge',
+};
+
+function TakeCard({ take, story, onChat }: { take: DailyTake['takes'][0]; story: DailyTake['story']; onChat?: () => void }) {
+    const [copied, setCopied] = useState(false);
+
+    const handleShare = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const shareText = `${take.emoji} ${take.agent} via ${take.influence}\n\n"${take.take}"\n\n— Reacting to: ${story.headline}\nDaily Council · famile.xyz`;
+
+        if (navigator.share) {
+            try {
+                await navigator.share({ text: shareText });
+                return;
+            } catch {}
+        }
+        await navigator.clipboard.writeText(shareText);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    return (
+        <div className="rounded-xl border border-border/60 bg-card transition-colors overflow-hidden">
+            <div className="p-5">
+                <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                        <span className="text-2xl">{take.emoji}</span>
+                        <div>
+                            <span className="font-semibold text-foreground">{take.agent}</span>
+                            <span className="text-muted-foreground text-sm ml-2">
+                                via {take.influence}
+                            </span>
+                        </div>
+                    </div>
+                    <div
+                        className="w-1.5 h-1.5 rounded-full"
+                        style={{ backgroundColor: AGENT_COLORS[take.agent] || '#7c3aed' }}
+                    />
+                </div>
+                <div className="border-l-2 pl-4 ml-1" style={{ borderColor: AGENT_COLORS[take.agent] + '40' }}>
+                    <p className="text-foreground leading-relaxed text-[15px]">
+                        &ldquo;{take.take}&rdquo;
+                    </p>
+                </div>
+            </div>
+            <div className="flex items-center justify-between px-5 py-3 bg-muted/30 border-t border-border/50">
+                <button
+                    onClick={onChat}
+                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-muted hover:bg-muted/80 transition-colors text-muted-foreground hover:text-foreground"
+                >
+                    <MessageCircle className="w-3.5 h-3.5" />
+                    Chat about this
+                </button>
+                <button
+                    onClick={handleShare}
+                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-muted/50 hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                >
+                    {copied ? (
+                        <><Check className="w-3.5 h-3.5" /> Copied</>
+                    ) : (
+                        <><Share2 className="w-3.5 h-3.5" /> Share</>
+                    )}
+                </button>
+            </div>
+        </div>
+    );
+}
+
 export default function TodayPage() {
     const [data, setData] = useState<DailyTake | null>(null);
     const [loading, setLoading] = useState(true);
-    const [expandedAgent, setExpandedAgent] = useState<string | null>(null);
+    const [showAllTakes, setShowAllTakes] = useState(false);
+    const router = useRouter();
 
     useEffect(() => {
         fetch('/api/today')
@@ -32,6 +116,11 @@ export default function TodayPage() {
             .catch(() => {})
             .finally(() => setLoading(false));
     }, []);
+
+    const navigateToChat = useCallback((agentName: string) => {
+        const slug = AGENT_SLUGS[agentName];
+        if (slug) router.push(`/chat/${slug}?context=today`);
+    }, [router]);
 
     if (loading) {
         return (
@@ -58,124 +147,103 @@ export default function TodayPage() {
 
     return (
         <div className="min-h-screen bg-background">
-            <div className="bg-gradient-to-r from-amber-600 via-orange-600 to-red-600 text-white px-6 py-8">
-                <div className="max-w-4xl mx-auto">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <Link href="/" className="text-white/70 hover:text-white text-sm mb-2 inline-block">
-                                &larr; Back to Hub
-                            </Link>
-                            <h1 className="text-2xl sm:text-3xl font-bold">
-                                Today&apos;s Council
-                            </h1>
-                            <p className="text-white/80 text-sm mt-1">
-                                {formattedDate}
-                            </p>
-                        </div>
-                        <div className="text-4xl">🏛️</div>
-                    </div>
+            <div className="bg-gradient-to-r from-amber-600 via-orange-600 to-red-600 px-6 py-10 sm:py-14">
+                <div className="max-w-5xl mx-auto">
+                    <Link href="/" className="text-white/50 hover:text-white text-xs uppercase tracking-[0.15em] mb-3 inline-block">
+                        &larr; Back to Home
+                    </Link>
+                    <h1 className="text-2xl sm:text-4xl font-bold text-white drop-shadow-lg">
+                        Today&apos;s Council
+                    </h1>
+                    <p className="text-white/60 text-sm mt-2">
+                        {formattedDate}
+                    </p>
                 </div>
             </div>
 
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-8">
-                <div className="bg-card border rounded-xl p-6 sm:p-8">
-                    <div className="flex items-start gap-3 mb-4">
-                        <span className="text-2xl">📰</span>
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 -mt-6 sm:-mt-8 relative z-20">
+                <div className="space-y-6 sm:space-y-8 pb-12">
+                    <div className="bg-card border rounded-xl p-6 sm:p-8 shadow-sm">
+                        <div className="flex items-start gap-3 sm:gap-4 mb-4">
+                            <span className="text-2xl sm:text-3xl mt-0.5">📰</span>
+                            <div>
+                                <h2 className="text-xl sm:text-2xl font-bold text-foreground leading-tight">
+                                    {data.story.headline}
+                                </h2>
+                                <p className="text-sm text-muted-foreground mt-1.5">
+                                    {data.story.source}
+                                    {data.story.url && (
+                                        <>
+                                            <span className="mx-1.5">·</span>
+                                            <a href={data.story.url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+                                                Read original
+                                            </a>
+                                        </>
+                                    )}
+                                </p>
+                            </div>
+                        </div>
+                        <p className="text-muted-foreground leading-relaxed">
+                            {data.story.summary}
+                        </p>
+                    </div>
+
+                    <div className="flex items-end justify-between">
                         <div>
-                            <h2 className="text-xl sm:text-2xl font-bold text-foreground leading-tight">
-                                {data.story.headline}
-                            </h2>
+                            <h3 className="text-lg sm:text-xl font-semibold text-foreground">
+                                Five Perspectives
+                            </h3>
                             <p className="text-sm text-muted-foreground mt-1">
-                                {data.story.source}
-                                {data.story.url && (
-                                    <>
-                                        {' '}&middot;{' '}
-                                        <a
-                                            href={data.story.url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-blue-500 hover:underline"
-                                        >
-                                            Read original
-                                        </a>
-                                    </>
-                                )}
+                                Each agent brings their unique intellectual tradition.
                             </p>
                         </div>
-                    </div>
-                    <p className="text-muted-foreground leading-relaxed">
-                        {data.story.summary}
-                    </p>
-                </div>
-
-                <div className="space-y-1">
-                    <h3 className="text-lg font-semibold text-foreground px-1">
-                        Five Perspectives
-                    </h3>
-                    <p className="text-sm text-muted-foreground px-1 mb-4">
-                        Each agent brings their unique intellectual tradition to today&apos;s story.
-                    </p>
-
-                    <div className="space-y-4">
-                        {data.takes.map((take) => {
-                            const isExpanded = expandedAgent === take.agent;
-                            return (
-                                <div
-                                    key={take.agent}
-                                    className="bg-card border rounded-xl overflow-hidden transition-all"
-                                >
-                                    <button
-                                        onClick={() => setExpandedAgent(isExpanded ? null : take.agent)}
-                                        className="w-full px-6 py-4 flex items-center justify-between hover:bg-muted/50 transition-colors text-left"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-2xl">{take.emoji}</span>
-                                            <div>
-                                                <span className="font-semibold text-foreground">
-                                                    {take.agent}
-                                                </span>
-                                                <span className="text-muted-foreground text-sm ml-2">
-                                                    via {take.influence}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <svg
-                                            className={`w-5 h-5 text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                        >
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                        </svg>
-                                    </button>
-                                    {isExpanded && (
-                                        <div className="px-6 pb-5 pt-0">
-                                            <div className="pl-11">
-                                                <p className="text-foreground leading-relaxed">
-                                                    {take.take}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-
-                <div className="bg-muted/30 border border-dashed rounded-xl p-6 text-center">
-                    <p className="text-muted-foreground text-sm">
-                        New story and perspectives every day. Join the conversation on{' '}
-                        <a
-                            href="https://t.me/familexyzbot"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-500 hover:underline"
+                        <button
+                            onClick={() => setShowAllTakes(!showAllTakes)}
+                            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors sm:hidden"
                         >
-                            Telegram
-                        </a>
-                        .
-                    </p>
+                            {showAllTakes ? 'Collapse' : 'Show all'}
+                            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showAllTakes ? 'rotate-180' : ''}`} />
+                        </button>
+                    </div>
+
+                    <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {data.takes.slice(0, 3).map((take) => (
+                            <TakeCard key={take.agent} take={take} story={data.story} onChat={() => navigateToChat(take.agent)} />
+                        ))}
+                    </div>
+                    <div className="hidden lg:grid lg:grid-cols-2 gap-4">
+                        {data.takes.slice(3).map((take) => (
+                            <TakeCard key={take.agent} take={take} story={data.story} onChat={() => navigateToChat(take.agent)} />
+                        ))}
+                    </div>
+
+                    <div className="sm:hidden space-y-4">
+                        {(showAllTakes ? data.takes : data.takes.slice(0, 2)).map((take) => (
+                            <TakeCard key={take.agent} take={take} story={data.story} onChat={() => navigateToChat(take.agent)} />
+                        ))}
+                    </div>
+
+                    <div className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/20 rounded-xl p-6 sm:p-8 text-center">
+                        <div className="max-w-md mx-auto">
+                            <p className="text-foreground font-semibold mb-2">
+                                Get tomorrow&apos;s council on Telegram
+                            </p>
+                            <p className="text-muted-foreground text-sm mb-4">
+                                Fresh perspectives delivered daily. Subscribe for free.
+                            </p>
+                            <a
+                                href="https://t.me/familexyzbot?start=subscribe_daily"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
+                            >
+                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M11.944 0A12 12 0 000 12a12 12 0 0012 12 12 12 0 0012-12A12 12 0 0012 0a12 12 0 00-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 01.171.325c.016.127.087.669.087.669l-1.677 7.88c-.145.684-.55.838-.924.514l-2.547-1.99-1.232 1.19c-.136.128-.25.234-.523.234-.334 0-.432-.232-.432-.232l-.977-3.231-2.81-.978c-.607-.21-.61-.604-.124-.894l10.895-4.205c.271-.1.503-.07.678.044z"/>
+                                </svg>
+                                Subscribe on Telegram
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

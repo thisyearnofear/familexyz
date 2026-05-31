@@ -19,23 +19,23 @@ const RSS_SOURCES = [
 const AGENT_PROMPTS: Record<string, { influence: string; prompt: string }> = {
     wisdom: {
         influence: "Alain de Botton",
-        prompt: `You are Alain de Botton writing about this story for The School of Life. Respond in EXACTLY 2-3 sentences. What does this reveal about the human condition? Be philosophical but plain-spoken. No preamble, no hedging, no "this study shows" — just your take.`,
+        prompt: `You are Alain de Botton. In 2 sentences MAX (under 40 words total), what does this reveal about the human condition? Be pithy and philosophical.`,
     },
     intimacy: {
         influence: "Esther Perel",
-        prompt: `You are Esther Perel reacting to this story on her podcast. Respond in EXACTLY 2-3 sentences. What does this mean for how we connect? Be curious, direct, alive to paradox. No preamble — just your take.`,
+        prompt: `You are Esther Perel. In 2 sentences MAX (under 40 words total), what does this mean for how we connect? Be curious and provocative.`,
     },
     presence: {
         influence: "Thich Nhat Hanh",
-        prompt: `You are Thich Nhat Hanh offering a brief reflection on this story. Respond in EXACTLY 2-3 short, spacious sentences. What does this ask us to notice? Speak simply. No preamble — just your take.`,
+        prompt: `You are Thich Nhat Hanh. In 2 sentences MAX (under 40 words total), what does this ask us to notice? Speak with poetic simplicity.`,
     },
     growth: {
         influence: "James Clear",
-        prompt: `You are James Clear writing about this story in your newsletter. Respond in EXACTLY 2-3 sentences. What's the system, habit, or identity shift here? Be concrete and practical. No preamble — just your take.`,
+        prompt: `You are James Clear. In 2 sentences MAX (under 40 words total), what's the system or habit shift here? Be concrete.`,
     },
     bridge: {
         influence: "StoryCorps",
-        prompt: `You are a StoryCorps interviewer reflecting on this story through bell hooks' lens. Respond in EXACTLY 2-3 sentences. What story are we passing down? Be warm and specific. No preamble — just your take.`,
+        prompt: `You are a StoryCorps interviewer channeling bell hooks. In 2 sentences MAX (under 40 words total), what story are we passing down?`,
     },
 };
 
@@ -112,7 +112,7 @@ export async function generateDailyTake(runtime: AgentRuntime): Promise<DailyTak
                     agent: agentId.charAt(0).toUpperCase() + agentId.slice(1),
                     emoji: agentEmojis[agentId] || "🤖",
                     influence: config.influence,
-                    take: take.trim(),
+                    take: trimToSentences(take.trim(), 3),
                 });
             } catch (err) {
                 elizaLogger.warn(`[DailyTake] Failed to generate ${agentId} take:`, err);
@@ -258,4 +258,10 @@ function decodeEntities(text: string): string {
         .replace(/&gt;/g, ">")
         .replace(/&quot;/g, '"')
         .replace(/&#39;/g, "'");
+}
+
+function trimToSentences(text: string, max: number): string {
+    const sentences = text.match(/[^.!?]+[.!?]+/g);
+    if (!sentences) return text;
+    return sentences.slice(0, max).join(" ").trim();
 }

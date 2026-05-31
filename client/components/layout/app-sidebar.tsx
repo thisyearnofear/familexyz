@@ -1,6 +1,5 @@
 'use client';
 
-import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -14,30 +13,21 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
-    SidebarMenuSkeleton,
 } from "@/components/ui/sidebar";
-import { apiClient } from "@/lib/api";
 import { Book, Cog, Home, Beaker, ExternalLink, Send, Hash, ShieldCheck } from "lucide-react";
 
 const info = { version: "0.1.0" };
 
-const agentEmojis: Record<string, string> = {
-    wisdom: "\uD83E\uDDE0",
-    intimacy: "\uD83D\uDC96",
-    presence: "\uD83E\uDDD8",
-    bridge: "\uD83D\uDC68\u200D\uD83D\uDC69\u200D\uD83D\uDC67\u200D\uD83D\uDC66",
-    growth: "\uD83C\uDF31",
-};
+const agents = [
+    { id: "wisdom", name: "Wisdom", emoji: "\uD83E\uDDE0" },
+    { id: "intimacy", name: "Intimacy", emoji: "\uD83D\uDC96" },
+    { id: "presence", name: "Presence", emoji: "\uD83E\uDDD8" },
+    { id: "generational", name: "Generational", emoji: "\uD83D\uDC68\u200D\uD83D\uDC69\u200D\uD83D\uDC67\u200D\uD83D\uDC66" },
+    { id: "growth", name: "Growth", emoji: "\uD83C\uDF31" },
+];
 
 export function AppSidebar() {
     const pathname = usePathname();
-    const query = useQuery({
-        queryKey: ["agents"],
-        queryFn: () => apiClient.getAgents(),
-        refetchInterval: 5_000,
-    });
-
-    const agents = query?.data?.agents;
 
     return (
         <Sidebar aria-label="Main navigation">
@@ -92,56 +82,26 @@ export function AppSidebar() {
                     <SidebarGroupLabel>Agents</SidebarGroupLabel>
                     <SidebarGroupContent>
                         <SidebarMenu>
-                            {query?.isPending ? (
-                                <div>
-                                    {Array.from({ length: 5 }).map(
-                                        (_, index) => (
-                                            <SidebarMenuItem key={index}>
-                                                <SidebarMenuSkeleton />
-                                            </SidebarMenuItem>
-                                        )
-                                    )}
-                                </div>
-                            ) : (
-                                <div>
-                                    {(agents as any[])?.map(
-                                        (agent: {
-                                            id: string;
-                                            name: string;
-                                        }) => {
-                                            const agentName =
-                                                agent.name.toLowerCase();
-                                            const emoji =
-                                                agentEmojis[agentName] || "🤖";
-
-                                            return (
-                                                <SidebarMenuItem
-                                                    key={agent.id}
-                                                    className="mb-3"
-                                                >
-                                                    <Link
-                                                        href={`/chat/${agent.id}`}
-                                                    >
-                                                        <SidebarMenuButton
-                                                            isActive={pathname.includes(
-                                                                agent.id
-                                                            )}
-                                                            className="relative py-3 h-auto"
-                                                        >
-                                                            <span className="text-lg">
-                                                                {emoji}
-                                                            </span>
-                                                            <span className="flex-1">
-                                                                {agent.name}
-                                                            </span>
-                                                        </SidebarMenuButton>
-                                                    </Link>
-                                                </SidebarMenuItem>
-                                            );
-                                        }
-                                    )}
-                                </div>
-                            )}
+                            {agents.map((agent) => (
+                                <SidebarMenuItem
+                                    key={agent.id}
+                                    className="mb-3"
+                                >
+                                    <Link href={`/chat/${agent.id}`}>
+                                        <SidebarMenuButton
+                                            isActive={pathname.includes(agent.id)}
+                                            className="relative py-3 h-auto"
+                                        >
+                                            <span className="text-lg">
+                                                {agent.emoji}
+                                            </span>
+                                            <span className="flex-1">
+                                                {agent.name}
+                                            </span>
+                                        </SidebarMenuButton>
+                                    </Link>
+                                </SidebarMenuItem>
+                            ))}
                         </SidebarMenu>
                     </SidebarGroupContent>
                 </SidebarGroup>

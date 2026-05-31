@@ -148,6 +148,9 @@ importers:
       '@elizaos/client-direct':
         specifier: workspace:*
         version: link:../packages/clients/direct
+      '@elizaos/client-telegram':
+        specifier: workspace:*
+        version: link:../packages/clients/telegram
       '@elizaos/config':
         specifier: workspace:*
         version: link:../packages/config
@@ -16082,7 +16085,7 @@ snapshots:
       '@hashgraphonline/hashinal-wc': 1.0.115(@reown/walletkit@1.5.5(bufferutil@4.1.0)(ioredis@5.10.1)(react-native@0.85.3(@babel/core@7.29.0)(@types/react@19.2.15)(bufferutil@4.1.0)(react@19.2.6)(utf-8-validate@5.0.10))(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.25.76))(@types/react@19.2.15)(@walletconnect/modal@2.7.0(@types/react@19.2.15)(react@19.2.6))(ansi-regex@6.2.2)(ansi-styles@6.2.3)(bn.js@5.2.3)(bufferutil@4.1.0)(debug@4.4.1)(encoding@0.1.13)(ethers@6.16.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(ioredis@5.10.1)(protobufjs@7.5.4)(react-native@0.85.3(@babel/core@7.29.0)(@types/react@19.2.15)(bufferutil@4.1.0)(react@19.2.6)(utf-8-validate@5.0.10))(react@19.2.6)(strip-ansi@7.1.2)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.25.76)
       '@hiero-did-sdk/registrar': 0.1.2(bn.js@5.2.3)(react-native@0.85.3(@babel/core@7.29.0)(@types/react@19.2.15)(bufferutil@4.1.0)(react@19.2.6)(utf-8-validate@5.0.10))
       '@hiero-did-sdk/resolver': 0.1.2(bn.js@5.2.3)(react-native@0.85.3(@babel/core@7.29.0)(@types/react@19.2.15)(bufferutil@4.1.0)(react@19.2.6)(utf-8-validate@5.0.10))
-      '@kiloscribe/inscription-sdk': 1.0.61(@reown/appkit@1.8.9(@types/react@19.2.15)(bufferutil@4.1.0)(encoding@0.1.13)(ioredis@5.10.1)(react@19.2.6)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.25.76))(@reown/walletkit@1.5.5(bufferutil@4.1.0)(ioredis@5.10.1)(react-native@0.85.3(@babel/core@7.29.0)(@types/react@19.2.15)(bufferutil@4.1.0)(react@19.2.6)(utf-8-validate@5.0.10))(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.25.76))(@types/react@19.2.15)(@walletconnect/modal@2.7.0(@types/react@19.2.15)(react@19.2.6))(ansi-regex@6.2.2)(ansi-styles@6.2.3)(bn.js@5.2.3)(bufferutil@4.1.0)(debug@4.4.1)(encoding@0.1.13)(ethers@6.16.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(protobufjs@7.5.4)(react-native@0.85.3(@babel/core@7.29.0)(@types/react@19.2.15)(bufferutil@4.1.0)(react@19.2.6)(utf-8-validate@5.0.10))(react@19.2.6)(strip-ansi@7.1.2)(typescript@5.6.3)(utf-8-validate@5.0.10)
+      '@kiloscribe/inscription-sdk': 1.0.61(@reown/appkit@1.8.9(@types/react@19.2.15)(bufferutil@4.1.0)(encoding@0.1.13)(ioredis@5.10.1)(react@19.2.6)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.25.76))(@reown/walletkit@1.5.5(bufferutil@4.1.0)(ioredis@5.10.1)(react-native@0.85.3(@babel/core@7.29.0)(@types/react@19.2.15)(bufferutil@4.1.0)(react@19.2.6)(utf-8-validate@5.0.10))(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.25.76))(@walletconnect/modal@2.7.0(@types/react@19.2.15)(react@19.2.6))(ansi-regex@6.2.2)(ansi-styles@6.2.3)(bn.js@5.2.3)(bufferutil@4.1.0)(debug@4.4.1)(ethers@6.16.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(protobufjs@7.5.4)(react-native@0.85.3(@babel/core@7.29.0)(@types/react@19.2.15)(bufferutil@4.1.0)(react@19.2.6)(utf-8-validate@5.0.10))(strip-ansi@7.1.2)(utf-8-validate@5.0.10)
       axios: 1.16.1(debug@4.4.1)
       bignumber.js: 9.3.1
       buffer: 6.0.3
@@ -16138,7 +16141,7 @@ snapshots:
       '@hashgraphonline/hashinal-wc': 1.0.115(@reown/walletkit@1.5.5(bufferutil@4.1.0)(ioredis@5.10.1)(react-native@0.85.3(@babel/core@7.29.0)(@types/react@19.2.15)(bufferutil@4.1.0)(react@19.2.6)(utf-8-validate@5.0.10))(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.25.76))(@types/react@19.2.15)(@walletconnect/modal@2.7.0(@types/react@19.2.15)(react@19.2.6))(ansi-regex@6.2.2)(ansi-styles@6.2.3)(bn.js@5.2.3)(bufferutil@4.1.0)(debug@4.4.1)(encoding@0.1.13)(ethers@6.16.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(ioredis@5.10.1)(protobufjs@7.5.4)(react-native@0.85.3(@babel/core@7.29.0)(@types/react@19.2.15)(bufferutil@4.1.0)(react@19.2.6)(utf-8-validate@5.0.10))(react@19.2.6)(strip-ansi@7.1.2)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.25.76)
       '@hiero-did-sdk/registrar': 0.1.2(bn.js@5.2.3)(react-native@0.85.3(@babel/core@7.29.0)(@types/react@19.2.15)(bufferutil@4.1.0)(react@19.2.6)(utf-8-validate@5.0.10))
       '@hiero-did-sdk/resolver': 0.1.2(bn.js@5.2.3)(react-native@0.85.3(@babel/core@7.29.0)(@types/react@19.2.15)(bufferutil@4.1.0)(react@19.2.6)(utf-8-validate@5.0.10))
-      '@kiloscribe/inscription-sdk': 1.0.61(@reown/appkit@1.8.9(@types/react@19.2.15)(bufferutil@4.1.0)(encoding@0.1.13)(ioredis@5.10.1)(react@19.2.6)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.25.76))(@reown/walletkit@1.5.5(bufferutil@4.1.0)(ioredis@5.10.1)(react-native@0.85.3(@babel/core@7.29.0)(@types/react@19.2.15)(bufferutil@4.1.0)(react@19.2.6)(utf-8-validate@5.0.10))(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.25.76))(@types/react@19.2.15)(@walletconnect/modal@2.7.0(@types/react@19.2.15)(react@19.2.6))(ansi-regex@6.2.2)(ansi-styles@6.2.3)(bn.js@5.2.3)(bufferutil@4.1.0)(debug@4.4.1)(encoding@0.1.13)(ethers@6.16.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(protobufjs@7.5.4)(react-native@0.85.3(@babel/core@7.29.0)(@types/react@19.2.15)(bufferutil@4.1.0)(react@19.2.6)(utf-8-validate@5.0.10))(react@19.2.6)(strip-ansi@7.1.2)(typescript@5.6.3)(utf-8-validate@5.0.10)
+      '@kiloscribe/inscription-sdk': 1.0.61(@reown/appkit@1.8.9(@types/react@19.2.15)(bufferutil@4.1.0)(encoding@0.1.13)(ioredis@5.10.1)(react@19.2.6)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.25.76))(@reown/walletkit@1.5.5(bufferutil@4.1.0)(ioredis@5.10.1)(react-native@0.85.3(@babel/core@7.29.0)(@types/react@19.2.15)(bufferutil@4.1.0)(react@19.2.6)(utf-8-validate@5.0.10))(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.25.76))(@walletconnect/modal@2.7.0(@types/react@19.2.15)(react@19.2.6))(ansi-regex@6.2.2)(ansi-styles@6.2.3)(bn.js@5.2.3)(bufferutil@4.1.0)(debug@4.4.1)(ethers@6.16.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(protobufjs@7.5.4)(react-native@0.85.3(@babel/core@7.29.0)(@types/react@19.2.15)(bufferutil@4.1.0)(react@19.2.6)(utf-8-validate@5.0.10))(strip-ansi@7.1.2)(utf-8-validate@5.0.10)
       axios: 1.16.1(debug@4.4.1)
       bignumber.js: 9.3.1
       buffer: 6.0.3
@@ -17129,7 +17132,7 @@ snapshots:
 
   '@kikobeats/time-span@1.0.13': {}
 
-  '@kiloscribe/inscription-sdk@1.0.61(@reown/appkit@1.8.9(@types/react@19.2.15)(bufferutil@4.1.0)(encoding@0.1.13)(ioredis@5.10.1)(react@19.2.6)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.25.76))(@reown/walletkit@1.5.5(bufferutil@4.1.0)(ioredis@5.10.1)(react-native@0.85.3(@babel/core@7.29.0)(@types/react@19.2.15)(bufferutil@4.1.0)(react@19.2.6)(utf-8-validate@5.0.10))(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.25.76))(@types/react@19.2.15)(@walletconnect/modal@2.7.0(@types/react@19.2.15)(react@19.2.6))(ansi-regex@6.2.2)(ansi-styles@6.2.3)(bn.js@5.2.3)(bufferutil@4.1.0)(debug@4.4.1)(encoding@0.1.13)(ethers@6.16.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(protobufjs@7.5.4)(react-native@0.85.3(@babel/core@7.29.0)(@types/react@19.2.15)(bufferutil@4.1.0)(react@19.2.6)(utf-8-validate@5.0.10))(react@19.2.6)(strip-ansi@7.1.2)(typescript@5.6.3)(utf-8-validate@5.0.10)':
+  '@kiloscribe/inscription-sdk@1.0.61(@reown/appkit@1.8.9(@types/react@19.2.15)(bufferutil@4.1.0)(encoding@0.1.13)(ioredis@5.10.1)(react@19.2.6)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.25.76))(@reown/walletkit@1.5.5(bufferutil@4.1.0)(ioredis@5.10.1)(react-native@0.85.3(@babel/core@7.29.0)(@types/react@19.2.15)(bufferutil@4.1.0)(react@19.2.6)(utf-8-validate@5.0.10))(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.25.76))(@walletconnect/modal@2.7.0(@types/react@19.2.15)(react@19.2.6))(ansi-regex@6.2.2)(ansi-styles@6.2.3)(bn.js@5.2.3)(bufferutil@4.1.0)(debug@4.4.1)(ethers@6.16.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(protobufjs@7.5.4)(react-native@0.85.3(@babel/core@7.29.0)(@types/react@19.2.15)(bufferutil@4.1.0)(react@19.2.6)(utf-8-validate@5.0.10))(strip-ansi@7.1.2)(utf-8-validate@5.0.10)':
     dependencies:
       '@hashgraph/hedera-wallet-connect': 2.0.3(@hashgraph/sdk@2.77.0(bn.js@5.2.3)(react-native@0.85.3(@babel/core@7.29.0)(@types/react@19.2.15)(bufferutil@4.1.0)(react@19.2.6)(utf-8-validate@5.0.10)))(@reown/appkit@1.8.9(@types/react@19.2.15)(bufferutil@4.1.0)(encoding@0.1.13)(ioredis@5.10.1)(react@19.2.6)(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.25.76))(@reown/walletkit@1.5.5(bufferutil@4.1.0)(ioredis@5.10.1)(react-native@0.85.3(@babel/core@7.29.0)(@types/react@19.2.15)(bufferutil@4.1.0)(react@19.2.6)(utf-8-validate@5.0.10))(typescript@5.6.3)(utf-8-validate@5.0.10)(zod@3.25.76))(@walletconnect/modal@2.7.0(@types/react@19.2.15)(react@19.2.6))(ethers@6.16.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))
       '@hashgraph/sdk': 2.77.0(bn.js@5.2.3)(react-native@0.85.3(@babel/core@7.29.0)(@types/react@19.2.15)(bufferutil@4.1.0)(react@19.2.6)(utf-8-validate@5.0.10))
@@ -17140,42 +17143,20 @@ snapshots:
       mime-types: 3.0.2
       socket.io-client: 4.8.3(bufferutil@4.1.0)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
-      - '@azure/app-configuration'
-      - '@azure/cosmos'
-      - '@azure/data-tables'
-      - '@azure/identity'
-      - '@azure/keyvault-secrets'
-      - '@azure/storage-blob'
-      - '@capacitor/preferences'
-      - '@deno/kv'
-      - '@netlify/blobs'
-      - '@planetscale/database'
-      - '@react-native-async-storage/async-storage'
       - '@reown/appkit'
       - '@reown/walletkit'
-      - '@types/react'
-      - '@upstash/redis'
-      - '@vercel/blob'
-      - '@vercel/functions'
-      - '@vercel/kv'
       - '@walletconnect/modal'
       - ansi-regex
       - ansi-styles
-      - aws4fetch
       - bn.js
       - bufferutil
-      - db0
       - debug
-      - encoding
       - ethers
       - expo-crypto
       - protobufjs
-      - react
       - react-native
       - strip-ansi
       - supports-color
-      - typescript
-      - uploadthing
       - utf-8-validate
 
   '@kwsites/file-exists@1.1.1':

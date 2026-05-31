@@ -24,6 +24,7 @@
         "grammy": "^1.34.0",
         "@elizaos/adapter-sqlite": "workspace:*",
         "@elizaos/client-direct": "workspace:*",
+        "@elizaos/client-telegram": "workspace:*",
         "@elizaos/config": "workspace:*",
         "@elizaos/core": "workspace:*",
         "@elizaos/family-metrics": "workspace:*",

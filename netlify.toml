@@ -1,7 +1,7 @@
 [build]
   base = "client"
-  publish = "dist"
-  command = "pnpm install --filter . --no-frozen-lockfile && pnpm run build"
+  publish = "out"
+  command = "cd .. && pnpm install --no-frozen-lockfile && pnpm --filter @familexyz/client run build"
 
 [build.environment]
   NODE_VERSION = "22"

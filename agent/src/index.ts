@@ -421,9 +421,9 @@ const startAgents = async () => {
     // Start agents
     let primaryRuntime: AgentRuntime | null = null;
     let primaryDb: IDatabaseAdapter | null = null;
-    
-    try {
-        for (const character of characters) {
+
+    for (const character of characters) {
+        try {
             const runtime = await startAgent(character, directClient);
             if (!primaryRuntime) {
                 primaryRuntime = runtime;
@@ -431,9 +431,9 @@ const startAgents = async () => {
                     primaryDb = (runtime as any).databaseAdapter;
                 }
             }
+        } catch (error) {
+            elizaLogger.error(`Error starting agent ${character.name}:`, error);
         }
-    } catch (error) {
-        elizaLogger.error("Error starting agents:", error);
     }
     
     // Initialize weekly bond score scheduler

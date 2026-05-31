@@ -83,7 +83,7 @@ export const apiClient = {
             body: formData,
         });
     },
-    getAgents: () => fetcher({ url: "/agents" }),
+    getAgents: () => fetcher({ url: "/agents" }).then((res: any) => res.data ?? res),
     getAgent: (agentId: string): Promise<{ id: string; character: Character }> =>
         fetcher({ url: `/agents/${agentId}` }),
     tts: (agentId: string, text: string) =>

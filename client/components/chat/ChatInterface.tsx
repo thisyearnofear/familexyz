@@ -101,7 +101,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
         try {
             const data = await apiClient.sendMessage(agentId, userMessage.content);
-            const reply = data.text || data.content || data.response || JSON.stringify(data);
+            const reply = Array.isArray(data)
+                ? data.map((d: any) => d.text || d.content || "").filter(Boolean).join("\n\n")
+                : data.text || data.content || data.response || JSON.stringify(data);
 
             // Word-by-word streaming effect
             let displayed = "";

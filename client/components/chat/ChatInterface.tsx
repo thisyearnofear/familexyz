@@ -48,7 +48,7 @@ interface ChatInterfaceProps {
 
 const CONTEXT_WELCOME: Record<string, (story?: DailyTake) => string> = {
     today: (story) => story
-        ? `I just finished discussing today's council story — "${story.story.headline}". Want to explore it through my lens?`
+        ? `You just read my take on today's council story — "${story.story.headline}". Want to explore it further through my lens?`
         : "I see you just came from today's Daily Council. Want to explore today's story through my lens? Ask me anything about it.",
 };
 

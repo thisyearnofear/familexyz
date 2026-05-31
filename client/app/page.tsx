@@ -88,7 +88,7 @@ function HomePage() {
     }, []);
 
     const navigateToChat = useCallback((slug: string) => {
-        router.push(`/chat/${slug}?context=today`);
+        router.push(`/chat/${slug}`);
     }, [router]);
 
     const today = new Date();

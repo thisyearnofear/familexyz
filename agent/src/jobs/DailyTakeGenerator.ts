@@ -104,7 +104,8 @@ export async function generateDailyTake(runtime: AgentRuntime): Promise<DailyTak
                 const take = await generateText({
                     runtime,
                     context: prompt,
-                    modelClass: ModelClass.LARGE,
+                    modelClass: ModelClass.SMALL,
+                    maxTokens: 150,
                 });
 
                 takes.push({

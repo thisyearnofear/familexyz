@@ -154,32 +154,36 @@ async function findTodaysStory(runtime: AgentRuntime): Promise<DailyTake["story"
 }
 
 async function tryRssFeed(): Promise<DailyTake["story"] | null> {
+    const allItems: Array<{ item: RssItem; source: string }> = [];
+
     for (const source of RSS_SOURCES) {
         try {
             const res = await fetch(source.url, { signal: AbortSignal.timeout(5000) });
             if (!res.ok) continue;
             const text = await res.text();
-
             const items = parseRssItems(text);
-            const familyStory = items.find(item =>
-                /family|parent|child|relationship|generation|marriage|partner|sibling|elder/i.test(
-                    item.title + " " + item.description
-                )
-            );
-
-            if (familyStory) {
-                return {
-                    headline: familyStory.title,
-                    source: source.name,
-                    url: familyStory.link,
-                    summary: familyStory.description.slice(0, 300),
-                };
+            for (const item of items.slice(0, 5)) {
+                allItems.push({ item, source: source.name });
             }
         } catch {
             continue;
         }
     }
-    return null;
+
+    if (allItems.length === 0) return null;
+
+    const familyKeywords = /family|parent|child|relationship|generation|marriage|partner|sibling|elder|teen|mother|father|kid|couple|home|divorce|caregiving|aging|school|adolescen/i;
+    const familyStory = allItems.find(({ item }) =>
+        familyKeywords.test(item.title + " " + item.description)
+    );
+
+    const chosen = familyStory || allItems[0];
+    return {
+        headline: chosen.item.title,
+        source: chosen.source,
+        url: chosen.item.link,
+        summary: chosen.item.description.slice(0, 300),
+    };
 }
 
 async function tryWebSearch(runtime: AgentRuntime): Promise<DailyTake["story"] | null> {

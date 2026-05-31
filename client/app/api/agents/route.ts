@@ -1,32 +1,36 @@
 import { NextResponse } from "next/server";
 
-// Shared agent statuses - sync with transform route
-const defaultAgentStatuses = [
-    { id: "wisdom", name: "Wisdom", status: "IDLE", emoji: "\uD83E\uDDE0" },
-    {
-        id: "intimacy",
-        name: "Intimacy",
-        status: "IDLE",
-        emoji: "\uD83D\uDC96",
-    },
-    {
-        id: "presence",
-        name: "Presence",
-        status: "IDLE",
-        emoji: "\uD83E\uDDD8",
-    },
-    {
-        id: "generational",
-        name: "Generational",
-        status: "IDLE",
-        emoji: "\uD83D\uDC68\u200D\uD83D\uDC69\u200D\uD83D\uDC67\u200D\uD83D\uDC66",
-    },
-    { id: "growth", name: "Growth", status: "IDLE", emoji: "\uD83C\uDF31" },
-];
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.famile.xyz";
+
+const EMOJI_MAP: Record<string, string> = {
+    wisdom: "\uD83E\uDDE0",
+    intimacy: "\uD83D\uDC96",
+    presence: "\uD83E\uDDD8",
+    generationalbridge: "\uD83E\uDDD3",
+    growth: "\uD83C\uDF31",
+    savings: "\uD83D\uDCB0",
+};
 
 export const dynamic = "force-dynamic";
 
-// GET: SSE stream for agent status updates
+async function fetchAgentStatuses() {
+    try {
+        const res = await fetch(`${API_BASE}/agents`, { cache: "no-store" });
+        if (!res.ok) return null;
+        const json = await res.json();
+        const agents = json.data?.agents ?? json.agents ?? json;
+        if (!Array.isArray(agents)) return null;
+        return agents.map((a: any) => ({
+            id: a.name?.toLowerCase() || a.id,
+            name: a.name || a.id,
+            status: a.status === "running" ? "ACTIVE" : "IDLE",
+            emoji: EMOJI_MAP[a.name?.toLowerCase()] || "\uD83E\uDD16",
+        }));
+    } catch {
+        return null;
+    }
+}
+
 export async function GET() {
     const encoder = new TextEncoder();
 
@@ -34,59 +38,37 @@ export async function GET() {
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
     const stream = new ReadableStream({
-        start(controller) {
-            // Send initial status
+        async start(controller) {
+            const initial = await fetchAgentStatuses();
             const initialData = JSON.stringify({
                 type: "agent-status",
-                agents: defaultAgentStatuses,
+                agents: initial || [],
             });
-            controller.enqueue(
-                encoder.encode(`data: ${initialData}\n\n`)
-            );
+            controller.enqueue(encoder.encode(`data: ${initialData}\n\n`));
 
-            // Track active controllers globally
-            // @ts-ignore
-            global.__agentStreamControllers ??= [];
-            // @ts-ignore
-            global.__agentStreamControllers.push(controller);
-
-            // Poll shared global for status updates
-            intervalId = setInterval(() => {
-                // @ts-ignore
-                const statuses = global.__agentStatuses;
+            intervalId = setInterval(async () => {
+                const statuses = await fetchAgentStatuses();
                 if (statuses) {
                     const data = JSON.stringify({
                         type: "agent-status",
                         agents: statuses,
                     });
                     try {
-                        controller.enqueue(
-                            encoder.encode(`data: ${data}\n\n`)
-                        );
+                        controller.enqueue(encoder.encode(`data: ${data}\n\n`));
                     } catch {
-                        // Stream closed
                         if (intervalId) clearInterval(intervalId);
                     }
                 }
-            }, 500);
+            }, 10000);
 
-            // Wait 30s then close (keep-alive timeout)
             timeoutId = setTimeout(() => {
                 if (intervalId) clearInterval(intervalId);
                 try { controller.close(); } catch {}
-            }, 30000);
+            }, 60000);
         },
         cancel() {
             if (intervalId) clearInterval(intervalId);
             if (timeoutId) clearTimeout(timeoutId);
-            // Remove from global tracking
-            // @ts-ignore
-            if (global.__agentStreamControllers) {
-                // @ts-ignore
-                const idx = global.__agentStreamControllers.indexOf(this);
-                // @ts-ignore
-                if (idx > -1) global.__agentStreamControllers.splice(idx, 1);
-            }
         },
     });
 

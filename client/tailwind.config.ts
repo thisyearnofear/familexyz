@@ -17,6 +17,16 @@ const config: Config = {
         },
         extend: {
             colors: {
+                editorial: {
+                    bg: "#1a1614",
+                    cream: "#e8e0d8",
+                    dim: "#c8c0b8",
+                    muted: "#a09890",
+                    subtle: "#706b63",
+                    faint: "#504a42",
+                    accent: "#c4542b",
+                    surface: "#2d2a24",
+                },
                 border: "hsl(var(--border))",
                 input: "hsl(var(--input))",
                 ring: "hsl(var(--ring))",

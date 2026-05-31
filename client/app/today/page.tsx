@@ -116,58 +116,44 @@ export default function TodayPage() {
     }
 
     return (
-        <div className={`${playfair.variable} ${caveat.variable} min-h-screen bg-[#1a1614]`}>
-            <style jsx>{`
-                @keyframes fadeUp {
-                    from { opacity: 0; transform: translateY(16px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
-                .fade-in { animation: fadeUp 0.7s cubic-bezier(0.22,1,0.36,1) both; }
-                .fade-in-d1 { animation-delay: 0.05s; }
-                .fade-in-d2 { animation-delay: 0.1s; }
-                .fade-in-d3 { animation-delay: 0.15s; }
-                .fade-in-d4 { animation-delay: 0.2s; }
-                .fade-in-d5 { animation-delay: 0.25s; }
-                .fade-in-d6 { animation-delay: 0.3s; }
-            `}</style>
-
+        <div className={`${playfair.variable} ${caveat.variable} min-h-screen bg-editorial-bg`}>
             <div className="max-w-5xl mx-auto px-6 py-12 sm:py-16">
                 {/* Back link */}
                 <Link
                     href="/"
-                    className="inline-block text-[0.6rem] tracking-[0.2em] uppercase text-[#504a42] hover:text-[#c4542b] transition-colors mb-8 fade-in"
+                    className="inline-block text-[0.6rem] tracking-[0.2em] uppercase text-editorial-faint hover:text-editorial-accent transition-colors mb-8 fade-in"
                 >
                     &larr; Back to Home
                 </Link>
 
                 {/* Header */}
                 <header className="text-center mb-12 fade-in fade-in-d1">
-                    <div className="w-20 h-px mx-auto mb-5 bg-gradient-to-r from-transparent via-[#c4542b]/30 to-transparent" />
-                    <h1 className="font-[family-name:var(--font-playfair)] text-[clamp(1.6rem,3.5vw,2.6rem)] font-bold text-[#e8e0d8] leading-[1.1] tracking-[-0.01em]">
+                    <div className="w-20 h-px mx-auto mb-5 bg-gradient-to-r from-transparent via-editorial-accent/30 to-transparent" />
+                    <h1 className="font-[family-name:var(--font-playfair)] text-[clamp(1.6rem,3.5vw,2.6rem)] font-bold text-editorial-cream leading-[1.1] tracking-[-0.01em]">
                         Today&rsquo;s Council
                     </h1>
-                    <p className="text-[0.65rem] tracking-[0.15em] uppercase text-[#706b63] mt-3">
+                    <p className="text-[0.65rem] tracking-[0.15em] uppercase text-editorial-subtle mt-3">
                         {formattedDate}
                     </p>
-                    <div className="w-32 h-px mx-auto mt-5 bg-gradient-to-r from-transparent via-[#c4542b]/30 to-transparent" />
+                    <div className="w-32 h-px mx-auto mt-5 bg-gradient-to-r from-transparent via-editorial-accent/30 to-transparent" />
                 </header>
 
                 {/* Story */}
                 <section className="mb-14 fade-in fade-in-d2">
                     <div className="text-center mb-8">
-                        <p className="font-[family-name:var(--font-playfair)] text-xl sm:text-2xl italic leading-snug text-[#c8c0b8] max-w-3xl mx-auto">
+                        <p className="font-[family-name:var(--font-playfair)] text-xl sm:text-2xl italic leading-snug text-editorial-dim max-w-3xl mx-auto">
                             &ldquo;{data.story.headline}&rdquo;
                         </p>
-                        <p className="text-[0.65rem] tracking-[0.15em] uppercase text-[#706b63] mt-3">
+                        <p className="text-[0.65rem] tracking-[0.15em] uppercase text-editorial-subtle mt-3">
                             {data.story.source}
                             {data.story.url && (
                                 <>
-                                    <span className="mx-2 text-[#504a42]">&middot;</span>
+                                    <span className="mx-2 text-editorial-faint">&middot;</span>
                                     <a
                                         href={data.story.url}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-[#a09890] hover:text-[#c4542b] transition-colors"
+                                        className="text-editorial-muted hover:text-editorial-accent transition-colors"
                                     >
                                         Read original
                                     </a>
@@ -175,16 +161,16 @@ export default function TodayPage() {
                             )}
                         </p>
                     </div>
-                    <p className="text-[#a09890] text-sm leading-relaxed max-w-2xl mx-auto text-center">
+                    <p className="text-editorial-muted text-sm leading-relaxed max-w-2xl mx-auto text-center">
                         {data.story.summary}
                     </p>
                 </section>
 
                 {/* Section divider */}
                 <div className="flex items-center gap-3 justify-center mb-8 fade-in fade-in-d3">
-                    <span className="w-12 h-px bg-[#706b63]/20" />
-                    <span className="text-[0.55rem] tracking-[0.2em] uppercase text-[#504a42]">Five Perspectives</span>
-                    <span className="w-12 h-px bg-[#706b63]/20" />
+                    <span className="w-12 h-px bg-editorial-subtle/20" />
+                    <span className="text-[0.55rem] tracking-[0.2em] uppercase text-editorial-faint">Five Perspectives</span>
+                    <span className="w-12 h-px bg-editorial-subtle/20" />
                 </div>
 
                 {/* Takes */}
@@ -202,7 +188,7 @@ export default function TodayPage() {
                             >
                                 {/* Wax seal for Wisdom */}
                                 {take.agent === "Wisdom" && (
-                                    <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full border-2 border-purple-500/30 flex items-center justify-center text-sm bg-[#1a1614]">
+                                    <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full border-2 border-purple-500/30 flex items-center justify-center text-sm bg-editorial-bg">
                                         <span className="text-purple-400/60">{take.emoji}</span>
                                     </div>
                                 )}
@@ -241,33 +227,33 @@ export default function TodayPage() {
                                                 style={{ color: meta.color }}>
                                                 {take.agent}
                                             </h3>
-                                            <span className="text-[#504a42] text-xs">/</span>
-                                            <span className="text-[0.55rem] tracking-[0.08em] uppercase text-[#706b63]">
+                                            <span className="text-editorial-faint text-xs">/</span>
+                                            <span className="text-[0.55rem] tracking-[0.08em] uppercase text-editorial-subtle">
                                                 {take.influence}
                                                 {influenceBio && (
-                                                    <span className="relative ml-1 group/tip cursor-help text-[#a09890]/40">
+                                                    <span className="relative ml-1 group/tip cursor-help text-editorial-muted/40">
                                                         &#9432;
-                                                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 rounded bg-[#2d2a24] text-[#e8e0d8] text-[0.6rem] leading-tight whitespace-nowrap opacity-0 group-hover/tip:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg border border-white/5">
+                                                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 rounded bg-editorial-surface text-editorial-cream text-[0.6rem] leading-tight whitespace-nowrap opacity-0 group-hover/tip:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg border border-white/5">
                                                             {influenceBio}
                                                         </span>
                                                     </span>
                                                 )}
                                             </span>
                                         </div>
-                                        <p className="text-[#a09890] text-xs mt-0.5 leading-relaxed">
+                                        <p className="text-editorial-muted text-xs mt-0.5 leading-relaxed">
                                             {meta.focus}
                                         </p>
                                     </div>
                                 </div>
 
-                                <p className="font-[family-name:var(--font-playfair)] text-sm italic leading-relaxed text-[#c8c0b8] mb-3">
+                                <p className="font-[family-name:var(--font-playfair)] text-sm italic leading-relaxed text-editorial-dim mb-3">
                                     &ldquo;{take.take}&rdquo;
                                 </p>
 
                                 <div className="flex items-center gap-4">
                                     <button
                                         onClick={() => navigateToChat(meta.slug)}
-                                        className="text-[0.6rem] tracking-[0.1em] uppercase text-[#504a42] hover:text-[#c4542b] transition-colors"
+                                        className="text-[0.6rem] tracking-[0.1em] uppercase text-editorial-faint hover:text-editorial-accent transition-colors"
                                     >
                                         Chat about this &rarr;
                                     </button>
@@ -280,24 +266,24 @@ export default function TodayPage() {
 
                 {/* Telegram CTA */}
                 <footer className="text-center fade-in fade-in-d6">
-                    <div className="w-24 h-px mx-auto mb-6 bg-gradient-to-r from-transparent via-[#c4542b]/20 to-transparent" />
-                    <p className="font-[family-name:var(--font-caveat)] text-lg text-[#706b63]">
+                    <div className="w-24 h-px mx-auto mb-6 bg-gradient-to-r from-transparent via-editorial-accent/20 to-transparent" />
+                    <p className="font-[family-name:var(--font-caveat)] text-lg text-editorial-subtle">
                         P.S. Get tomorrow&rsquo;s council on{` `}
                         <a
                             href="https://t.me/familexyzbot?start=subscribe_daily"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-[#c4542b] hover:text-[#c4542b]/80 transition-colors border-b border-[#c4542b]/20 hover:border-[#c4542b]/50"
+                            className="text-editorial-accent hover:text-editorial-accent/80 transition-colors border-b border-editorial-accent/20 hover:border-editorial-accent/50"
                         >
                             Telegram
                         </a>
                     </p>
-                    <p className="text-[0.55rem] tracking-[0.2em] uppercase text-[#504a42]/50 mt-4">
+                    <p className="text-[0.55rem] tracking-[0.2em] uppercase text-editorial-faint/50 mt-4">
                         famile.xyz &middot; Daily Council
                     </p>
                     <Link
                         href="/"
-                        className="inline-block mt-6 text-[0.55rem] tracking-[0.2em] uppercase text-[#504a42] hover:text-[#a09890] transition-colors"
+                        className="inline-block mt-6 text-[0.55rem] tracking-[0.2em] uppercase text-editorial-faint hover:text-editorial-muted transition-colors"
                     >
                         &larr; Back to Home
                     </Link>

@@ -45,7 +45,7 @@ export function AppSidebar() {
     return (
         <Sidebar aria-label="Main navigation" className={`${playfair.variable}`}>
             {/* Warm accent line at top */}
-            <div className="h-px mx-3 bg-gradient-to-r from-transparent via-[#c4542b]/30 to-transparent" />
+            <div className="h-px mx-3 bg-gradient-to-r from-transparent via-editorial-accent/30 to-transparent" />
 
             <SidebarHeader className="pb-2">
                 {/* Brand */}
@@ -53,14 +53,14 @@ export function AppSidebar() {
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
                             <Link href="/">
-                                <div className="flex items-center justify-center size-8 rounded-lg bg-[#c4542b]/10 border border-[#c4542b]/20">
+                                <div className="flex items-center justify-center size-8 rounded-lg bg-editorial-accent/10 border border-editorial-accent/20">
                                     <span className="text-lg">👨‍👩‍👧‍👦</span>
                                 </div>
                                 <div className="flex flex-col gap-0 leading-none">
-                                    <span className="font-[family-name:var(--font-playfair)] text-base font-bold tracking-[-0.01em] text-[#e8e0d8]">
+                                    <span className="font-[family-name:var(--font-playfair)] text-base font-bold tracking-[-0.01em] text-editorial-cream">
                                         famile.xyz
                                     </span>
-                                    <span className="text-[0.55rem] tracking-[0.15em] uppercase text-[#706b63]">
+                                    <span className="text-[0.55rem] tracking-[0.15em] uppercase text-editorial-subtle">
                                         Daily Council
                                     </span>
                                 </div>
@@ -96,11 +96,11 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
 
-            <div className="mx-3 h-px bg-gradient-to-r from-transparent via-[#454038]/30 to-transparent" />
+            <div className="mx-3 h-px bg-gradient-to-r from-transparent via-editorial-accent/10 to-transparent" />
 
             <SidebarContent>
                 <SidebarGroup>
-                    <SidebarGroupLabel className="text-[0.55rem] tracking-[0.2em] uppercase text-[#504a42] px-3 pb-1">
+                    <SidebarGroupLabel className="text-[0.55rem] tracking-[0.2em] uppercase text-editorial-faint px-3 pb-1">
                         Agents
                     </SidebarGroupLabel>
                     <SidebarGroupContent>
@@ -138,10 +138,10 @@ export function AppSidebar() {
                 </SidebarGroup>
             </SidebarContent>
 
-            <div className="mx-3 h-px bg-gradient-to-r from-transparent via-[#454038]/30 to-transparent" />
+            <div className="mx-3 h-px bg-gradient-to-r from-transparent via-editorial-accent/10 to-transparent" />
 
             <SidebarFooter className="space-y-1 pb-4 pt-2">
-                <p className="px-3 text-[0.5rem] tracking-[0.2em] uppercase text-[#504a42]">
+                <p className="px-3 text-[0.5rem] tracking-[0.2em] uppercase text-editorial-faint">
                     Connect
                 </p>
                 <SidebarMenu>
@@ -155,7 +155,7 @@ export function AppSidebar() {
                             >
                                 <Send className="h-3.5 w-3.5 text-blue-400/70" />
                                 <span>Telegram Bot</span>
-                                <ExternalLink className="h-2.5 w-2.5 ml-auto text-[#504a42]" />
+                                <ExternalLink className="h-2.5 w-2.5 ml-auto text-editorial-faint" />
                             </a>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -169,7 +169,7 @@ export function AppSidebar() {
                             >
                                 <ShieldCheck className="h-3.5 w-3.5 text-green-400/70" />
                                 <span>Hedera HCS Logs</span>
-                                <ExternalLink className="h-2.5 w-2.5 ml-auto text-[#504a42]" />
+                                <ExternalLink className="h-2.5 w-2.5 ml-auto text-editorial-faint" />
                             </a>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -183,12 +183,12 @@ export function AppSidebar() {
                             >
                                 <Hash className="h-3.5 w-3.5 text-amber-400/70" />
                                 <span>$FAM Token</span>
-                                <ExternalLink className="h-2.5 w-2.5 ml-auto text-[#504a42]" />
+                                <ExternalLink className="h-2.5 w-2.5 ml-auto text-editorial-faint" />
                             </a>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
-                <div className="mx-3 h-px bg-gradient-to-r from-transparent via-[#454038]/30 to-transparent my-1" />
+                <div className="mx-3 h-px bg-gradient-to-r from-transparent via-editorial-accent/10 to-transparent my-1" />
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton asChild>

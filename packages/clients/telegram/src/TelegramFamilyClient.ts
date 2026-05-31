@@ -72,6 +72,14 @@ import {
     handlePrivacyAccept,
     showPrivacyDisclosureIfNeeded,
 } from "./privacy.js";
+import {
+    handleHederaStatus,
+    handleMilestone,
+    handleReward,
+    handleTransfer,
+    handleBalance,
+    handleDemo,
+} from "./hederaHandlers.js";
 
 export interface TelegramChannelConfig extends ChannelConfig {
     credentials: {
@@ -373,18 +381,23 @@ export class TelegramFamilyClient implements FamilyMessagingAdapter {
         });
 
         this.bot.command("status", async (ctx) => {
+            const hederaEnabled = !!(process.env.HEDERA_OPERATOR_ID && process.env.HEDERA_OPERATOR_KEY);
+            
             await ctx.reply(
-                `\u{1F4CA} *FamilyXYZ Status*\n\n` +
-                `Connection: ${this.status.isConnected ? "\u{2705} Online" : "\u{274C} Offline"}\n` +
+                `📊 *FamilyXYZ Status*\n\n` +
+                `Connection: ${this.status.isConnected ? "✅ Online" : "❌ Offline"}\n` +
                 `Groups: ${this.groupMappings.size}\n` +
                 `Agents: 6 available\n` +
                 `Bot: @${this.status.details?.botUsername || "familexyzbot"}\n\n` +
+                `🏦 *Hedera:* ${hederaEnabled ? "✅ Connected" : "❌ Not configured"}\n\n` +
                 `*Commands:*\n` +
                 `/checkin — Daily mood & gratitude\n` +
                 `/agents — Switch coaching agent\n` +
                 `/bondscore — View family score\n` +
                 `/challenge — Family goals\n` +
                 `/savings — FAM vault\n` +
+                `/hedera — Hedera status & tools\n` +
+                `/demo — Full Hedera walkthrough\n` +
                 `/ask <agent> <q> — Ask a specific agent\n` +
                 `/help — Feature overview`,
                 { parse_mode: "Markdown" }
@@ -423,6 +436,37 @@ export class TelegramFamilyClient implements FamilyMessagingAdapter {
                 "_This cannot be undone._",
                 { parse_mode: "Markdown", reply_markup: kb }
             );
+            this.updateActivity();
+        });
+
+        // Hedera commands
+        this.bot.command("hedera", async (ctx) => {
+            await handleHederaStatus(ctx);
+            this.updateActivity();
+        });
+
+        this.bot.command("milestone", async (ctx) => {
+            await handleMilestone(ctx);
+            this.updateActivity();
+        });
+
+        this.bot.command("reward", async (ctx) => {
+            await handleReward(ctx);
+            this.updateActivity();
+        });
+
+        this.bot.command("transfer", async (ctx) => {
+            await handleTransfer(ctx);
+            this.updateActivity();
+        });
+
+        this.bot.command("balance", async (ctx) => {
+            await handleBalance(ctx);
+            this.updateActivity();
+        });
+
+        this.bot.command("demo", async (ctx) => {
+            await handleDemo(ctx);
             this.updateActivity();
         });
     }

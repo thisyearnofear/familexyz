@@ -9,7 +9,9 @@
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
-        "types": ["node"],
+    "types": [
+      "node"
+    ],
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
@@ -33,7 +35,8 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

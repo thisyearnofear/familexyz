@@ -69,6 +69,17 @@ export {
     showPrivacyDisclosureIfNeeded,
 } from "./privacy.js";
 
+// Hedera integration handlers
+export {
+    handleHederaStatus,
+    handleMilestone,
+    handleReward,
+    handleTransfer,
+    handleBalance,
+    registerHederaCommands,
+    type HederaSessionData,
+} from "./hederaHandlers.js";
+
 export {
     getDb,
     ensureUser,

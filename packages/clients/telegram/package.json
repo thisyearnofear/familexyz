@@ -20,6 +20,8 @@
     ],
     "dependencies": {
         "@elizaos/core": "workspace:*",
+        "@elizaos/familyxyz-hedera-plugin": "workspace:*",
+        "@hashgraph/sdk": "2.53.0",
         "better-sqlite3": "11.6.0",
         "grammy": "1.34.0"
     },

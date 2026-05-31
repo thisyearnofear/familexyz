@@ -24,6 +24,67 @@ let telegramClient: TelegramFamilyClient | null = null;
 let runtimeInstance: AgentRuntime | null = null;
 
 /**
+ * Smart Agent Routing
+ *
+ * Classifies message intent by keywords/patterns and routes to the most
+ * relevant agent. Falls back to the user's preferred agent or "wisdom" (general).
+ */
+const AGENT_ROUTING_RULES: Array<{ agent: string; patterns: RegExp[] }> = [
+    {
+        agent: "intimacy",
+        patterns: [
+            /\b(partner|spouse|husband|wife|marriage|romantic|love life|date night|reconnect|intimacy|affection|relationship|disconnect(ed)?|argue|argument|fighting)\b/i,
+            /\b(closer|drifting apart|quality time|physical touch|emotional connect|trust issues|jealous|boundaries)\b/i,
+        ],
+    },
+    {
+        agent: "presence",
+        patterns: [
+            /\b(mindful|meditation|screen time|device|phone|distract|present|focus|attention|digital|unplug|overwhelm|stress|anxious|anxiety|calm|breath|peace)\b/i,
+            /\b(work.life balance|burnout|too busy|no time|rushing|slow down|self.care|mental health)\b/i,
+        ],
+    },
+    {
+        agent: "bridge",
+        patterns: [
+            /\b(grandparent|grandma|grandpa|elder|aging|generation|tradition|heritage|story|stories|legacy|wisdom.*elder|parent.*aging|old.school)\b/i,
+            /\b(generation gap|boomer|millennial|gen.?z|culture clash|family history|ancestor|roots)\b/i,
+        ],
+    },
+    {
+        agent: "growth",
+        patterns: [
+            /\b(challenge|goal|habit|improve|growth|develop|learn|skill|resilience|setback|fail|succeed|achievement|milestone|progress|motivat)\b/i,
+            /\b(new year|resolution|accountability|discipline|routine|stuck|potential|overcome)\b/i,
+        ],
+    },
+    {
+        agent: "wisdom",
+        patterns: [
+            /\b(communicat|conflict|disagree|fight|misunderstand|listen|empathy|emotional intelligence|forgive|apologize|boundaries|conversation)\b/i,
+            /\b(family meeting|difficult topic|hard talk|sensitive|navigate|mediate|resolve)\b/i,
+        ],
+    },
+];
+
+function detectAgentFromMessage(text: string): string | null {
+    let bestMatch: { agent: string; score: number } | null = null;
+
+    for (const rule of AGENT_ROUTING_RULES) {
+        let score = 0;
+        for (const pattern of rule.patterns) {
+            const matches = text.match(pattern);
+            if (matches) score += matches.length;
+        }
+        if (score > 0 && (!bestMatch || score > bestMatch.score)) {
+            bestMatch = { agent: rule.agent, score };
+        }
+    }
+
+    return bestMatch?.agent ?? null;
+}
+
+/**
  * Default template for handling Telegram messages via the agent runtime.
  * Uses state keys populated by runtime.composeState().
  * Falls back to this if the character doesn't have a telegramMessageHandlerTemplate.
@@ -137,6 +198,13 @@ async function handleTelegramMessage(message: IncomingMessage, runtime: AgentRun
 
         elizaLogger.debug(`[Telegram] Processing message from ${from} (${chatType}): ${text.substring(0, 50)}...`);
 
+        // Check if it's a council request (/council command)
+        if (metadata?.isCouncilRequest) {
+            elizaLogger.info(`[Telegram] Council request: ${text}`);
+            await handleCouncilRequest(text, from, conversationId, runtime, isPrivate);
+            return;
+        }
+
         // Check if it's a direct agent question (/ask command)
         if (metadata?.isDirectQuestion && metadata?.agentName) {
             const agentName = metadata.agentName as string;
@@ -145,8 +213,19 @@ async function handleTelegramMessage(message: IncomingMessage, runtime: AgentRun
             return;
         }
 
-        // Route with context
-        await routeToAgent(text, from, conversationId, runtime, { preferredAgent, isPrivate });
+        // Smart routing: detect intent from message content
+        const detectedAgent = detectAgentFromMessage(text);
+        const routedAgent = detectedAgent || preferredAgent;
+
+        if (detectedAgent && detectedAgent !== preferredAgent) {
+            elizaLogger.info(`[Telegram] Smart-routed "${text.substring(0, 40)}..." → ${detectedAgent} (preferred was ${preferredAgent || "none"})`);
+        }
+
+        await routeToAgent(text, from, conversationId, runtime, {
+            agentName: detectedAgent || undefined,
+            preferredAgent: detectedAgent ? undefined : preferredAgent,
+            isPrivate,
+        });
     } catch (error) {
         elizaLogger.error("[Telegram] Message handling error:", error);
     }
@@ -301,6 +380,81 @@ function buildSuggestedActionsKeyboard(responseContent: any): InlineKeyboard | u
         }
     }
     return added > 0 ? kb : undefined;
+}
+
+/**
+ * Family Council: ask all agents and combine perspectives
+ */
+async function handleCouncilRequest(
+    text: string,
+    userId: string,
+    conversationId: string,
+    runtime: AgentRuntime,
+    isPrivate: boolean
+): Promise<void> {
+    const agents = ["wisdom", "intimacy", "presence", "growth", "bridge"];
+
+    const responses: Array<{ agent: string; emoji: string; text: string }> = [];
+
+    for (const agentKey of agents) {
+        const profile = AGENT_PROFILES[agentKey];
+        if (!profile) continue;
+
+        const agentPrefix = `\nYou are the ${profile.name} agent (${profile.desc}). ` +
+            `Give a focused 1-2 sentence perspective on the user's question from your specialty area. Be concrete and actionable.\n`;
+
+        const messageId = `${conversationId}-council-${agentKey}-${Date.now()}`;
+
+        const memory: Memory = {
+            id: messageId as UUID,
+            userId: userId as UUID,
+            agentId: runtime.agentId,
+            roomId: conversationId as UUID,
+            content: { text, source: "telegram" },
+            createdAt: Date.now(),
+        };
+
+        try {
+            const state = await runtime.composeState(memory);
+            const responseTemplate =
+                runtime.character.templates?.telegramMessageHandlerTemplate ??
+                defaultTelegramHandlerTemplate;
+
+            const responseContext = composeContext({
+                state,
+                template: responseTemplate + agentPrefix,
+            });
+
+            const responseContent = await generateMessageResponse({
+                runtime,
+                context: responseContext,
+                modelClass: ModelClass.LARGE,
+            });
+
+            if (responseContent?.text) {
+                responses.push({
+                    agent: profile.name,
+                    emoji: profile.emoji,
+                    text: responseContent.text,
+                });
+            }
+        } catch (error) {
+            elizaLogger.warn(`[Council] ${agentKey} failed:`, error);
+            responses.push({
+                agent: profile.name,
+                emoji: profile.emoji,
+                text: "_Could not respond at this time._",
+            });
+        }
+    }
+
+    const formatted = responses
+        .map((r) => `${r.emoji} *${r.agent}:*\n${r.text}`)
+        .join("\n\n");
+
+    const reply = `*Family Council* 🏛️\n_\"${text.length > 80 ? text.substring(0, 77) + "..." : text}\"_\n\n${formatted}`;
+
+    await sendTelegramMessage(conversationId, reply);
 }
 
 /**

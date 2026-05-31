@@ -119,14 +119,15 @@ export async function handleHelp(ctx: Context): Promise<void> {
 
     await ctx.reply(
         "*FamilyXYZ — Your Family Companion* \u{1F3E1}\n\n" +
-        "*Features:*\n" +
+        "*Commands:*\n" +
         "\u{1F4AC} `/checkin` — Daily mood & gratitude\n" +
         "\u{1F916} `/agents` — Switch coaching agent\n" +
+        "\u{1F3DB} `/council <question>` — All 5 agents weigh in\n" +
+        "\u{1F4AD} `/ask <agent> <question>` — Ask a specific agent\n" +
         "\u{1F4CA} `/bondscore` — Family health metrics\n" +
         "\u{1F3AF} `/challenge` — Weekly family goals\n" +
-        "\u{1F4B0} `/savings` — FAM token vault\n" +
-        "\u{1F4AD} `/ask wisdom <question>` — Ask a specific agent\n\n" +
-        "*Or just message me naturally* — I'll route to the right agent based on your topic.\n\n" +
+        "\u{1F4B0} `/savings` — FAM token vault\n\n" +
+        "*Smart routing:* Just type naturally — I detect your topic and route to the right agent automatically.\n\n" +
         "_Try something:_",
         { parse_mode: "Markdown", reply_markup: quickStart }
     );

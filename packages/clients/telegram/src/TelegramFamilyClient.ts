@@ -285,21 +285,32 @@ export class TelegramFamilyClient implements FamilyMessagingAdapter {
                     `I'm your family's AI companion, here to strengthen bonds and grow together.\n\n` +
                     `*What I can do:*\n` +
                     `\u{1F4AC} Daily check-ins & gratitude\n` +
-                    `\u{1F916} 6 specialized coaching agents\n` +
+                    `\u{1F916} 5 specialized coaching agents\n` +
                     `\u{1F4CA} Track your family bond score\n` +
                     `\u{1F3AF} Family challenges & goals\n` +
-                    `\u{1F4B0} Savings vault (4.5% APY)\n\n` +
-                    `Use the menu below to get started!`,
+                    `\u{1F3DB} /council — ask all agents at once\n\n` +
+                    `Use the menu below or just talk naturally — I'll route to the right agent!`,
                     { parse_mode: "Markdown", reply_markup: persistentKeyboard() }
                 );
             } else {
                 ctx.session.onboardingComplete = false;
+
                 await ctx.reply(
-                    `*Hey there* \u{1F44B}\n\n` +
-                    `I'm FamilyXYZ — your personal family wellness companion.\n\n` +
-                    `I help you build deeper connections through daily reflection, emotional coaching, and shared goals.\n\n` +
-                    `*Explore what's possible:*`,
-                    { parse_mode: "Markdown", reply_markup: onboardingKeyboard() }
+                    `*Welcome to FamilyXYZ* \u{1F44B}\n\n` +
+                    `I'm your family wellness companion with *5 specialized agents* — each one coaches a different dimension of family life.\n\n` +
+                    `\u{1F9E0} *Wisdom* — Communication & conflict resolution\n` +
+                    `_"How do I apologize after an argument?"_\n\n` +
+                    `\u{1F491} *Intimacy* — Relationships & emotional connection\n` +
+                    `_"We've been drifting apart, how do we reconnect?"_\n\n` +
+                    `\u{1F9D8} *Presence* — Mindfulness & digital wellness\n` +
+                    `_"Help me be more present with my kids"_\n\n` +
+                    `\u{1F680} *Growth* — Challenges & family development\n` +
+                    `_"We need a new family goal for this month"_\n\n` +
+                    `\u{1F9D3} *Bridge* — Generational bonds & traditions\n` +
+                    `_"How do I connect with my aging parents?"_\n\n` +
+                    `\u{2728} *Just type naturally* — I'll detect the topic and route to the right agent. Or use /council to hear from all 5 at once.\n\n` +
+                    `_Try it now — what's on your mind about your family?_`,
+                    { parse_mode: "Markdown", reply_markup: persistentKeyboard() }
                 );
 
                 // Show privacy disclosure for first-time users
@@ -336,6 +347,40 @@ export class TelegramFamilyClient implements FamilyMessagingAdapter {
 
         this.bot.command("savings", async (ctx) => {
             await handleSavings(ctx);
+            this.updateActivity();
+        });
+
+        this.bot.command("council", async (ctx) => {
+            const question = ctx.match?.trim();
+            if (!question) {
+                await ctx.reply(
+                    "Usage: `/council <question>`\n\n" +
+                    "All 5 agents will share their perspective.\n\n" +
+                    "Example: `/council How can we handle holiday planning stress?`",
+                    { parse_mode: "Markdown" }
+                );
+                return;
+            }
+
+            await ctx.reply("🏛️ _Gathering perspectives from all agents..._", { parse_mode: "Markdown" });
+            await ctx.api.sendChatAction(ctx.chat!.id, "typing");
+
+            const incomingMessage: IncomingMessage = {
+                id: ctx.message?.message_id.toString() || Date.now().toString(),
+                from: ctx.from?.id.toString() || "unknown",
+                fromUsername: ctx.from?.username,
+                conversationId: `telegram:${ctx.chat?.id}`,
+                text: question,
+                timestamp: Date.now(),
+                metadata: {
+                    isCouncilRequest: true,
+                    chatType: ctx.chat?.type,
+                },
+            };
+
+            for (const handler of this.messageHandlers) {
+                await handler(incomingMessage);
+            }
             this.updateActivity();
         });
 

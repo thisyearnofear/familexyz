@@ -473,7 +473,7 @@ const startAgents = async () => {
     
     // Start HTTP API server
     const healthPort = Number.parseInt(process.env.HEALTH_PORT || "31338");
-    await createHttpServer({ port: healthPort, primaryDb });
+    await createHttpServer({ port: healthPort, primaryDb, runtime: primaryRuntime });
     
     if (serverPort !== Number.parseInt(settings.SERVER_PORT || "31337")) {
         elizaLogger.log(`Server started on alternate port ${serverPort}`);

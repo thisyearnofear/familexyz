@@ -497,10 +497,29 @@ export function getGroupMappings() {
 }
 
 /**
- * Extend DirectClient with Telegram API endpoints
+ * Extend DirectClient with Telegram API endpoints and Daily Take
  */
 export function extendDirectClientWithTelegram(directClient: DirectClient): void {
     elizaLogger.info("[Telegram] Extending DirectClient with Telegram endpoints");
+
+    // Daily Take endpoint
+    directClient.app.get("/daily-take", async (req, res) => {
+        try {
+            const { getCachedDailyTake, generateDailyTake } = await import("../jobs/DailyTakeGenerator.js");
+            let take = getCachedDailyTake();
+            if (!take && runtimeInstance) {
+                take = await generateDailyTake(runtimeInstance);
+            }
+            if (take) {
+                res.json(take);
+            } else {
+                res.status(503).json({ error: "Daily take not yet generated" });
+            }
+        } catch (error) {
+            elizaLogger.error("[DailyTake] Error:", error);
+            res.status(500).json({ error: "Failed to generate daily take" });
+        }
+    });
 
     // Telegram Integration Status
     directClient.app.get("/integrations/telegram/status", (req, res) => {

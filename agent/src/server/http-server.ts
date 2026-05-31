@@ -11,6 +11,7 @@ import http from "http";
 import url from "url";
 import { elizaLogger, type IDatabaseAdapter } from "@elizaos/core";
 import { healthCheck, readinessCheck } from "../health.js";
+import { getCachedDailyTake, generateDailyTake } from "../jobs/DailyTakeGenerator.js";
 
 // Global payout API handler
 declare global {
@@ -23,6 +24,7 @@ let _primaryDb: IDatabaseAdapter | null = null;
 export interface HttpServerConfig {
     port: number;
     primaryDb: IDatabaseAdapter | null;
+    runtime?: any;
 }
 
 /**
@@ -46,9 +48,13 @@ function getCorsOrigin(reqOrigin?: string): string | null {
 /**
  * Create and start the HTTP API server
  */
+// Module-level ref to runtime for daily take generator
+let _runtime: any = null;
+
 export async function createHttpServer(config: HttpServerConfig): Promise<http.Server> {
-    const { port, primaryDb } = config;
+    const { port, primaryDb, runtime } = config;
     _primaryDb = primaryDb;
+    _runtime = runtime;
 
     const server = http.createServer(async (req, res) => {
         // Add CORS headers with origin validation
@@ -117,6 +123,31 @@ export async function createHttpServer(config: HttpServerConfig): Promise<http.S
         // File dispute
         if (req.method === "POST" && pathname === "/api/payouts/dispute") {
             return routeHandlers.handleDispute(req, res, handler);
+        }
+
+        // Daily Take endpoint
+        if (req.method === "GET" && pathname === "/daily-take") {
+            try {
+                let take = getCachedDailyTake();
+                if (!take && _runtime) {
+                    take = await generateDailyTake(_runtime);
+                }
+                if (take) {
+                    res.statusCode = 200;
+                    res.setHeader("Content-Type", "application/json");
+                    res.end(JSON.stringify(take));
+                } else {
+                    res.statusCode = 503;
+                    res.setHeader("Content-Type", "application/json");
+                    res.end(JSON.stringify({ error: "Daily take not yet generated" }));
+                }
+            } catch (error) {
+                elizaLogger.error("Error serving daily take:", error);
+                res.statusCode = 500;
+                res.setHeader("Content-Type", "application/json");
+                res.end(JSON.stringify({ error: "Failed to generate daily take" }));
+            }
+            return;
         }
 
         // Health check endpoint (explicit)

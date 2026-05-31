@@ -192,6 +192,26 @@ export const EnhancedFamilyDashboard: React.FC = () => {
                     </div>
                 </div>
 
+                <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-xl p-6">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h2 className="text-lg font-semibold mb-1">
+                                Today&apos;s Council
+                            </h2>
+                            <p className="text-muted-foreground text-sm">
+                                One story from the zeitgeist, five agent perspectives.
+                                Updated daily.
+                            </p>
+                        </div>
+                        <a
+                            href="/today"
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-600 text-white text-sm font-medium hover:bg-amber-700 transition-colors whitespace-nowrap"
+                        >
+                            Read Today&apos;s Take
+                        </a>
+                    </div>
+                </div>
+
                 <div className="bg-card border rounded-xl p-6">
                     <AgentActivityFeed
                         agentId="primary"

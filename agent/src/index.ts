@@ -14,9 +14,7 @@
 
 // Load environment variables FIRST before any other imports
 import { config } from "dotenv";
-import { resolve } from "path";
-config({ path: resolve(process.env.HOME || "/home/deploy", "familexyz/shared/.env") });
-config(); // Also try loading from current directory .env
+config(); // Loads .env from CWD (symlinked to shared/env/.env on server)
 
 import { DirectClient } from "@elizaos/client-direct";
 import {

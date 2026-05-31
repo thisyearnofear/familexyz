@@ -14,7 +14,27 @@
       "Bash(npx tsc *)",
       "Bash(node --import tsx -e ' *)",
       "Bash(node *)",
-      "Bash(rsync *)"
+      "Bash(rsync *)",
+      "Bash(cat next.config.mjs)",
+      "Bash(cat next.config.js)",
+      "Bash(cat next.config.ts)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(pnpm install *)",
+      "Bash(npx next *)",
+      "Bash(curl -sS -o /dev/null -w \"HTTP %{http_code} from %{url_effective}\\\\n\" https://api.famile.xyz/agents)",
+      "Bash(curl -sS https://api.famile.xyz/agents)",
+      "Bash(curl -sS https://api.famile.xyz/agents/d7889563-20b2-0c44-b202-04cc8ec5a505)",
+      "Bash(curl -sS https://api.famile.xyz/wisdom/message -X POST -H \"Content-Type: multipart/form-data\" -F \"text=hello\" -F \"user=user\")",
+      "Bash(curl -sS https://api.famile.xyz/d7889563-20b2-0c44-b202-04cc8ec5a505/message -X POST -F \"text=hello\" -F \"user=user\")",
+      "Bash(curl *)",
+      "Bash(grep -E \"\\\\.\\(ts|js|json\\)$\")",
+      "Bash(npx tsup *)",
+      "Bash(pnpm ls *)",
+      "Bash(git commit *)",
+      "Bash(ssh deploy@5.78.76.113 \"pm2 list && echo '---' && cat /etc/nginx/sites-enabled/api.famile.xyz 2>/dev/null || cat /etc/nginx/conf.d/api.famile.xyz* 2>/dev/null\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d.get\\('date','none'\\)\\)\")"
     ],
     "deny": []
   }

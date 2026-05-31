@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from "next/navigation";
 import { Share2, Check, ChevronDown, MessageCircle } from "lucide-react";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 
 interface DailyTake {
     date: string;
@@ -21,6 +22,14 @@ interface DailyTake {
     }>;
     generatedAt: number;
 }
+
+const INFLUENCER_BIO: Record<string, string> = {
+    "Alain de Botton": "Philosopher and author exploring love, art, and modern life",
+    "Esther Perel": "Therapist and author on relationships and intimacy",
+    "Thich Nhat Hanh": "Buddhist monk, peace activist, and mindfulness teacher",
+    "James Clear": "Author of Atomic Habits, focused on habit formation",
+    "StoryCorps": "Nonprofit preserving and sharing humanity's stories",
+};
 
 const AGENT_COLORS: Record<string, string> = {
     Wisdom: '#7c3aed',
@@ -43,7 +52,7 @@ function TakeCard({ take, story, onChat }: { take: DailyTake['takes'][0]; story:
 
     const handleShare = async (e: React.MouseEvent) => {
         e.stopPropagation();
-        const shareText = `${take.emoji} ${take.agent} via ${take.influence}\n\n"${take.take}"\n\n— Reacting to: ${story.headline}\nDaily Council · famile.xyz`;
+        const shareText = `${take.emoji} ${take.agent} inspired by ${take.influence}\n\n"${take.take}"\n\n— Reacting to: ${story.headline}\nDaily Council · famile.xyz`;
 
         if (navigator.share) {
             try {
@@ -65,7 +74,17 @@ function TakeCard({ take, story, onChat }: { take: DailyTake['takes'][0]; story:
                         <div>
                             <span className="font-semibold text-foreground">{take.agent}</span>
                             <span className="text-muted-foreground text-sm ml-2">
-                                via {take.influence}
+                                inspired by{" "}
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <span className="cursor-help underline decoration-dotted underline-offset-2 decoration-muted-foreground/30">
+                                            {take.influence}
+                                        </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top" className="max-w-[220px] text-xs">
+                                        {INFLUENCER_BIO[take.influence] || "Influential thinker"}
+                                    </TooltipContent>
+                                </Tooltip>
                             </span>
                         </div>
                     </div>
@@ -146,6 +165,7 @@ export default function TodayPage() {
     });
 
     return (
+        <TooltipProvider>
         <div className="min-h-screen bg-background">
             <div className="bg-gradient-to-r from-amber-600 via-orange-600 to-red-600 px-6 py-10 sm:py-14">
                 <div className="max-w-5xl mx-auto">
@@ -247,5 +267,6 @@ export default function TodayPage() {
                 </div>
             </div>
         </div>
+        </TooltipProvider>
     );
 }

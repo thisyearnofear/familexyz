@@ -25,10 +25,14 @@ export const EnhancedFamilyDashboard: React.FC = () => {
         AGENT_LIST.map(a => ({ id: a.id, name: a.name, status: 'IDLE', emoji: a.emoji }))
     );
     const [bondScore, setBondScore] = useState(85);
+    const [sseStatus, setSseStatus] = useState<'connecting' | 'connected' | 'error' | 'idle'>('idle');
+    const [bondHistory, setBondHistory] = useState<number[]>([62, 65, 68, 72, 75, 78, 82, 85]);
 
     useEffect(() => {
+        setSseStatus('connecting');
         const eventSource = new EventSource('/api/agents');
 
+        eventSource.onopen = () => setSseStatus('connected');
         eventSource.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
@@ -43,23 +47,29 @@ export const EnhancedFamilyDashboard: React.FC = () => {
                         }
                         return updated;
                     });
+                    setSseStatus('connected');
                 }
             } catch { }
         };
+        eventSource.onerror = () => setSseStatus('error');
 
         return () => eventSource.close();
     }, []);
 
     useEffect(() => {
+        setSseStatus('connecting');
         const es = new EventSource('/api/agents/primary/stream');
+        es.onopen = () => setSseStatus('connected');
         es.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
                 if (data.type === 'metric' && data.data?.metric === 'bondScore') {
                     setBondScore(data.data.value);
+                    if (data.data?.history) setBondHistory(data.data.history);
                 }
             } catch { }
         };
+        es.onerror = () => setSseStatus('error');
         return () => es.close();
     }, []);
 
@@ -82,13 +92,25 @@ export const EnhancedFamilyDashboard: React.FC = () => {
                             </p>
                         </div>
                         <div className="flex items-center gap-3">
-                            <div className="flex items-center space-x-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2">
-                                <span className="w-2 h-2 bg-green-300 rounded-full animate-pulse" />
-                                <span className="font-semibold text-white text-sm">
-                                    System Online
-                                </span>
-                            </div>
-                        </div>
+                <a
+                    href="https://t.me/familexyzbot"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 bg-blue-500/20 backdrop-blur-sm rounded-full px-4 py-2 text-sm text-blue-200 hover:bg-blue-500/30 transition-colors"
+                >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M11.944 0A12 12 0 000 12a12 12 0 0012 12 12 12 0 0012-12A12 12 0 0012 0a12 12 0 00-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 01.171.325c.016.127.087.669.087.669l-1.677 7.88c-.145.684-.55.838-.924.514l-2.547-1.99-1.232 1.19c-.136.128-.25.234-.523.234-.334 0-.432-.232-.432-.232l-.977-3.231-2.81-.978c-.607-.21-.61-.604-.124-.894l10.895-4.205c.271-.1.503-.07.678.044z"/>
+                    </svg>
+                    <span className="hidden sm:inline">Open in Telegram</span>
+                    <span className="sm:hidden">Telegram</span>
+                </a>
+                <div className="flex items-center space-x-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2">
+                    <span className="w-2 h-2 bg-green-300 rounded-full animate-pulse" />
+                    <span className="font-semibold text-white text-sm">
+                        System Online
+                    </span>
+                </div>
+            </div>
                     </div>
                 </div>
             </div>
@@ -143,7 +165,13 @@ export const EnhancedFamilyDashboard: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <BondScoreChart />
+                    <BondScoreChart
+                        data={bondHistory.map((score, i) => ({
+                            day: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][i % 7] + (i >= 7 ? `+${Math.floor(i/7)}` : ''),
+                            score,
+                            target: Math.min(100, score + 8),
+                        }))}
+                    />
                     <div className="bg-card border rounded-xl p-6">
                         <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
                         <div className="grid grid-cols-2 gap-3">

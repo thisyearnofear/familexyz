@@ -17,7 +17,7 @@ import {
     SidebarMenuSkeleton,
 } from "@/components/ui/sidebar";
 import { apiClient } from "@/lib/api";
-import { Book, Cog, Home, MessageSquareQuote, Beaker } from "lucide-react";
+import { Book, Cog, Home, Beaker, ExternalLink, Send, Hash, ShieldCheck } from "lucide-react";
 
 const info = { version: "0.1.0" };
 
@@ -146,7 +146,54 @@ export function AppSidebar() {
                     </SidebarGroupContent>
                 </SidebarGroup>
             </SidebarContent>
-            <SidebarFooter>
+            <SidebarFooter className="space-y-1 pb-3">
+                <SidebarGroupLabel className="px-3 text-xs font-medium text-muted-foreground">
+                    Connect
+                </SidebarGroupLabel>
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton asChild>
+                            <a
+                                href="https://t.me/familexyzbot"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2"
+                            >
+                                <Send className="h-4 w-4 text-blue-400" />
+                                <span>Telegram Bot</span>
+                                <ExternalLink className="h-3 w-3 ml-auto text-muted-foreground" />
+                            </a>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton asChild>
+                            <a
+                                href="https://hashscan.io/testnet/topic/0.0.7304500"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2"
+                            >
+                                <ShieldCheck className="h-4 w-4 text-green-400" />
+                                <span>Hedera HCS Logs</span>
+                                <ExternalLink className="h-3 w-3 ml-auto text-muted-foreground" />
+                            </a>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton asChild>
+                            <a
+                                href="https://hashscan.io/testnet/token/0.0.7304501"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2"
+                            >
+                                <Hash className="h-4 w-4 text-amber-400" />
+                                <span>$FAM Token</span>
+                                <ExternalLink className="h-3 w-3 ml-auto text-muted-foreground" />
+                            </a>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                </SidebarMenu>
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton asChild>

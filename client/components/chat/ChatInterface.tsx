@@ -34,13 +34,22 @@ interface Message {
     id: string;
 }
 
+interface DailyTake {
+    date: string;
+    story: { headline: string; source: string; url?: string; summary: string };
+    takes: Array<{ agent: string; emoji: string; influence: string; take: string }>;
+    generatedAt: number;
+}
+
 interface ChatInterfaceProps {
     initialAgentId: string;
     context?: string;
 }
 
-const CONTEXT_WELCOME: Record<string, string> = {
-    today: "I see you just came from today's Daily Council. Want to explore today's story through my lens? Ask me anything about it.",
+const CONTEXT_WELCOME: Record<string, (story?: DailyTake) => string> = {
+    today: (story) => story
+        ? `I just finished discussing today's council story — "${story.story.headline}". Want to explore it through my lens?`
+        : "I see you just came from today's Daily Council. Want to explore today's story through my lens? Ask me anything about it.",
 };
 
 const SUGGESTIONS: Record<string, string[]> = {
@@ -52,10 +61,10 @@ const SUGGESTIONS: Record<string, string[]> = {
 };
 
 const DEFAULT_SUGGESTIONS = [
-    "How can we communicate better as a family?",
-    "Suggest a family activity for this weekend",
-    "Help me resolve a conflict with empathy",
-    "What's our family bond score trend?",
+    "How can we build healthier communication habits?",
+    "Suggest a family activity that strengthens our bond",
+    "Help me work through a disagreement with empathy",
+    "What family goals should we set this month?",
 ];
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({
@@ -65,10 +74,12 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     const [agentId, setAgentId] = useState(initialAgentId);
     const [messages, setMessages] = useState<Message[]>([]);
     const [contextSeen, setContextSeen] = useState(!!context);
+    const [storyContext, setStoryContext] = useState<DailyTake | null>(null);
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [streamingContent, setStreamingContent] = useState("");
     const [error, setError] = useState<string | null>(null);
+    const hasSentRef = useRef(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const abortRef = useRef<AbortController | null>(null);
 
@@ -83,9 +94,25 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages, streamingContent]);
 
+    useEffect(() => {
+        if (context === "today") {
+            fetch('/api/today')
+                .then(res => res.json())
+                .then(setStoryContext)
+                .catch(() => {});
+        }
+    }, [context]);
+
+    const enrichFirstMessage = (text: string): string => {
+        if (hasSentRef.current || !storyContext) return text;
+        hasSentRef.current = true;
+        return `Regarding today's council story "${storyContext.story.headline}" (${storyContext.story.source}): ${text}`;
+    };
+
     const handleSend = async () => {
         if (!input.trim() || isLoading) return;
 
+        const textToSend = enrichFirstMessage(input.trim());
         const userMessage: Message = {
             role: "user",
             content: input.trim(),
@@ -100,7 +127,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         abortRef.current = new AbortController();
 
         try {
-            const data = await apiClient.sendMessage(agentId, userMessage.content);
+            const data = await apiClient.sendMessage(agentId, textToSend);
             const reply = Array.isArray(data)
                 ? data.map((d: any) => d.text || d.content || "").filter(Boolean).join("\n\n")
                 : data.text || data.content || data.response || JSON.stringify(data);
@@ -208,8 +235,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                                 Chat with {profile.name}
                             </h2>
                             <p className="text-editorial-subtle text-sm max-w-md mb-8 leading-relaxed">
-                                {contextSeen
-                                    ? CONTEXT_WELCOME[context || ''] || "Ask for advice, share how you're feeling, or explore ways to strengthen your family connections."
+                                {contextSeen && context && CONTEXT_WELCOME[context]
+                                    ? CONTEXT_WELCOME[context]!(storyContext || undefined)
                                     : "Ask for advice, share how you're feeling, or explore ways to strengthen your family connections."
                                 }
                             </p>

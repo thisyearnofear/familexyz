@@ -108,10 +108,11 @@ function HomePage() {
                         famile.xyz
                     </p>
                     <h1 className="font-[family-name:var(--font-playfair)] text-[clamp(2rem,4.5vw,3.2rem)] font-bold text-editorial-cream leading-[1.1] tracking-[-0.01em]">
-                        AI agents for deeper<br />family connections
+                        Enterprise AI coaches for<br />measurable family wellness
                     </h1>
-                    <p className="mt-4 text-editorial-muted text-sm sm:text-base max-w-lg mx-auto leading-relaxed">
-                        Five specialized personalities helping your family communicate, connect, and grow stronger together.
+                    <p className="mt-4 text-editorial-muted text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
+                        Evidence-based autonomous agents that strengthen family relationships.
+                        Every milestone verified on Hedera. Outcomes you can measure, not just feel.
                     </p>
                     <div className="w-32 h-px mx-auto mt-5 bg-gradient-to-r from-transparent via-editorial-accent/30 to-transparent" />
                 </header>

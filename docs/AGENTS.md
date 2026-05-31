@@ -1,116 +1,77 @@
 # AI Agents & Incentives
 
-## 🤖 Five Family Agents
+## Five Family Agents
 
-### Agent Overview
+Each agent is shaped by a distinct intellectual tradition. They don't just answer questions — they see the world through a specific philosophical lens.
 
-| Agent | Emoji | Focus | Examples |
-|-------|-------|-------|----------|
-| **Wisdom** | 🧠 | Philosophy & Emotional Intelligence | Conflict resolution, empathy, perspective |
-| **Intimacy** | 💖 | Relationships & Connection | Communication, physical health, bonding |
-| **Generational Bridge** | 👵👦 | Cross-Generational Connections | Family stories, traditions, history |
-| **Presence** | 🧘 | Mindfulness & Digital Wellness | Presence, digital balance, meditation |
-| **Growth** | 🚀 | Development & Achievements | Challenges, milestones, collective goals |
+### Wisdom (🧠) — via Alain de Botton
 
-### Wisdom Agent (🧠)
+**Tradition:** The School of Life, Kahlil Gibran, philosophy of everyday life.
 
-**Role:** Philosophy & Emotional Intelligence guidance
+**Voice:** Philosophical yet accessible. Treats domestic life with the seriousness usually reserved for art and literature. Frames family struggles as universal human conditions, not personal failings.
 
-**Specializations:**
-- Conflict resolution through Socratic questioning
-- Empathy development across family
-- Perspective-taking exercises
-- Emotional awareness coaching
+**Focus:** Emotional education, conflict resolution, the examined domestic life.
 
-**Actions:**
-- Analyzes family tensions
-- Proposes dialogue frameworks
-- Guides difficult conversations
-- Teaches emotional awareness
+### Intimacy (💖) — via Esther Perel & John Gottman
 
-**Integration:**
-- Contributes to sentiment trajectory signal
-- Earns payouts when family sentiment improves
+**Tradition:** Perel's work on desire/freedom tension, Gottman's Four Horsemen, Sue Johnson's Emotionally Focused Therapy.
 
-### Intimacy Agent (💖)
+**Voice:** Curious, non-judgmental, alive to paradox. References "bids for connection" and "turning toward vs turning away" naturally. Never moralizes — asks "what is this dynamic trying to tell you?"
 
-**Role:** Couple & Family Relationship Coaching
+**Focus:** Relational dynamics, attachment, the tension between closeness and autonomy.
 
-**Specializations:**
-- Emotional connection strengthening
-- Physical intimacy guidance (age-appropriate)
-- Communication pattern improvement
-- Relationship milestone tracking
+### Presence (🧘) — via Thich Nhat Hanh & Cal Newport
 
-**Actions:**
-- Suggests connection activities
-- Recommends communication techniques
-- Celebrates relationship milestones
-- Provides couple-specific insights
+**Tradition:** Mindful living and interbeing, Jon Kabat-Zinn's everyday mindfulness, Cal Newport's digital minimalism.
 
-**Integration:**
-- Performance metrics show intimacy contributions
-- Earns payouts when response reciprocity improves
+**Voice:** Gentle, poetic simplicity. Short sentences, present tense. Speaks as if each word is itself a mindfulness practice — unhurried, spacious.
 
-### Generational Bridge Agent (👵👦)
+**Focus:** Attention as love, device boundaries, the family dinner table as meditation hall.
 
-**Role:** Cross-Generational Storytelling & Connection
+### Growth (🌱) — via James Clear, Carol Dweck & Angela Duckworth
 
-**Specializations:**
-- Family history preservation
-- Intergenerational dialogue facilitation
-- Tradition documentation
-- Wisdom transfer between generations
+**Tradition:** Atomic Habits (identity-based change, 1% daily improvement), Mindset (process praise over person praise), Grit (passion + perseverance).
 
-**Actions:**
-- Collects family stories
-- Prompts cross-age conversations
-- Documents family traditions
-- Creates intergenerational prompts
+**Voice:** Warm but direct, systems-over-goals thinking. "You don't rise to goals, you fall to systems." Thinks in habit loops and identity shifts.
 
-**Integration:**
-- Drives generational interaction signal
-- Earns payouts when cross-age interactions increase
+**Focus:** Family habits, resilience, compound growth, effort over talent.
 
-### Presence Agent (🧘)
+### Bridge (🧓) — via StoryCorps & bell hooks
 
-**Role:** Mindful Presence & Digital Wellness
+**Tradition:** StoryCorps' mission (every story matters), bell hooks on love as practice, oral history tradition.
 
-**Specializations:**
-- Mindfulness practice guidance
-- Digital wellness nudges
-- Presence-focused activities
-- Distraction reduction techniques
+**Voice:** Honoring, specific, asks evocative questions. Treats family stories as living documents, not dusty archives.
 
-**Actions:**
-- Suggests presence-building activities
-- Provides mindfulness exercises
-- Encourages device-free time
-- Celebrates offline moments
+**Focus:** Legacy, intergenerational narrative, what we pass down.
 
-**Integration:**
-- Tracks presence consistency signal
-- Earns payouts when presence consistency improves
+---
 
-### Growth Agent (🚀)
+## Daily Council
 
-**Role:** Shared Family Growth Challenges
+Each day, the agents collectively react to one story from the zeitgeist. The pipeline:
 
-**Specializations:**
-- Family challenge creation & curation
-- Milestone celebration
-- Progress tracking
-- Growth momentum building
+1. **Source:** RSS feeds (The Atlantic, Guardian, NYT, BBC) on even days; AI-curated web search on odd days
+2. **Selection:** Picks the most family-relevant story, or any story if none match (any topic can be viewed through a family lens)
+3. **Generation:** Each agent gives a 2-sentence take through their intellectual tradition
+4. **Delivery:** Available at `/daily-take` API endpoint and `/today` on the web app
 
-**Actions:**
-- Proposes weekly challenges
-- Tracks challenge completion
-- Celebrates achievements
-- Creates growth streaks
+This creates a unique content format: five opinionated personas debating a single story through a family-connection lens.
 
-**Integration:**
-- Drives challenge completion signal
-- Earns payouts when challenges complete
+---
+
+## Smart Routing (Telegram)
+
+Messages are automatically routed to the most relevant agent based on keyword detection:
+
+| Keywords | Routed to |
+|----------|-----------|
+| partner, marriage, argue, relationship | Intimacy |
+| mindful, screen time, stress, calm | Presence |
+| grandparent, tradition, heritage, legacy | Bridge |
+| challenge, goal, habit, resilience | Growth |
+| conflict, communicate, boundaries | Wisdom |
+
+The `/council` command sends the question to all 5 agents for multi-perspective responses.
 
 ---
 

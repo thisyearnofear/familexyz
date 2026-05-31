@@ -1,159 +1,78 @@
 # FamilyXYZ: AI Agents for Family Thriving
-### 🏆 Built for Hedera Hello Future: Ascension (Theme 1: AI & Agents)
 
 <div align="center">
 
-**[📄 Technical Paper](https://arxiv.org/pdf/2501.06781)** | **[⛓️ Hedera Proofs](./docs/AGENTS.md)**
+**[Live App](https://familexyz.netlify.app)** | **[Telegram Bot](https://t.me/familexyzbot)** | **[API](https://api.famile.xyz/agents)**
 
 </div>
 
-## 🚩 Overview
-**FamileXYZ** is a privacy-first suite of autonomous AI agents designed to strengthen family bonds. Built on **Hedera**, it combines advanced LLMs with the **Hedera Consensus Service (HCS)** to create a verifiable, immutable log of family milestones ("Wisdom Blocks").
+## Overview
 
-Unlike passive chatbots, our agents—**Wisdom, Intimacy, GenerationalBridge, Presence, and Growth**—are proactive family coaches. They use **Hedera Token Service (HTS)** to reward positive interactions, effectively creating an on-chain economy of emotional wealth.
+Five specialized AI agents that strengthen family bonds. Each agent is shaped by a distinct intellectual tradition and offers a unique lens on family life.
 
-### 🔑 Key Features
-*   **Verifiable Agent Actions:** Agent decisions are logged to HCS Topic `0.0.7304500`.
-*   **Tokenized Incentives:** Families earn $FAM tokens (`0.0.7304501`) for completing connection challenges.
-*   **Privacy-First:** Powered by Grok/Venice AI for secure, private inference.
-*   **Backend API:** REST API for agent interactions, health monitoring, and payout management.
-*   **Multi-Agent Coordination:** Five specialized agents work together across a family unit.
+| Agent | Emoji | Intellectual DNA | Focus |
+|-------|-------|-----------------|-------|
+| **Wisdom** | 🧠 | Alain de Botton, School of Life | Philosophy & emotional education |
+| **Intimacy** | 💖 | Esther Perel, John Gottman | Relational dynamics & connection |
+| **Presence** | 🧘 | Thich Nhat Hanh, Cal Newport | Attention & digital wellness |
+| **Growth** | 🌱 | James Clear, Carol Dweck, Angela Duckworth | Habits, resilience & identity |
+| **Bridge** | 🧓 | StoryCorps, bell hooks | Legacy, narrative & oral history |
 
-### 🎯 Platform Vision
-FamilyXYZ is evolving into a **platform** where practitioners distribute research-backed agents to families:
+## Live Features
+
+- **Daily Council** — One zeitgeist story, five agent perspectives. Updated daily via RSS + AI curation. ([/today](https://familexyz.netlify.app/today))
+- **Telegram Bot** — Smart routing (detects topic → routes to right agent), `/council` command (all 5 agents weigh in), daily check-ins with streaks. ([@familexyzbot](https://t.me/familexyzbot))
+- **Web Dashboard** — Agent status, bond score tracking, quick actions. ([/dashboard](https://familexyz.netlify.app/dashboard))
+- **Hedera Integration** — Agent actions logged to HCS, FAM token rewards via HTS.
+
+## Architecture
 
 ```
-CREATORS                          FAMILIES
-Dr. Gottman Institute      →      "Gottman Relationship"
-Attachment Research Lab    →      "Secure Attachment"
-Custom Agent Creator      →      "Family Wisdom"
+familexyz/
+├── agent/                 # Backend (ElizaOS runtime, 5 agents, Venice AI)
+├── client/                # Frontend (Next.js on Netlify)
+├── characters/            # Agent persona definitions (JSON)
+├── packages/
+│   ├── clients/telegram/  # Grammy-based Telegram bot
+│   ├── family/            # Agent plugins (wisdom, intimacy, etc.)
+│   ├── blockchain/        # Hedera services
+│   └── core/              # ElizaOS core
+└── docs/                  # Detailed documentation
 ```
 
-**Trust through verification:** Hedera blockchain creates immutable audit trails. Practitioners are publicly accountable. Families have verifiable proof of engagement.
+**Stack:** TypeScript, pnpm monorepo, ElizaOS, Venice AI (llama-3.3-70b), Grammy, Next.js 16, SQLite, Hedera SDK.
 
-## ✨ Five Family Agents
-
-- 🧠 **Wisdom Agent** - Philosophy & Emotional Intelligence guidance
-- 💑 **Intimacy Agent** - Couple & family relationship coaching
-- 👵👦 **Generational Bridge Agent** - Cross-generational storytelling
-- 🧘 **Presence Agent** - Mindful presence & digital-wellness nudges
-- 🚀 **Growth Agent** - Shared family growth challenges
-
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
-# 1. Clone and install
-git clone https://github.com/your-org/familexyz.git
-cd familexyz
-pnpm install
-
-# 2. Set up environment
-cp .env.example .env
-# Edit .env with your API keys (Grok/Venice AI, Hedera credentials)
-
-# 3. Build all packages
-pnpm build
-
-# 4. Start the backend agent server
-pnpm start
+git clone https://github.com/thisyearnofear/familexyz.git && cd familexyz
+pnpm install && pnpm build
+cp .env.example .env  # Add Venice API key + Telegram bot token
+pnpm start            # Starts all 5 agents on :31337, health on :31338
 ```
 
-The backend API will be available at `http://localhost:3004` with health check at `http://localhost:3005`.
+## API
 
-### 🔧 Development Options
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /agents` | List running agents |
+| `POST /:agentId/message` | Send message to agent |
+| `GET /daily-take` | Today's council (story + 5 perspectives) |
+| `GET /health` | Health check |
+| `GET /api/families/:id/bond-score` | Bond score history |
 
-**Start Backend Agents (with debug logging)**
+## Deployment
 
-```bash
-pnpm start:debug
-```
+- **Frontend:** Netlify (auto-deploys from `develop` branch)
+- **Backend:** Hetzner VPS via PM2 at `/home/deploy/familexyz/current`
+- **Environment:** Single `.env` at `shared/env/.env`, symlinked into release
 
-**Start with clean database**
+## Docs
 
-```bash
-pnpm cleanstart
-```
+- [Architecture](./docs/ARCHITECTURE.md) — System design & data flows
+- [Agents & Incentives](./docs/AGENTS.md) — Agent details, HCS-10, FAM token
+- [Development](./docs/DEVELOPMENT.md) — Local setup & testing
 
-**Start CLI Direct Client (for testing agents without API)**
+## License
 
-```bash
-pnpm dev
-```
-
-See [Development Guide](./docs/DEVELOPMENT.md) for detailed setup instructions.
-
-## 📡 API Endpoints
-
-### Core Agent Endpoints
-
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/:agentId/message` | POST | Send message to agent |
-| `/:agentId/ag-ui` | POST | AG-UI protocol stream |
-| `/agents/insights` | GET | All agents' real-time insights |
-| `/agents/:agentId/insights` | GET | Single agent insights |
-
-### Payout System APIs
-
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/api/agents/:agentId/payouts` | GET | Agent payout history |
-| `/api/agents/:agentId/performance` | GET | Agent performance metrics |
-| `/api/families/:familyId/payouts` | GET | Family payout aggregation |
-| `/api/payouts/pending` | GET | Payouts awaiting execution |
-| `/api/payouts/calculate` | POST | Dry-run payout calculation |
-
-### Bond Scoring APIs
-
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/api/families/:familyId/bond-score` | GET | Current + 12-week history |
-
-### Health & Status
-
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/health` | GET | Server health status |
-| `/api/status` | GET | Full system status |
-
-## 📚 Documentation
-
-Complete documentation in 5 consolidated guides:
-
-- **[Architecture & Technical Reference](./docs/ARCHITECTURE.md)** - System design, services, data flows
-- **[Agents & Incentives](./docs/AGENTS.md)** - AI agents, HCS-10, FAM token, Payouts
-- **[Development Guide](./docs/DEVELOPMENT.md)** - Local setup, testing, cloud deployment
-- **[Roadmap](./docs/ROADMAP.md)** - Current status and future plans
-- **[Submission Details](./docs/SUBMISSION.md)** - Hackathon submission info
-
-## 🛡️ Privacy & Safety First
-
-Family data protection is our top priority:
-
-- **Privacy-First Design** - Built with privacy in mind
-- **Secure Architecture** - Modern security practices
-- **Family Focused** - Designed for safe family interactions
-- **Age-appropriate responses** for all family members
-- **Data retention policies** with automatic cleanup
-
-## 🌐 Platform Support
-
-- **🔜 Future:** Frontend dashboard (TBD)
-- **📱 Telegram Integration** - Coming soon
-- **💬 XMTP Encrypted Messaging** - Coming soon
-
-## 🛠️ Built For Developers
-
-- **📦 Monorepo architecture** with clear package organization
-- **🎯 TypeScript throughout** for type safety and better DX
-- **🧪 Comprehensive testing** with Jest
-- **🐳 Docker support** for easy deployment
-- **⚙️ Environment templates** for all deployment scenarios
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-**Ready to strengthen your family connections?** See our [documentation](./docs/ARCHITECTURE.md) to get started.
+MIT

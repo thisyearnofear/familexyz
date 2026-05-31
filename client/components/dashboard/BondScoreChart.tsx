@@ -60,11 +60,12 @@ export function BondScoreChart({
     const trend = latestScore - data[0]?.score;
 
     return (
-        <div className="bg-card border rounded-xl p-6">
+        <div className="rounded-lg p-5 border border-[#2d2a24]"
+            style={{ background: "linear-gradient(135deg, #c4542b08 0%, transparent 70%)" }}>
             <div className="flex items-center justify-between mb-6">
                 <div>
-                    <h3 className="text-lg font-semibold">{title}</h3>
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <h3 className="text-sm font-semibold text-editorial-cream">{title}</h3>
+                    <p className="text-xs text-editorial-subtle mt-0.5">
                         Last 7 days
                     </p>
                 </div>
@@ -81,8 +82,8 @@ export function BondScoreChart({
                     <AreaChart data={data}>
                         <defs>
                             <linearGradient id="scoreGradient" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#a855f7" stopOpacity={0.3} />
-                                <stop offset="95%" stopColor="#a855f7" stopOpacity={0} />
+                                <stop offset="5%" stopColor="#c4542b" stopOpacity={0.25} />
+                                <stop offset="95%" stopColor="#c4542b" stopOpacity={0} />
                             </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -102,7 +103,7 @@ export function BondScoreChart({
                         <Area
                             type="monotone"
                             dataKey="score"
-                            stroke="#a855f7"
+                            stroke="#c4542b"
                             fill="url(#scoreGradient)"
                             strokeWidth={2}
                             name="Bond Score"
@@ -122,7 +123,7 @@ export function BondScoreChart({
             <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
                 <div className="flex items-center gap-4">
                     <span className="flex items-center gap-1.5">
-                        <span className="w-3 h-0.5 bg-purple-500 rounded" />
+                        <span className="w-3 h-0.5 bg-editorial-accent rounded" />
                         Bond Score
                     </span>
                     <span className="flex items-center gap-1.5">

@@ -1,19 +1,26 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { Playfair_Display } from "next/font/google";
 import { BondScoreChart } from './BondScoreChart';
 import Link from 'next/link';
 
-const AGENT_LIST = [
-    { id: 'wisdom', name: 'Wisdom', emoji: '\uD83E\uDDE0', desc: 'Philosophy & EQ', color: 'from-purple-500 to-indigo-500', tagline: 'Alain de Botton on life, love, and family' },
-    { id: 'intimacy', name: 'Intimacy', emoji: '\uD83D\uDC96', desc: 'Relationships', color: 'from-pink-500 to-rose-500', tagline: 'Esther Perel on connection and desire' },
-    { id: 'presence', name: 'Presence', emoji: '\uD83E\uDDD8', desc: 'Mindfulness', color: 'from-teal-500 to-emerald-500', tagline: 'Thich Nhat Hanh on being here now' },
-    { id: 'growth', name: 'Growth', emoji: '\uD83C\uDF31', desc: 'Challenges', color: 'from-amber-500 to-orange-500', tagline: 'James Clear on habits that compound' },
-    { id: 'bridge', name: 'Bridge', emoji: '\uD83E\uDDD3', desc: 'Generational', color: 'from-blue-500 to-cyan-500', tagline: 'StoryCorps on family narratives' },
-    { id: 'savings', name: 'Savings', emoji: '\uD83D\uDCB0', desc: 'FAM tokens', color: 'from-green-500 to-emerald-500', tagline: 'Coming soon' },
-];
+const playfair = Playfair_Display({
+    subsets: ["latin"],
+    variable: "--font-playfair",
+    display: "swap",
+});
 
-const ACTIVE_AGENTS = AGENT_LIST.filter(a => a.id !== 'savings');
+const AGENT_META: Record<string, { name: string; emoji: string; color: string; desc: string; tagline: string }> = {
+    wisdom:   { name: "Wisdom",    emoji: "\uD83E\uDDE0", color: "#6d28d9", desc: "Philosophy & EQ", tagline: "Alain de Botton on life, love, and family" },
+    intimacy: { name: "Intimacy",  emoji: "\uD83D\uDC96", color: "#db2777", desc: "Relationships", tagline: "Esther Perel on connection and desire" },
+    presence: { name: "Presence",  emoji: "\uD83E\uDDD8", color: "#0d9488", desc: "Mindfulness", tagline: "Thich Nhat Hanh on being here now" },
+    growth:   { name: "Growth",    emoji: "\uD83C\uDF31", color: "#d97706", desc: "Challenges", tagline: "James Clear on habits that compound" },
+    bridge:   { name: "Bridge",    emoji: "\uD83E\uDDD3", color: "#2563eb", desc: "Generational", tagline: "StoryCorps on family narratives" },
+    savings:  { name: "Savings",   emoji: "\uD83D\uDCB0", color: "#059669", desc: "FAM tokens", tagline: "Coming soon" },
+};
+
+const ACTIVE_AGENTS = Object.entries(AGENT_META).filter(([id]) => id !== 'savings');
 
 interface AgentStatus {
     id: string;
@@ -24,7 +31,7 @@ interface AgentStatus {
 
 export const EnhancedFamilyDashboard: React.FC = () => {
     const [agents, setAgents] = useState<AgentStatus[]>(
-        AGENT_LIST.map(a => ({ id: a.id, name: a.name, status: 'IDLE', emoji: a.emoji }))
+        Object.entries(AGENT_META).map(([id, a]) => ({ id, name: a.name, status: 'IDLE', emoji: a.emoji }))
     );
     const [bondScore, setBondScore] = useState(85);
     const [bondHistory, setBondHistory] = useState<number[]>([62, 65, 68, 72, 75, 78, 82, 85]);
@@ -67,77 +74,68 @@ export const EnhancedFamilyDashboard: React.FC = () => {
     const bondColor = bondScore >= 80 ? 'text-green-400' : bondScore >= 60 ? 'text-amber-400' : 'text-red-400';
 
     return (
-        <div className="min-h-screen bg-background">
-            <div className="relative bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 px-6 py-8 overflow-hidden">
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent" />
-                <div className="max-w-7xl mx-auto relative z-10">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                        <div>
-                            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white drop-shadow-lg">
-                                Family Connection Hub
-                            </h1>
-                            <p className="text-xs sm:text-sm lg:text-base text-white/80 drop-shadow mt-1">
-                                Your family&apos;s personalized agent council
-                            </p>
-                        </div>
-                        <a
-                            href="https://t.me/familexyzbot"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 text-sm text-white hover:bg-white/20 transition-colors"
-                        >
-                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M11.944 0A12 12 0 000 12a12 12 0 0012 12 12 12 0 0012-12A12 12 0 0012 0a12 12 0 00-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 01.171.325c.016.127.087.669.087.669l-1.677 7.88c-.145.684-.55.838-.924.514l-2.547-1.99-1.232 1.19c-.136.128-.25.234-.523.234-.334 0-.432-.232-.432-.232l-.977-3.231-2.81-.978c-.607-.21-.61-.604-.124-.894l10.895-4.205c.271-.1.503-.07.678.044z"/>
-                            </svg>
-                            <span className="hidden sm:inline">Open in Telegram</span>
-                            <span className="sm:hidden">Telegram</span>
-                        </a>
-                    </div>
+        <div className={`${playfair.variable} min-h-screen fade-in`}>
+            {/* Header */}
+            <div className="px-6 py-10 sm:py-14">
+                <div className="max-w-7xl mx-auto text-center">
+                    <div className="w-16 h-px mx-auto mb-4 bg-gradient-to-r from-transparent via-editorial-accent/30 to-transparent" />
+                    <h1 className="font-[family-name:var(--font-playfair)] text-[clamp(1.4rem,3vw,2.2rem)] font-bold text-editorial-cream leading-[1.1] tracking-[-0.01em]">
+                        Family Connection Hub
+                    </h1>
+                    <p className="mt-2 text-editorial-muted text-sm">
+                        Your family&rsquo;s personalized agent council
+                    </p>
+                    <div className="w-24 h-px mx-auto mt-4 bg-gradient-to-r from-transparent via-editorial-accent/30 to-transparent" />
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="bg-card border rounded-xl p-6">
-                        <h3 className="text-sm font-medium text-muted-foreground mb-2">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 space-y-8">
+                {/* Stat cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 fade-in fade-in-d1">
+                    <div className="rounded-lg p-5 border border-[#2d2a24]"
+                        style={{ background: "linear-gradient(135deg, #c4542b08 0%, transparent 70%)" }}>
+                        <p className="text-xs tracking-[0.1em] uppercase text-editorial-subtle mb-2">
                             Family Bond Score
-                        </h3>
-                        <p className={`text-3xl font-bold ${bondColor}`}>
+                        </p>
+                        <p className={`text-3xl font-bold tracking-tight ${bondColor}`}>
                             {bondScore}%
                         </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            {bondScore >= 80 ? 'Strong connection — keep nurturing it' :
-                             bondScore >= 60 ? 'Building momentum — stay consistent' :
-                             'Room to grow — small steps add up'}
+                        <p className="text-xs text-editorial-subtle mt-1">
+                            {bondScore >= 80 ? 'Strong connection \u2014 keep nurturing it' :
+                             bondScore >= 60 ? 'Building momentum \u2014 stay consistent' :
+                             'Room to grow \u2014 small steps add up'}
                         </p>
                     </div>
-                    <div className="bg-card border rounded-xl p-6">
-                        <h3 className="text-sm font-medium text-muted-foreground mb-2">
+                    <div className="rounded-lg p-5 border border-[#2d2a24]"
+                        style={{ background: "linear-gradient(135deg, #db277708 0%, transparent 70%)" }}>
+                        <p className="text-xs tracking-[0.1em] uppercase text-editorial-subtle mb-2">
                             Active Agents
-                        </h3>
-                        <p className="text-3xl font-bold text-foreground">
+                        </p>
+                        <p className="text-3xl font-bold tracking-tight text-editorial-cream">
                             {activeCount}
                         </p>
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-xs text-editorial-subtle mt-1">
                             {activeCount > 0
                                 ? agents.filter(a => a.status !== 'IDLE').map(a => a.name).join(', ')
                                 : 'All agents ready to help'}
                         </p>
                     </div>
-                    <div className="bg-card border rounded-xl p-6">
-                        <h3 className="text-sm font-medium text-muted-foreground mb-2">
-                            Today&apos;s Council
-                        </h3>
-                        <p className="text-3xl font-bold text-amber-400">
+                    <div className="rounded-lg p-5 border border-[#2d2a24]"
+                        style={{ background: "linear-gradient(135deg, #0d948808 0%, transparent 70%)" }}>
+                        <p className="text-xs tracking-[0.1em] uppercase text-editorial-subtle mb-2">
+                            Today&rsquo;s Council
+                        </p>
+                        <p className="text-3xl font-bold tracking-tight text-editorial-accent">
                             New
                         </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            5 perspectives on today&apos;s story
+                        <p className="text-xs text-editorial-subtle mt-1">
+                            5 perspectives on today&rsquo;s story
                         </p>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Chart + Agents */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 fade-in fade-in-d2">
                     <BondScoreChart
                         data={bondHistory.map((score, i) => ({
                             day: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][i % 7] + (i >= 7 ? `+${Math.floor(i/7)}` : ''),
@@ -145,19 +143,23 @@ export const EnhancedFamilyDashboard: React.FC = () => {
                             target: Math.min(100, score + 8),
                         }))}
                     />
-                    <div className="bg-card border rounded-xl p-6">
-                        <h3 className="text-lg font-semibold mb-4">Your Agents</h3>
-                        <div className="grid grid-cols-2 gap-3">
-                            {ACTIVE_AGENTS.map(agent => (
+                    <div className="rounded-lg p-5 border border-[#2d2a24]"
+                        style={{ background: "linear-gradient(135deg, #2563eb08 0%, transparent 70%)" }}>
+                        <h3 className="font-[family-name:var(--font-playfair)] text-base font-semibold text-editorial-cream mb-4">
+                            Your Agents
+                        </h3>
+                        <div className="grid grid-cols-2 gap-2">
+                            {ACTIVE_AGENTS.map(([id, agent]) => (
                                 <a
-                                    key={agent.id}
-                                    href={`/chat/${agent.id}`}
-                                    className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                                    key={id}
+                                    href={`/chat/${id}`}
+                                    className="flex items-center gap-3 p-3 rounded-lg transition-colors hover:-translate-y-0.5 duration-200"
+                                    style={{ background: `linear-gradient(135deg, ${agent.color}08 0%, transparent 70%)` }}
                                 >
-                                    <span className="text-xl">{agent.emoji}</span>
+                                    <span className="text-lg">{agent.emoji}</span>
                                     <div>
-                                        <p className="text-sm font-medium">{agent.name}</p>
-                                        <p className="text-xs text-muted-foreground">{agent.desc}</p>
+                                        <p className="text-sm font-medium text-editorial-cream">{agent.name}</p>
+                                        <p className="text-xs text-editorial-subtle">{agent.desc}</p>
                                     </div>
                                 </a>
                             ))}
@@ -165,52 +167,78 @@ export const EnhancedFamilyDashboard: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-xl p-6">
+                {/* Today's Council CTA */}
+                <div className="rounded-lg p-5 border border-editorial-accent/20 fade-in fade-in-d3"
+                    style={{ background: "linear-gradient(135deg, #c4542b08 0%, transparent 70%)" }}>
                     <div className="flex items-center justify-between">
                         <div>
-                            <h2 className="text-lg font-semibold mb-1">
-                                Today&apos;s Council
+                            <h2 className="font-[family-name:var(--font-playfair)] text-base font-semibold text-editorial-cream mb-1">
+                                Today&rsquo;s Council
                             </h2>
-                            <p className="text-muted-foreground text-sm max-w-lg">
+                            <p className="text-editorial-subtle text-sm max-w-lg">
                                 One story from the zeitgeist, five distinct perspectives.
                                 Wisdom, Intimacy, Presence, Growth, and Bridge weigh in.
                             </p>
                         </div>
                         <Link
                             href="/today"
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-600 text-white text-sm font-medium hover:bg-amber-700 transition-colors whitespace-nowrap"
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs tracking-[0.1em] uppercase bg-editorial-accent/10 border border-editorial-accent/20 text-editorial-accent hover:bg-editorial-accent/20 transition-colors whitespace-nowrap"
                         >
-                            Read Today&apos;s Take
+                            Read today&rsquo;s take
                         </Link>
                     </div>
                 </div>
 
-                <div className="bg-card border rounded-xl p-6">
-                    <h3 className="text-lg font-semibold mb-4">Meet Your Agents</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {AGENT_LIST.map(agent => (
+                {/* Meet Your Agents */}
+                <div className="space-y-3 fade-in fade-in-d4">
+                    <h3 className="font-[family-name:var(--font-playfair)] text-base font-semibold text-editorial-cream text-center">
+                        Meet Your Agents
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {ACTIVE_AGENTS.map(([id, agent]) => (
                             <a
-                                key={agent.id}
-                                href={`/chat/${agent.id}`}
-                                className={`bg-gradient-to-br ${agent.color} p-[1px] rounded-xl overflow-hidden group`}
+                                key={id}
+                                href={`/chat/${id}`}
+                                className="group relative rounded-lg p-4 transition-all duration-300 hover:-translate-y-0.5"
+                                style={{ background: `linear-gradient(135deg, ${agent.color}08 0%, transparent 70%)` }}
                             >
-                                <div className="bg-card rounded-[11px] p-4 h-full group-hover:bg-card/80 transition-colors">
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <span className="text-2xl">{agent.emoji}</span>
-                                        <div>
-                                            <p className="font-semibold text-sm">{agent.name}</p>
-                                            <p className="text-xs text-muted-foreground">{agent.desc}</p>
-                                        </div>
+                                <div className="flex items-start gap-3 mb-2">
+                                    <span className="text-xl">{agent.emoji}</span>
+                                    <div>
+                                        <p className="font-[family-name:var(--font-playfair)] text-sm font-semibold text-editorial-cream"
+                                            style={{ color: agent.color }}>
+                                            {agent.name}
+                                        </p>
+                                        <p className="text-xs text-editorial-subtle">{agent.desc}</p>
                                     </div>
-                                    <p className="text-xs text-muted-foreground/80 leading-relaxed">
-                                        {agent.tagline}
-                                    </p>
                                 </div>
+                                <p className="text-xs text-editorial-muted leading-relaxed">
+                                    {agent.tagline}
+                                </p>
+                                <p className="mt-2 text-[0.55rem] tracking-[0.1em] uppercase text-editorial-faint group-hover:text-editorial-accent transition-colors">
+                                    Chat &rarr;
+                                </p>
                             </a>
                         ))}
                     </div>
                 </div>
+
+                {/* Telegram */}
+                <div className="text-center fade-in fade-in-d5">
+                    <div className="w-16 h-px mx-auto mb-4 bg-gradient-to-r from-transparent via-editorial-accent/20 to-transparent" />
+                    <p className="text-xs text-editorial-subtle">
+                        Get the council on{` `}
+                        <a
+                            href="https://t.me/familexyzbot?start=subscribe_daily"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-editorial-accent hover:text-editorial-accent/80 transition-colors border-b border-editorial-accent/20 hover:border-editorial-accent/50"
+                        >
+                            Telegram
+                        </a>
+                    </p>
+                </div>
             </div>
         </div>
     );
-};
+}

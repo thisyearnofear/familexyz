@@ -1,15 +1,31 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from "react";
+import { Playfair_Display } from "next/font/google";
 import { apiClient } from "@/lib/api";
 
-const AGENT_PROFILES: Record<string, { name: string; emoji: string; color: string; tagline: string }> = {
-    wisdom:     { name: "Wisdom",    emoji: "🧠", color: "from-purple-500 to-indigo-500",  tagline: "Philosophy & Emotional Intelligence" },
-    intimacy:   { name: "Intimacy",  emoji: "💖", color: "from-pink-500 to-rose-500",     tagline: "Relationships & Connection" },
-    presence:   { name: "Presence",  emoji: "🧘", color: "from-teal-500 to-emerald-500",  tagline: "Mindfulness & Digital Wellness" },
-    growth:     { name: "Growth",    emoji: "🌱", color: "from-amber-500 to-orange-500",  tagline: "Development & Achievements" },
-    bridge:     { name: "Bridge",    emoji: "🧓", color: "from-blue-500 to-cyan-500",     tagline: "Generational Connections" },
-    savings:    { name: "Savings",   emoji: "💰", color: "from-green-500 to-emerald-500", tagline: "FAM Token Vault" },
+const playfair = Playfair_Display({
+    subsets: ["latin"],
+    variable: "--font-playfair",
+    display: "swap",
+});
+
+const AGENT_COLORS: Record<string, string> = {
+    wisdom: "#6d28d9",
+    intimacy: "#db2777",
+    presence: "#0d9488",
+    growth: "#d97706",
+    bridge: "#2563eb",
+    savings: "#059669",
+};
+
+const AGENT_PROFILES: Record<string, { name: string; emoji: string; tagline: string }> = {
+    wisdom:     { name: "Wisdom",    emoji: "🧠", tagline: "Philosophy & Emotional Intelligence" },
+    intimacy:   { name: "Intimacy",  emoji: "💖", tagline: "Relationships & Connection" },
+    presence:   { name: "Presence",  emoji: "🧘", tagline: "Mindfulness & Digital Wellness" },
+    growth:     { name: "Growth",    emoji: "🌱", tagline: "Development & Achievements" },
+    bridge:     { name: "Bridge",    emoji: "🧓", tagline: "Generational Connections" },
+    savings:    { name: "Savings",   emoji: "💰", tagline: "FAM Token Vault" },
 };
 
 interface Message {
@@ -59,9 +75,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     const profile = AGENT_PROFILES[agentId] || {
         name: agentId,
         emoji: "\U0001F916",
-        color: "from-gray-500 to-slate-500",
         tagline: "AI Agent",
     };
+    const agentColor = AGENT_COLORS[agentId] || "#666666";
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -133,30 +149,48 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     };
 
     return (
-        <div className="flex flex-col h-full bg-background">
+        <div className={`${playfair.variable} flex flex-col h-full`}>
             {/* Agent Identity Banner */}
-            <div className={`bg-gradient-to-r ${profile.color} px-4 sm:px-6 py-4`}>
+            <div className="relative px-4 sm:px-6 py-4 border-b border-[#2d2a24]"
+                style={{ background: `linear-gradient(135deg, ${agentColor}08 0%, transparent 70%)` }}>
+                {/* Left accent bar */}
+                <div className="absolute left-0 top-0 bottom-0 w-0.5"
+                    style={{ backgroundColor: agentColor, opacity: 0.3 }} />
                 <div className="max-w-4xl mx-auto flex items-center gap-4">
-                    <span className="text-3xl">{profile.emoji}</span>
-                    <div className="flex-1 min-w-0">
-                        <h1 className="text-lg font-bold text-white drop-shadow-sm">{profile.name} Agent</h1>
-                        <p className="text-sm text-white/80">{profile.tagline}</p>
+                    <div className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
+                        style={{
+                            background: `radial-gradient(circle at 50% 50%, ${agentColor}15 0%, transparent 70%)`,
+                        }}>
+                        <span className="text-xl">{profile.emoji}</span>
                     </div>
-                    <div className="hidden sm:flex items-center gap-2">
-                        {Object.entries(AGENT_PROFILES).map(([id, p]) => (
-                            <button
-                                key={id}
-                                onClick={() => switchAgent(id)}
-                                className={`w-9 h-9 rounded-full flex items-center justify-center text-lg transition-all ${
-                                    id === agentId
-                                        ? "bg-white/25 ring-2 ring-white/50 scale-110"
-                                        : "bg-white/10 hover:bg-white/20"
-                                }`}
-                                title={p.name}
-                            >
-                                {p.emoji}
-                            </button>
-                        ))}
+                    <div className="flex-1 min-w-0">
+                        <h1 className="font-[family-name:var(--font-playfair)] text-base font-semibold text-editorial-cream leading-tight">
+                            {profile.name}
+                        </h1>
+                        <p className="text-xs text-editorial-subtle mt-0.5">{profile.tagline}</p>
+                    </div>
+                    <div className="hidden sm:flex items-center gap-1.5">
+                        {Object.entries(AGENT_PROFILES).map(([id, p]) => {
+                            const c = AGENT_COLORS[id] || "#666";
+                            return (
+                                <button
+                                    key={id}
+                                    onClick={() => switchAgent(id)}
+                                    className="w-8 h-8 rounded-md flex items-center justify-center text-base transition-all duration-200"
+                                    style={{
+                                        background: id === agentId
+                                            ? `${c}20`
+                                            : "transparent",
+                                        border: id === agentId
+                                            ? `1px solid ${c}30`
+                                            : "1px solid transparent",
+                                    }}
+                                    title={p.name}
+                                >
+                                    {p.emoji}
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
             </div>
@@ -167,9 +201,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                     {/* Empty state with suggestions */}
                     {messages.length === 0 && !isLoading && (
                         <div className="flex flex-col items-center justify-center py-16 text-center">
-                            <span className="text-5xl mb-4">{profile.emoji}</span>
-                            <h2 className="text-xl font-semibold mb-2">Chat with {profile.name}</h2>
-                            <p className="text-muted-foreground max-w-md mb-8">
+                            <span className="text-4xl mb-4">{profile.emoji}</span>
+                            <h2 className="font-[family-name:var(--font-playfair)] text-lg font-semibold text-editorial-cream mb-2">
+                                Chat with {profile.name}
+                            </h2>
+                            <p className="text-editorial-subtle text-sm max-w-md mb-8 leading-relaxed">
                                 {contextSeen
                                     ? CONTEXT_WELCOME[context || ''] || "Ask for advice, share how you're feeling, or explore ways to strengthen your family connections."
                                     : "Ask for advice, share how you're feeling, or explore ways to strengthen your family connections."
@@ -180,7 +216,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                                     <button
                                         key={suggestion}
                                         onClick={() => { setInput(suggestion); }}
-                                        className="text-left text-sm p-3 rounded-lg bg-muted/50 border hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                                        className="text-left text-sm p-3 rounded-lg border border-[#2d2a24] text-editorial-subtle hover:text-editorial-cream transition-colors"
+                                        style={{ background: `linear-gradient(135deg, ${agentColor}06 0%, transparent 70%)` }}
                                     >
                                         {suggestion}
                                     </button>

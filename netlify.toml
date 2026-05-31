@@ -1,13 +1,11 @@
 [build]
-  command = "pnpm install && pnpm --filter @familexyz/client build"
-  # `publish` is set automatically by @netlify/plugin-nextjs
+  base = "client"
+  command = "cd .. && pnpm install --no-frozen-lockfile && cd client && pnpm build"
+  # publish is set automatically by @netlify/plugin-nextjs v5
 
 [build.environment]
   NODE_VERSION = "22"
   PNPM_VERSION = "9"
-  # Netlify auto-runs `pnpm install` from the lockfile with --frozen-lockfile
-  # because CI=true is always set. Allow drift while we stabilize the workspace.
-  PNPM_FLAGS = "--no-frozen-lockfile"
   # Production environment variables
   VITE_API_BASE_URL = "https://api.famile.xyz"
   VITE_APP_VERSION = "1.0.0-beta"

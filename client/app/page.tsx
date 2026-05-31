@@ -108,11 +108,11 @@ function HomePage() {
                         famile.xyz
                     </p>
                     <h1 className="font-[family-name:var(--font-playfair)] text-[clamp(2rem,4.5vw,3.2rem)] font-bold text-editorial-cream leading-[1.1] tracking-[-0.01em]">
-                        Enterprise AI coaches for<br />measurable family wellness
+                        AI companions for your<br />family&rsquo;s journey
                     </h1>
                     <p className="mt-4 text-editorial-muted text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
-                        Evidence-based autonomous agents that strengthen family relationships.
-                        Every milestone verified on Hedera. Outcomes you can measure, not just feel.
+                        Five specialized guides rooted in evidence and care.
+                        Your milestones, preserved. Your privacy, protected. Your growth, celebrated.
                     </p>
                     <div className="w-32 h-px mx-auto mt-5 bg-gradient-to-r from-transparent via-editorial-accent/30 to-transparent" />
                 </header>
@@ -253,6 +253,48 @@ function HomePage() {
                         </div>
                     </section>
                 )}
+
+                {/* Enterprise — for practitioners and organizations */}
+                <section className="mb-14 fade-in fade-in-d6">
+                    <div className="text-center mb-6">
+                        <div className="inline-flex items-center gap-3 text-editorial-subtle text-xs">
+                            <span className="w-8 h-px bg-editorial-subtle/20" />
+                            <span className="tracking-[0.15em] uppercase">For Practitioners &amp; Organizations</span>
+                            <span className="w-8 h-px bg-editorial-subtle/20" />
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="rounded-lg p-5 border border-[#2d2a24] text-center"
+                            style={{ background: "linear-gradient(135deg, #c4542b08 0%, transparent 70%)" }}>
+                            <p className="text-xs tracking-[0.1em] uppercase text-editorial-accent mb-2">Verifiable</p>
+                            <p className="text-sm text-editorial-muted leading-relaxed">
+                                Every milestone recorded on Hedera Consensus Service.
+                                Immutable audit trails for practitioners, employers, and families.
+                            </p>
+                        </div>
+                        <div className="rounded-lg p-5 border border-[#2d2a24] text-center"
+                            style={{ background: "linear-gradient(135deg, #2563eb08 0%, transparent 70%)" }}>
+                            <p className="text-xs tracking-[0.1em] uppercase text-blue-400 mb-2">Outcome-Backed</p>
+                            <p className="text-sm text-editorial-muted leading-relaxed">
+                                FAM tokens reward meaningful behavioral change.
+                                Practitioners earn when families show measurable progress.
+                            </p>
+                        </div>
+                        <div className="rounded-lg p-5 border border-[#2d2a24] text-center"
+                            style={{ background: "linear-gradient(135deg, #0d948808 0%, transparent 70%)" }}>
+                            <p className="text-xs tracking-[0.1em] uppercase text-teal-400 mb-2">Privacy-First</p>
+                            <p className="text-sm text-editorial-muted leading-relaxed">
+                                Families control their data. Employers see privacy-preserving
+                                insights. Practitioners access actionable outcomes.
+                            </p>
+                        </div>
+                    </div>
+                    <div className="text-center mt-6">
+                        <p className="text-[0.6rem] tracking-[0.15em] uppercase text-editorial-faint">
+                            Practitioners &middot; Employers &middot; Researchers
+                        </p>
+                    </div>
+                </section>
 
                 {/* P.S. Telegram */}
                 <footer className="text-center fade-in fade-in-d7">

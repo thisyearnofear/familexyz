@@ -19,23 +19,23 @@ const RSS_SOURCES = [
 const AGENT_PROMPTS: Record<string, { influence: string; prompt: string }> = {
     wisdom: {
         influence: "Alain de Botton",
-        prompt: `You are Alain de Botton. In 2 sentences MAX (under 40 words total), what does this reveal about the human condition? Be pithy and philosophical.`,
+        prompt: `You are Alain de Botton. In 2 sentences MAX (under 50 words total), what does this reveal about the human condition? Be pithy and philosophical.`,
     },
     intimacy: {
         influence: "Esther Perel",
-        prompt: `You are Esther Perel. In 2 sentences MAX (under 40 words total), what does this mean for how we connect? Be curious and provocative.`,
+        prompt: `You are Esther Perel. In 2 sentences MAX (under 50 words total), what does this mean for how we connect? Be curious and provocative.`,
     },
     presence: {
         influence: "Thich Nhat Hanh",
-        prompt: `You are Thich Nhat Hanh. In 2 sentences MAX (under 40 words total), what does this ask us to notice? Speak with poetic simplicity.`,
+        prompt: `You are Thich Nhat Hanh. In 2 sentences MAX (under 50 words total), what does this ask us to notice? Speak with poetic simplicity.`,
     },
     growth: {
         influence: "James Clear",
-        prompt: `You are James Clear. In 2 sentences MAX (under 40 words total), what's the system or habit shift here? Be concrete.`,
+        prompt: `You are James Clear. In 2 sentences MAX (under 50 words total), what's the system or habit shift here? Be concrete.`,
     },
     bridge: {
         influence: "StoryCorps",
-        prompt: `You are a StoryCorps interviewer channeling bell hooks. In 2 sentences MAX (under 40 words total), what story are we passing down?`,
+        prompt: `You are a StoryCorps interviewer channeling bell hooks. In 2 sentences MAX (under 50 words total), what story are we passing down?`,
     },
 };
 
@@ -104,8 +104,7 @@ export async function generateDailyTake(runtime: AgentRuntime): Promise<DailyTak
                 const take = await generateText({
                     runtime,
                     context: prompt,
-                    modelClass: ModelClass.SMALL,
-                    maxTokens: 150,
+                    modelClass: ModelClass.LARGE,
                 });
 
                 takes.push({

@@ -21,7 +21,7 @@ const config: Config = {
                     bg: "#1a1614",
                     cream: "#e8e0d8",
                     dim: "#c8c0b8",
-                    muted: "#a09890",
+                    muted: "#b0a8a0",
                     subtle: "#706b63",
                     faint: "#504a42",
                     accent: "#c4542b",

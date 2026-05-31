@@ -254,47 +254,7 @@ function HomePage() {
                     </section>
                 )}
 
-                {/* Enterprise — for practitioners and organizations */}
-                <section className="mb-14 fade-in fade-in-d6">
-                    <div className="text-center mb-6">
-                        <div className="inline-flex items-center gap-3 text-editorial-subtle text-xs">
-                            <span className="w-8 h-px bg-editorial-subtle/20" />
-                            <span className="tracking-[0.15em] uppercase">For Practitioners &amp; Organizations</span>
-                            <span className="w-8 h-px bg-editorial-subtle/20" />
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div className="rounded-lg p-5 border border-[#2d2a24] text-center"
-                            style={{ background: "linear-gradient(135deg, #c4542b08 0%, transparent 70%)" }}>
-                            <p className="text-xs tracking-[0.1em] uppercase text-editorial-accent mb-2">Verifiable</p>
-                            <p className="text-sm text-editorial-muted leading-relaxed">
-                                Every milestone recorded on Hedera Consensus Service.
-                                Immutable audit trails for practitioners, employers, and families.
-                            </p>
-                        </div>
-                        <div className="rounded-lg p-5 border border-[#2d2a24] text-center"
-                            style={{ background: "linear-gradient(135deg, #2563eb08 0%, transparent 70%)" }}>
-                            <p className="text-xs tracking-[0.1em] uppercase text-blue-400 mb-2">Outcome-Backed</p>
-                            <p className="text-sm text-editorial-muted leading-relaxed">
-                                FAM tokens reward meaningful behavioral change.
-                                Practitioners earn when families show measurable progress.
-                            </p>
-                        </div>
-                        <div className="rounded-lg p-5 border border-[#2d2a24] text-center"
-                            style={{ background: "linear-gradient(135deg, #0d948808 0%, transparent 70%)" }}>
-                            <p className="text-xs tracking-[0.1em] uppercase text-teal-400 mb-2">Privacy-First</p>
-                            <p className="text-sm text-editorial-muted leading-relaxed">
-                                Families control their data. Employers see privacy-preserving
-                                insights. Practitioners access actionable outcomes.
-                            </p>
-                        </div>
-                    </div>
-                    <div className="text-center mt-6">
-                        <p className="text-[0.6rem] tracking-[0.15em] uppercase text-editorial-faint">
-                            Practitioners &middot; Employers &middot; Researchers
-                        </p>
-                    </div>
-                </section>
+
 
                 {/* P.S. Telegram */}
                 <footer className="text-center fade-in fade-in-d7">
@@ -314,6 +274,17 @@ function HomePage() {
                         famile.xyz &middot; Daily Council
                     </p>
                 </footer>
+
+                {/* Quiet enterprise footnote */}
+                <div className="text-center fade-in fade-in-d7 mt-3">
+                    <div className="w-12 h-px mx-auto mb-3 bg-gradient-to-r from-transparent via-editorial-faint/20 to-transparent" />
+                    <p className="text-[0.5rem] tracking-[0.25em] uppercase text-editorial-faint/50">
+                        Verifiable outcomes on Hedera &middot; FAM token incentives &middot; Privacy-preserving insights
+                    </p>
+                    <p className="text-[0.45rem] tracking-[0.2em] uppercase text-editorial-faint/30 mt-1">
+                        For practitioners, employers, and researchers
+                    </p>
+                </div>
             </div>
         </div>
     );

@@ -174,7 +174,7 @@ export default function TodayPage() {
                 </div>
 
                 {/* Takes */}
-                <section className="space-y-5 mb-14">
+                <section className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-14">
                     {data.takes.map((take, i) => {
                         const meta = AGENT_META[take.agent];
                         const influenceBio = take.influence ? INFLUENCER_BIO[take.influence] : null;
@@ -191,14 +191,6 @@ export default function TodayPage() {
                                     <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full border-2 border-purple-500/30 flex items-center justify-center text-sm bg-editorial-bg">
                                         <span className="text-purple-400/60">{take.emoji}</span>
                                     </div>
-                                )}
-
-                                {/* Connection line for Bridge */}
-                                {take.agent === "Bridge" && (
-                                    <>
-                                        <div className="absolute -left-6 top-1/2 w-6 h-px bg-blue-500/20 hidden lg:block" />
-                                        <div className="absolute -right-6 top-1/2 w-6 h-px bg-blue-500/20 hidden lg:block" />
-                                    </>
                                 )}
 
                                 <div className="flex items-start gap-3 mb-3">

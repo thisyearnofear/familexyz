@@ -92,6 +92,16 @@ cp "${PROJECT_ROOT}/package.json" "${TEMP_DEPLOY}/"
 cp "${PROJECT_ROOT}/pnpm-lock.yaml" "${TEMP_DEPLOY}/"
 cp "${PROJECT_ROOT}/tsconfig.json" "${TEMP_DEPLOY}/" 2>/dev/null || true
 
+cat > "${TEMP_DEPLOY}/.deployment.json" << EOF
+{
+  "deployed_from": "$(git -C "${PROJECT_ROOT}" branch --show-current 2>/dev/null || echo "unknown")",
+  "git_commit": "$(git -C "${PROJECT_ROOT}" rev-parse HEAD 2>/dev/null || echo "unknown")",
+  "git_commit_short": "$(git -C "${PROJECT_ROOT}" rev-parse --short HEAD 2>/dev/null || echo "unknown")",
+  "built_at": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+  "deploy_script": "scripts/deploy.sh"
+}
+EOF
+
 # Minimal workspace config (only agent runtime packages)
 cat > "${TEMP_DEPLOY}/pnpm-workspace.yaml" << 'WORKSPACE'
 packages:
@@ -122,8 +132,6 @@ echo "[1/4] Syncing to server..."
 rsync -avz --delete \
     --exclude 'node_modules' \
     --exclude '**/node_modules' \
-    --exclude 'cache' \
-    --exclude '**/cache' \
     --exclude '.turbo' \
     --exclude '*.log' \
     --exclude '*.tsbuildinfo' \
@@ -210,7 +218,7 @@ set -a
 . ${VPS_TARGET}/shared/env/.env 2>/dev/null || true
 set +a
 
-pm2 restart familexyz-agent 2>/dev/null || pm2 start ecosystem.config.js
+pm2 restart familexyz-agent --update-env 2>/dev/null || pm2 start ecosystem.config.js
 pm2 save
 echo ''
 pm2 status familexyz-agent

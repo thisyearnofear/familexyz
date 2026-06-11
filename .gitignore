@@ -18,6 +18,7 @@ node_modules
 .claude/
 .zencoder/
 .zenflow/
+.qoder/
 
 # Cursor IDE
 .cursor/
@@ -95,6 +96,9 @@ tsup.config.bundled_*.mjs
 # Netlify build temp files
 package.json.bak
 client-only-package.json
+
+# Local design/reference exports
+client/mockups/
 
 # =============================================================================
 # DATABASE & DATA FILES

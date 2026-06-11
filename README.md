@@ -51,6 +51,13 @@ cp .env.example .env  # Add Venice API key + Telegram bot token
 pnpm start            # Starts all 5 agents on :31337, health on :31338
 ```
 
+## Build Notes
+
+- Use Node 22 and pnpm 9.12.3; the repo declares `node >=22 <23`.
+- `pnpm build` runs `turbo run build` across all workspaces. Warm local Turbo builds should be mostly cache hits.
+- The Next.js client build is offline-safe: font variables are defined locally instead of fetching Google Fonts during `next build`.
+- Do not add a root `postinstall` rebuild step. pnpm already runs dependency lifecycle scripts, and a recursive rebuild can make installs appear to hang while native modules recompile repeatedly.
+
 ## API
 
 | Endpoint | Purpose |

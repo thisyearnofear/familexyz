@@ -1,5 +1,5 @@
 {
-  "extends": "../../tsconfig.json",
+  "extends": "../../../tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist",
     "noEmit": false,
@@ -22,10 +22,10 @@
   ],
   "references": [
     {
-      "path": "../core"
+      "path": "../../core"
     },
     {
-      "path": "../family-nlp-utils"
+      "path": "../../family/nlp-utils"
     },
     {
       "path": "../hedera-core"

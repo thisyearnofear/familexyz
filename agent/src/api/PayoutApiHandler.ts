@@ -1,4 +1,5 @@
 import type { PayoutService, AnomalyDetectionService, HederaPayoutLogger, HederaTokenService } from "@familexyz/agent-services";
+import { elizaLogger } from "@elizaos/core";
 
 /**
  * PayoutApiHandler
@@ -60,6 +61,7 @@ export class PayoutApiHandler {
                 },
             };
         } catch (err) {
+            elizaLogger.warn(`[PayoutAPI] getAgentPayoutHistory failed for ${agentId}:`, err);
             return {
                 agentId,
                 payouts: [],
@@ -69,6 +71,7 @@ export class PayoutApiHandler {
                     averageAmount: 0,
                     weeksCovered: weeks || 12,
                 },
+                error: "Failed to fetch agent payout history",
             };
         }
     }
@@ -109,6 +112,7 @@ export class PayoutApiHandler {
                 performanceScore,
             };
         } catch (err) {
+            elizaLogger.warn(`[PayoutAPI] getAgentPerformance failed for ${agentId}:`, err);
             return {
                 agentId,
                 consecutiveImprovements: 0,
@@ -118,6 +122,7 @@ export class PayoutApiHandler {
                 averagePayoutPerWeek: 0,
                 totalEarned: 0,
                 performanceScore: 50,
+                error: "Failed to fetch agent performance",
             };
         }
     }
@@ -178,6 +183,7 @@ export class PayoutApiHandler {
                 },
             };
         } catch (err) {
+            elizaLogger.warn(`[PayoutAPI] getFamilyPayoutHistory failed for ${familyId}:`, err);
             return {
                 familyId,
                 payoutsByAgent: [],
@@ -188,6 +194,7 @@ export class PayoutApiHandler {
                     agentCount: 0,
                     weeksCovered: weeks || 12,
                 },
+                error: "Failed to fetch family payout history",
             };
         }
     }
@@ -220,10 +227,12 @@ export class PayoutApiHandler {
                 })),
             };
         } catch (err) {
+            elizaLogger.warn("[PayoutAPI] getPendingPayouts failed:", err);
             return {
                 pendingCount: 0,
                 totalAmount: 0,
                 payouts: [],
+                error: "Failed to fetch pending payouts",
             };
         }
     }
@@ -287,6 +296,7 @@ export class PayoutApiHandler {
                 wouldExecute,
             };
         } catch (err: any) {
+            elizaLogger.warn(`[PayoutAPI] calculatePayoutDryRun failed for ${agentId}:`, err);
             return {
                 calculation: {
                     scoreDelta: 0,
@@ -298,6 +308,7 @@ export class PayoutApiHandler {
                 anomaliesDetected: false,
                 recommendation: "error",
                 wouldExecute: false,
+                error: err.message || "Payout calculation failed",
             };
         }
     }
@@ -339,9 +350,11 @@ export class PayoutApiHandler {
                 anomalies: paginated,
             };
         } catch (err) {
+            elizaLogger.warn("[PayoutAPI] getAnomalyReview failed:", err);
             return {
                 total: 0,
                 anomalies: [],
+                error: "Failed to fetch anomaly review",
             };
         }
     }

@@ -1,73 +1,25 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { Playfair_Display, Caveat } from "next/font/google";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import React, { useState, useEffect } from 'react';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { FamilyLogo } from "@/components/family/FamilyLogo";
-import { useRouter } from "next/navigation";
-
-export const dynamic = 'force-dynamic';
-
-const playfair = Playfair_Display({
-    subsets: ["latin"],
-    variable: "--font-playfair",
-    display: "swap",
-});
-
-const caveat = Caveat({
-    subsets: ["latin"],
-    variable: "--font-caveat",
-    display: "swap",
-});
-
-interface DailyTake {
-    date: string;
-    story: {
-        headline: string;
-        source: string;
-        url?: string;
-        summary: string;
-    };
-    takes: Array<{
-        agent: string;
-        emoji: string;
-        influence: string;
-        take: string;
-    }>;
-    generatedAt: number;
-}
-
-const AGENT_META: Record<string, { emoji: string; color: string; focus: string; slug: string }> = {
-    Wisdom: { emoji: "🧠", color: "#6d28d9", focus: "Emotional education & conflict resolution", slug: "wisdom" },
-    Intimacy: { emoji: "💖", color: "#db2777", focus: "Relationship quality & deep connection", slug: "intimacy" },
-    Presence: { emoji: "🧘", color: "#0d9488", focus: "Mindfulness & digital wellness", slug: "presence" },
-    Growth: { emoji: "🌱", color: "#d97706", focus: "Habits, resilience & family challenges", slug: "growth" },
-    Bridge: { emoji: "🧓", color: "#2563eb", focus: "Cross-generational bonds & legacy", slug: "bridge" },
-};
-
-const INFLUENCER_BIO: Record<string, string> = {
-    "Alain de Botton": "Philosopher and author exploring love, art, and modern life",
-    "Esther Perel": "Therapist and author on relationships and intimacy",
-    "Thich Nhat Hanh": "Buddhist monk, peace activist, and mindfulness teacher",
-    "James Clear": "Author of Atomic Habits, focused on habit formation",
-    "StoryCorps": "Nonprofit preserving and sharing humanity's stories",
-};
+import { AGENTS, type DailyTake } from "@/lib/agents";
+import { fontVariables } from "@/lib/fonts";
+import Link from "next/link";
 
 function MobileHeader() {
     const isMobile = useIsMobile();
     if (!isMobile) return null;
     return (
-        <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <header className="sticky top-0 z-40 w-full border-b bg-editorial-bg/95 backdrop-blur">
             <div className="flex h-14 items-center px-4 gap-4">
                 <SidebarTrigger />
                 <div className="flex items-center gap-2">
-                    <FamilyLogo size="sm" className="w-8 h-8" />
-                    <span className="font-semibold text-lg">famile.xyz</span>
+                    <span className="text-xl">👨‍👩‍👧‍👦</span>
+                    <span className="font-semibold text-lg font-[family-name:var(--font-playfair)]">famile.xyz</span>
                 </div>
             </div>
         </header>
@@ -77,7 +29,16 @@ function MobileHeader() {
 function HomePage() {
     const [data, setData] = useState<DailyTake | null>(null);
     const [loading, setLoading] = useState(true);
-    const router = useRouter();
+    const [showIntro, setShowIntro] = useState(false);
+
+    useEffect(() => {
+        const visited = localStorage.getItem('famile-visited');
+        if (!visited) {
+            setShowIntro(true);
+            localStorage.setItem('famile-visited', '1');
+            setTimeout(() => setShowIntro(false), 2500);
+        }
+    }, []);
 
     useEffect(() => {
         fetch('/api/today')
@@ -87,202 +48,261 @@ function HomePage() {
             .finally(() => setLoading(false));
     }, []);
 
-    const navigateToChat = useCallback((slug: string) => {
-        router.push(`/chat/${slug}`);
-    }, [router]);
-
     const today = new Date();
     const formattedDate = today.toLocaleDateString('en-US', {
         weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
     });
 
-    const agentEntries = Object.entries(AGENT_META);
-
     return (
-        <div className={`${playfair.variable} ${caveat.variable} min-h-screen bg-editorial-bg`}>
-            <div className="max-w-5xl mx-auto px-6 py-12 sm:py-16">
-                {/* Hero */}
-                <header className="text-center mb-14 fade-in">
-                    <div className="w-20 h-px mx-auto mb-5 bg-gradient-to-r from-transparent via-editorial-accent/30 to-transparent" />
-                    <p className="text-[0.65rem] tracking-[0.25em] uppercase text-editorial-muted/50 mb-4 font-[family-name:var(--font-playfair)]">
+        <div className={`${fontVariables} min-h-screen bg-editorial-bg bg-noise`}>
+            {/* First-visit intro overlay */}
+            {showIntro && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-editorial-bg"
+                    style={{ animation: 'fadeOut 0.6s ease-in 2s forwards' }}>
+                    <div className="text-center">
+                        <p className="font-[family-name:var(--font-playfair)] text-display font-bold text-editorial-cream"
+                            style={{ animation: 'revealScale 0.8s ease-out forwards' }}>
+                            famile.xyz
+                        </p>
+                        <p className="mt-3 text-editorial-muted text-sm opacity-0"
+                            style={{ animation: 'revealUp 0.6s ease-out 0.8s forwards' }}>
+                            Five minds. One family.
+                        </p>
+                    </div>
+                </div>
+            )}
+
+            <div className="max-w-4xl mx-auto px-6 py-12 sm:py-16">
+
+                {/* ── Masthead ── */}
+                <header className="text-center mb-12 reveal-up">
+                    <p className="text-[0.6rem] tracking-[0.3em] uppercase text-editorial-faint mb-6">
+                        {formattedDate}
+                    </p>
+                    <h1 className="font-[family-name:var(--font-playfair)] text-display font-bold text-editorial-cream">
                         famile.xyz
-                    </p>
-                    <h1 className="font-[family-name:var(--font-playfair)] text-[clamp(2rem,4.5vw,3.2rem)] font-bold text-editorial-cream leading-[1.1] tracking-[-0.01em]">
-                        AI companions for your<br />family&rsquo;s journey
                     </h1>
-                    <p className="mt-4 text-editorial-muted text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
-                        Five specialized guides rooted in evidence and care.
-                        Your milestones, preserved. Your privacy, protected. Your growth, celebrated.
+                    <p className="mt-3 text-editorial-muted text-sm sm:text-base max-w-lg mx-auto leading-relaxed">
+                        Five minds on today&rsquo;s world. Your family&rsquo;s council, every day.
                     </p>
-                    <div className="w-32 h-px mx-auto mt-5 bg-gradient-to-r from-transparent via-editorial-accent/30 to-transparent" />
                 </header>
 
-                {/* Agents */}
-                <section className="mb-14">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                        {agentEntries.map(([name, meta]) => {
-                            const take = data?.takes.find(t => t.agent === name);
-                            const influence = take?.influence;
-                            const influenceBio = influence ? INFLUENCER_BIO[influence] : null;
-
-                            return (
-                                <div
-                                    key={name}
-                                    className="group relative rounded-lg p-5 transition-all duration-300 hover:-translate-y-0.5 fade-in cursor-pointer"
-                                    style={{ background: `linear-gradient(135deg, ${meta.color}08 0%, transparent 70%)` }}
-                                    onClick={() => navigateToChat(meta.slug)}
+                {/* ── Agent Masthead (newspaper-style row) ── */}
+                <nav className="reveal-up reveal-d1 border-y border-editorial-faint/20 py-3 mb-14">
+                    <div className="flex items-center justify-center gap-x-5 gap-y-2 flex-wrap text-xs">
+                        <span className="text-[0.55rem] tracking-[0.2em] uppercase text-editorial-faint">
+                            Your Council
+                        </span>
+                        {AGENTS.map((agent, i) => (
+                            <React.Fragment key={agent.id}>
+                                {i > 0 && (
+                                    <span className="text-editorial-faint/30 hidden sm:inline">|</span>
+                                )}
+                                <Link
+                                    href={`/chat/${agent.id}`}
+                                    className="flex items-center gap-1.5 text-editorial-subtle hover-underline-wipe hover-shift"
+                                    style={{ color: agent.color }}
                                 >
-                                    {/* Wax seal for Wisdom */}
-                                    {name === "Wisdom" && (
-                                        <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full border-2 border-purple-500/30 flex items-center justify-center text-sm bg-editorial-bg">
-                                            <span className="text-purple-400/60">{meta.emoji}</span>
-                                        </div>
-                                    )}
+                                    <span className="text-sm">{agent.emoji}</span>
+                                    <span className="font-[family-name:var(--font-playfair)] text-sm font-medium">
+                                        {agent.name}
+                                    </span>
+                                </Link>
+                            </React.Fragment>
+                        ))}
+                    </div>
+                </nav>
 
-                                    {/* Connection line for Bridge */}
-                                    {name === "Bridge" && (
-                                        <>
-                                            <div className="absolute -left-6 top-1/2 w-6 h-px bg-blue-500/20 hidden lg:block" />
-                                            <div className="absolute -right-6 top-1/2 w-6 h-px bg-blue-500/20 hidden lg:block" />
-                                        </>
-                                    )}
+                {/* ── Feature Story (if available) ── */}
+                {data && (
+                    <section className="mb-16 reveal-up reveal-d2">
+                        <div className="text-center mb-8">
+                            <p className="text-[0.55rem] tracking-[0.2em] uppercase text-editorial-faint mb-4">
+                                Today&rsquo;s Story &middot; {data.story.source}
+                            </p>
+                            <h2 className="font-[family-name:var(--font-playfair)] text-headline font-bold text-editorial-cream leading-tight max-w-3xl mx-auto">
+                                {data.story.headline}
+                            </h2>
+                            {data.story.url && (
+                                <a
+                                    href={data.story.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-block mt-4 text-[0.6rem] tracking-[0.15em] uppercase text-editorial-faint hover:text-editorial-accent transition-colors hover-underline-wipe"
+                                >
+                                    Read original &rarr;
+                                </a>
+                            )}
+                        </div>
+                        <p className="text-body-lg text-editorial-muted leading-relaxed max-w-prose mx-auto text-center">
+                            {data.story.summary}
+                        </p>
+                    </section>
+                )}
 
-                                    <div className="flex items-start gap-3 mb-3">
-                                        {/* Icon container: distinct per agent */}
-                                        <div className={`
-                                            flex-shrink-0 flex items-center justify-center
-                                            ${name === "Wisdom" ? "w-10 h-10 rounded-full border-2" : ""}
-                                            ${name === "Intimacy" ? "w-10 h-10 rounded-2xl" : ""}
-                                            ${name === "Presence" ? "w-10 h-10 border-l-2 border-transparent pl-3" : ""}
-                                            ${name === "Growth" ? "w-10 h-10 rounded-lg" : ""}
-                                            ${name === "Bridge" ? "w-10 h-10" : ""}
-                                        `}
-                                            style={{
-                                                borderColor: name === "Wisdom" ? `${meta.color}40` : undefined,
-                                                background: name === "Intimacy" ? `radial-gradient(circle at 50% 50%, ${meta.color}15 0%, transparent 70%)` : undefined,
-                                                boxShadow: name === "Growth" ? `0 0 20px ${meta.color}15` : undefined,
-                                                borderLeftColor: name === "Presence" ? meta.color : undefined,
-                                            }}
-                                        >
-                                            <span className="text-lg">{meta.emoji}</span>
-                                        </div>
+                {!data && !loading && (
+                    <section className="mb-16 reveal-up reveal-d2 text-center">
+                        <p className="text-editorial-subtle text-sm italic">
+                            Today&rsquo;s council is being prepared. Check back soon.
+                        </p>
+                    </section>
+                )}
 
-                                        <div className="min-w-0 flex-1">
-                                            <h3 className="font-[family-name:var(--font-playfair)] text-base font-semibold leading-tight"
-                                                style={{ color: meta.color }}>
-                                                {name}
-                                            </h3>
-                                            <p className="text-editorial-muted text-xs mt-0.5 leading-relaxed">
-                                                {meta.focus}
-                                            </p>
+                {loading && (
+                    <section className="mb-16 text-center">
+                        <p className="text-editorial-subtle text-sm animate-pulse">
+                            Loading today&rsquo;s council...
+                        </p>
+                    </section>
+                )}
+
+                {/* ── Agent Takes (editorial columns, not cards) ── */}
+                {data && (
+                    <section className="mb-16">
+                        <div className="flex items-center gap-3 justify-center mb-10 reveal-up reveal-d3">
+                            <span className="w-12 h-px bg-editorial-faint/20" />
+                            <span className="text-[0.55rem] tracking-[0.2em] uppercase text-editorial-faint">
+                                Five Perspectives
+                                {data.isFallback && (
+                                    <span className="ml-2 text-editorial-faint/60 normal-case tracking-normal">
+                                        &middot; sample council
+                                    </span>
+                                )}
+                            </span>
+                            <span className="w-12 h-px bg-editorial-faint/20" />
+                        </div>
+
+                        {/* First take: featured full-width */}
+                        {data.takes[0] && (() => {
+                            const agent = AGENTS.find(a => a.name === data.takes[0].agent);
+                            return (
+                                <div className="mb-12 reveal-up reveal-d3">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <span className="text-2xl">{data.takes[0].emoji}</span>
+                                        <div>
+                                            <span
+                                                className="font-[family-name:var(--font-playfair)] text-lg font-semibold"
+                                                style={{ color: agent?.color }}
+                                            >
+                                                {data.takes[0].agent}
+                                            </span>
+                                            <span className="text-editorial-faint text-xs ml-2">
+                                                via {data.takes[0].influence}
+                                            </span>
                                         </div>
                                     </div>
-
-                                    {influence && (
-                                        <p className="text-[0.65rem] tracking-[0.08em] uppercase text-editorial-subtle mb-2">
-                                            inspired by {influence}
-                                            {influenceBio && (
-                                                <span className="relative ml-1 group/tip cursor-help text-editorial-muted/40">
-                                                    &#9432;
-                                                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 rounded bg-editorial-surface text-editorial-cream text-[0.6rem] leading-tight whitespace-nowrap opacity-0 group-hover/tip:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg border border-white/5">
-                                                        {influenceBio}
-                                                    </span>
-                                                </span>
-                                            )}
-                                        </p>
-                                    )}
-
-                                    {take && (
-                                        <p className="font-[family-name:var(--font-playfair)] text-sm italic leading-relaxed text-editorial-dim">
-                                            &ldquo;{take.take.length > 100 ? take.take.slice(0, 100) + "…" : take.take}&rdquo;
-                                        </p>
-                                    )}
-
-                                    {!take && (
-                                        <p className="text-editorial-subtle text-xs italic">
-                                            {loading ? "Loading…" : "No take available yet today."}
-                                        </p>
-                                    )}
-
-                                    <p className="mt-3 text-[0.6rem] tracking-[0.1em] uppercase text-editorial-subtle group-hover:text-editorial-accent transition-colors">
-                                        Chat &rarr;
-                                    </p>
+                                    <blockquote className="border-l-2 pl-6 font-[family-name:var(--font-playfair)] text-xl sm:text-2xl italic leading-snug text-editorial-dim max-w-3xl"
+                                        style={{ borderColor: agent?.color + "40" }}>
+                                        {data.takes[0].take}
+                                    </blockquote>
+                                    <Link
+                                        href={`/chat/${agent?.id ?? data.takes[0].agent.toLowerCase()}`}
+                                        className="inline-block mt-4 text-[0.6rem] tracking-[0.1em] uppercase text-editorial-faint hover:text-editorial-accent transition-colors hover-shift"
+                                    >
+                                        Continue the conversation &rarr;
+                                    </Link>
                                 </div>
                             );
-                        })}
-                    </div>
-                </section>
+                        })()}
 
-                {/* Daily Council preview */}
-                {data && (
-                    <section className="mb-14 fade-in fade-in-d5">
-                        <div className="text-center mb-6">
-                            <div className="inline-flex items-center gap-3 text-editorial-subtle text-xs">
-                                <span className="w-8 h-px bg-editorial-subtle/20" />
-                                <span className="tracking-[0.15em] uppercase">Today&rsquo;s Council</span>
-                                <span className="w-8 h-px bg-editorial-subtle/20" />
-                            </div>
-                        </div>
-
-                        <div className="text-center mb-6">
-                            <p className="font-[family-name:var(--font-playfair)] text-lg sm:text-xl italic leading-snug text-editorial-dim max-w-2xl mx-auto">
-                                &ldquo;{data.story.headline}&rdquo;
-                            </p>
-                            <p className="text-[0.65rem] tracking-[0.15em] uppercase text-editorial-subtle mt-2">
-                                {data.story.source} &middot; {formattedDate}
-                            </p>
-                        </div>
-
-                        <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-editorial-subtle mb-5">
-                            {data.takes.map(t => (
-                                <span key={t.agent} className="flex items-center gap-1.5">
-                                    <span>{t.emoji}</span>
-                                    <span className="text-editorial-muted">{t.agent}</span>
-                                    <span className="text-editorial-faint max-w-[160px] truncate">&ldquo;{t.take.slice(0, 50)}&rdquo;</span>
-                                </span>
-                            ))}
-                        </div>
-
-                        <div className="text-center">
-                            <button
-                                onClick={() => router.push('/today')}
-                                className="inline-flex items-center gap-1.5 text-xs tracking-[0.1em] uppercase text-editorial-muted hover:text-editorial-accent transition-colors border-b border-transparent hover:border-editorial-accent/30"
-                            >
-                                Read today&rsquo;s full council &rarr;
-                            </button>
+                        {/* Remaining takes: alternating 2-col editorial layout */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-10">
+                            {data.takes.slice(1).map((take, i) => {
+                                const agent = AGENTS.find(a => a.name === take.agent);
+                                const isLeft = i % 2 === 0;
+                                return (
+                                    <div
+                                        key={take.agent}
+                                        className={`reveal-up reveal-d${Math.min(i + 4, 7)}`}
+                                    >
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <span className="text-lg">{take.emoji}</span>
+                                            <span
+                                                className="font-[family-name:var(--font-playfair)] text-sm font-semibold"
+                                                style={{ color: agent?.color }}
+                                            >
+                                                {take.agent}
+                                            </span>
+                                            <span className="text-editorial-faint text-[0.6rem] tracking-[0.08em] uppercase">
+                                                / {take.influence}
+                                            </span>
+                                        </div>
+                                        <blockquote
+                                            className={`font-[family-name:var(--font-playfair)] text-sm italic leading-relaxed text-editorial-dim ${
+                                                take.agent === "Presence" ? "text-center py-4" : ""
+                                            } ${
+                                                take.agent === "Growth" ? "not-italic font-medium text-base" : ""
+                                            }`}
+                                            style={
+                                                take.agent === "Growth"
+                                                    ? { borderBottom: `1px solid ${agent?.color}30`, paddingBottom: "0.5rem" }
+                                                    : undefined
+                                            }
+                                        >
+                                            &ldquo;{take.take}&rdquo;
+                                        </blockquote>
+                                        <div className="flex items-center gap-4 mt-3">
+                                            <Link
+                                                href={`/chat/${agent?.id ?? take.agent.toLowerCase()}`}
+                                                className="text-[0.6rem] tracking-[0.1em] uppercase text-editorial-faint hover:text-editorial-accent transition-colors hover-shift"
+                                            >
+                                                Chat &rarr;
+                                            </Link>
+                                            {agent?.focus && (
+                                                <span className="text-[0.55rem] text-editorial-faint">
+                                                    {agent.focus}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </section>
                 )}
 
+                {/* ── CTA ── */}
+                {data && (
+                    <div className="text-center mb-14 reveal-up reveal-d6">
+                        <Link
+                            href="/today"
+                            className="text-sm text-editorial-muted hover:text-editorial-accent transition-colors hover-underline-wipe"
+                        >
+                            Read the full council &rarr;
+                        </Link>
+                    </div>
+                )}
 
+                {/* ── Start CTA ── */}
+                <div className="text-center mb-14 reveal-up reveal-d5">
+                    <Link
+                        href="/today"
+                        className="inline-block text-sm font-[family-name:var(--font-playfair)] text-editorial-accent hover:text-editorial-cream transition-colors hover-shift"
+                    >
+                        Start with today&rsquo;s council &rarr;
+                    </Link>
+                </div>
 
-                {/* P.S. Telegram */}
-                <footer className="text-center fade-in fade-in-d7">
-                    <div className="w-24 h-px mx-auto mb-6 bg-gradient-to-r from-transparent via-editorial-accent/20 to-transparent" />
+                {/* ── Telegram CTA ── */}
+                <footer className="text-center reveal-up reveal-d6">
+                    <div className="w-24 h-px mx-auto mb-6 bg-editorial-faint/15" />
                     <p className="font-[family-name:var(--font-caveat)] text-lg text-editorial-subtle">
-                        P.S. Get tomorrow&rsquo;s council on{` `}
+                        Get tomorrow&rsquo;s council on{` `}
                         <a
                             href="https://t.me/familexyzbot?start=subscribe_daily"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-editorial-accent hover:text-editorial-accent/80 transition-colors border-b border-editorial-accent/20 hover:border-editorial-accent/50"
+                            className="text-editorial-accent hover:text-editorial-accent/80 transition-colors hover-underline-wipe"
                         >
                             Telegram
                         </a>
                     </p>
-                    <p className="text-[0.55rem] tracking-[0.2em] uppercase text-editorial-faint/50 mt-4">
-                        famile.xyz &middot; Daily Council
-                    </p>
                 </footer>
 
-                {/* Quiet enterprise footnote */}
-                <div className="text-center fade-in fade-in-d7 mt-3">
-                    <div className="w-12 h-px mx-auto mb-3 bg-gradient-to-r from-transparent via-editorial-faint/20 to-transparent" />
-                    <p className="text-[0.5rem] tracking-[0.25em] uppercase text-editorial-faint/50">
-                        Verifiable outcomes on Hedera &middot; FAM token incentives &middot; Privacy-preserving insights
-                    </p>
-                    <p className="text-[0.45rem] tracking-[0.2em] uppercase text-editorial-faint/30 mt-1">
-                        For practitioners, employers, and researchers
+                {/* ── Enterprise whisper ── */}
+                <div className="text-center mt-8 reveal-up reveal-d7">
+                    <p className="text-[0.45rem] tracking-[0.25em] uppercase text-editorial-faint/40">
+                        Verifiable on Hedera &middot; FAM token incentives &middot; Privacy-preserving
                     </p>
                 </div>
             </div>
@@ -291,28 +311,20 @@ function HomePage() {
 }
 
 export default function Home() {
-    const [queryClient] = useState(
-        () => new QueryClient({
-            defaultOptions: { queries: { staleTime: 30_000 } },
-        })
-    );
-
     return (
-        <QueryClientProvider client={queryClient}>
-            <div className="dark antialiased font-sans" style={{ colorScheme: "dark" }} role="application" aria-label="Family Connection Platform">
-                <TooltipProvider delayDuration={0}>
-                    <SidebarProvider>
-                        <AppSidebar />
-                        <SidebarInset>
-                            <MobileHeader />
-                            <div className="flex flex-1 flex-col size-full" role="main" aria-label="Main content">
-                                <HomePage />
-                            </div>
-                        </SidebarInset>
-                    </SidebarProvider>
-                    <Toaster />
-                </TooltipProvider>
-            </div>
-        </QueryClientProvider>
+        <div className="dark antialiased font-sans" style={{ colorScheme: "dark" }} role="application" aria-label="Family Connection Platform">
+            <TooltipProvider delayDuration={0}>
+                <SidebarProvider>
+                    <AppSidebar />
+                    <SidebarInset>
+                        <MobileHeader />
+                        <div className="flex flex-1 flex-col size-full" role="main" aria-label="Main content">
+                            <HomePage />
+                        </div>
+                    </SidebarInset>
+                </SidebarProvider>
+                <Toaster />
+            </TooltipProvider>
+        </div>
     );
 }

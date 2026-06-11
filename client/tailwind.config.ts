@@ -71,6 +71,11 @@ const config: Config = {
                     ring: "hsl(var(--sidebar-ring))",
                 },
             },
+            fontSize: {
+                "display": ["clamp(2.5rem, 5vw, 4rem)", { lineHeight: "1.05", letterSpacing: "-0.02em" }],
+                "headline": ["clamp(1.5rem, 3vw, 2.5rem)", { lineHeight: "1.1", letterSpacing: "-0.01em" }],
+                "body-lg": ["1.125rem", { lineHeight: "1.7" }],
+            },
             borderRadius: {
                 lg: "var(--radius)",
                 md: "calc(var(--radius) - 2px)",
@@ -85,36 +90,10 @@ const config: Config = {
                     from: { height: "var(--radix-accordion-content-height)" },
                     to: { height: "0" },
                 },
-                "pulse-glow": {
-                    "0%, 100%": {
-                        opacity: "0.4",
-                        filter: "brightness(1)",
-                    },
-                    "50%": {
-                        opacity: "0.8",
-                        filter: "brightness(1.3)",
-                    },
-                },
-                "boot-typing": {
-                    from: { width: "0" },
-                    to: { width: "100%" },
-                },
-                "fade-in": {
-                    from: { opacity: "0", transform: "translateY(10px)" },
-                    to: { opacity: "1", transform: "translateY(0)" },
-                },
-                "slide-up": {
-                    from: { opacity: "0", transform: "translateY(20px)" },
-                    to: { opacity: "1", transform: "translateY(0)" },
-                },
             },
             animation: {
                 "accordion-down": "accordion-down 0.2s ease-out",
                 "accordion-up": "accordion-up 0.2s ease-out",
-                "pulse-glow": "pulse-glow 2s ease-in-out infinite",
-                "boot-typing": "boot-typing 1.5s steps(40, end)",
-                "fade-in": "fade-in 0.5s ease-out",
-                "slide-up": "slide-up 0.6s ease-out",
             },
         },
     },

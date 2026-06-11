@@ -8,6 +8,28 @@
  */
 
 import { elizaLogger, type AgentRuntime, ModelClass } from "@elizaos/core";
+import type { IDatabaseAdapter } from "@elizaos/core";
+
+let dbRef: IDatabaseAdapter | null = null;
+
+export async function initializeDailyTakePersistence(db: IDatabaseAdapter): Promise<void> {
+    dbRef = db;
+    try {
+        const today = new Date().toISOString().split("T")[0];
+        if ('query' in db && typeof (db as any).query === 'function') {
+            const rows = await (db as any).query(
+                "SELECT data FROM daily_takes WHERE date = ?",
+                [today]
+            );
+            if (rows && rows.length > 0) {
+                cachedTake = JSON.parse(rows[0].data);
+                elizaLogger.info("[DailyTake] Hydrated today's take from database");
+            }
+        }
+    } catch (err) {
+        elizaLogger.debug("[DailyTake] Could not hydrate from DB (table may not exist yet):", err);
+    }
+}
 
 const RSS_SOURCES = [
     { name: "The Atlantic - Family", url: "https://www.theatlantic.com/feed/channel/family/" },
@@ -133,6 +155,19 @@ export async function generateDailyTake(runtime: AgentRuntime): Promise<DailyTak
         };
 
         cachedTake = dailyTake;
+
+        if (dbRef && 'query' in dbRef && typeof (dbRef as any).query === 'function') {
+            try {
+                await (dbRef as any).query(
+                    "INSERT INTO daily_takes (date, data, generated_at) VALUES (?, ?, ?) ON CONFLICT(date) DO UPDATE SET data = excluded.data, generated_at = excluded.generated_at",
+                    [today, JSON.stringify(dailyTake), Date.now()]
+                );
+                elizaLogger.info("[DailyTake] Persisted to database");
+            } catch (err) {
+                elizaLogger.debug("[DailyTake] Could not persist to DB:", err);
+            }
+        }
+
         elizaLogger.info(`[DailyTake] Generated ${takes.length} perspectives`);
         return dailyTake;
     } catch (error) {

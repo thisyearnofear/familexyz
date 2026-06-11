@@ -1,15 +1,7 @@
 import { NextResponse } from "next/server";
+import { AGENTS } from "@/lib/agents";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.famile.xyz";
-
-const EMOJI_MAP: Record<string, string> = {
-    wisdom: "\uD83E\uDDE0",
-    intimacy: "\uD83D\uDC96",
-    presence: "\uD83E\uDDD8",
-    generationalbridge: "\uD83E\uDDD3",
-    growth: "\uD83C\uDF31",
-    savings: "\uD83D\uDCB0",
-};
 
 export const dynamic = "force-dynamic";
 
@@ -20,12 +12,16 @@ async function fetchAgentStatuses() {
         const json = await res.json();
         const agents = json.data?.agents ?? json.agents ?? json;
         if (!Array.isArray(agents)) return null;
-        return agents.map((a: any) => ({
-            id: a.name?.toLowerCase() || a.id,
-            name: a.name || a.id,
-            status: a.status === "running" ? "ACTIVE" : "IDLE",
-            emoji: EMOJI_MAP[a.name?.toLowerCase()] || "\uD83E\uDD16",
-        }));
+        return agents.map((a: any) => {
+            const name = a.name?.toLowerCase() || a.id;
+            const agent = AGENTS.find(ag => ag.id === name);
+            return {
+                id: name,
+                name: a.name || a.id,
+                status: a.status === "running" ? "ACTIVE" : "IDLE",
+                emoji: agent?.emoji ?? "\u{1F916}",
+            };
+        });
     } catch {
         return null;
     }
@@ -43,6 +39,7 @@ export async function GET() {
             const initialData = JSON.stringify({
                 type: "agent-status",
                 agents: initial || [],
+                isConnected: initial !== null,
             });
             controller.enqueue(encoder.encode(`data: ${initialData}\n\n`));
 
@@ -52,6 +49,7 @@ export async function GET() {
                     const data = JSON.stringify({
                         type: "agent-status",
                         agents: statuses,
+                        isConnected: true,
                     });
                     try {
                         controller.enqueue(encoder.encode(`data: ${data}\n\n`));

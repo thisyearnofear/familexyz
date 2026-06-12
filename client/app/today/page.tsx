@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AGENTS, type DailyTake } from "@/lib/agents";
+import { useDailyTake } from "@/hooks/use-daily-take";
 import { fontVariables } from "@/lib/fonts";
 
 function ShareLink({ take, story }: { take: DailyTake['takes'][0]; story: DailyTake['story'] }) {
@@ -146,17 +147,8 @@ const TAKE_COMPONENTS: Record<string, React.FC<TakeProps>> = {
 };
 
 export default function TodayPage() {
-    const [data, setData] = useState<DailyTake | null>(null);
-    const [loading, setLoading] = useState(true);
+    const { data, isLoading: loading } = useDailyTake();
     const router = useRouter();
-
-    useEffect(() => {
-        fetch('/api/today')
-            .then(res => res.json())
-            .then(setData)
-            .catch(() => {})
-            .finally(() => setLoading(false));
-    }, []);
 
     const navigateToChat = useCallback((slug: string) => {
         router.push(`/chat/${slug}?context=today`);

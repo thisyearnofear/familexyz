@@ -3,7 +3,6 @@ import type { DailyTake } from "@/lib/agents";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.famile.xyz";
 
-export const dynamic = "force-dynamic";
 export const revalidate = 3600;
 
 export async function GET() {

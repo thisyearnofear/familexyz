@@ -39,6 +39,7 @@ import { initializeDatabase } from "./database/initializer.js";
 import { getTokenForProvider, getSecret } from "./services/token-provider.js";
 import { createHttpServer } from "./server/http-server.js";
 import { patchDirectClientRoutes } from "./server/direct-client-routes.js";
+import { ServiceRegistry } from "./server/service-registry.js";
 import { extendDirectClientWithTelegram, initializeTelegram } from "./integrations/telegram.js";
 import { initializeHederaService } from "./hedera/setup.js";
 import { initializeCache } from "./cache/setup.js";
@@ -139,17 +140,8 @@ async function startAgent(character: Character, directClient: DirectClient): Pro
             fs.mkdirSync(dataDir, { recursive: true });
         }
         
-        // Check for cached database - DISABLED for testing
-        // const cachedDbAdapter = (global as any).__cachedDbAdapter;
-        const cachedDbAdapter = null; // Disable caching
         const filePath = process.env.SQLITE_FILE ?? path.resolve(dataDir, "db.sqlite");
-        const cachedFilePath = null; // (global as any).__cachedDbFilePath;
-        
-        if (false && cachedFilePath === filePath && cachedDbAdapter) {
-            db = cachedDbAdapter;
-        } else {
-            db = (await initializeDatabase(dataDir)) as IDatabaseAdapter & IDatabaseCacheAdapter;
-        }
+        db = (await initializeDatabase(dataDir)) as IDatabaseAdapter & IDatabaseCacheAdapter;
         
         // Run database migrations
         try {
@@ -221,6 +213,7 @@ const hasValidRemoteUrls = () =>
  */
 const startAgents = async () => {
     const directClient = new DirectClient();
+    ServiceRegistry.set("directClient", directClient);
     
     // Extend DirectClient with Telegram endpoints
     extendDirectClientWithTelegram(directClient);
@@ -285,6 +278,15 @@ const startAgents = async () => {
             await initializeDailyTakePersistence(primaryDb);
         } catch (error) {
             elizaLogger.warn("Failed to initialize daily take persistence:", error);
+        }
+
+        try {
+            const mono = await ServiceRegistry.ensureMonetization();
+            if (mono) {
+                elizaLogger.success("Monetization services initialized (subscriptions, usage tracking, feature gates)");
+            }
+        } catch (error) {
+            elizaLogger.warn("Failed to initialize monetization services:", error);
         }
     }
 

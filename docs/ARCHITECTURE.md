@@ -10,12 +10,29 @@ familexyz/
 │   ├── src/
 │   │   ├── index.ts           # Main entry point
 │   │   ├── services/          # Core business logic
-│   │   ├── integrations/      # External integrations
-│   │   └── api/               # REST API handlers
-│   └── data/                   # SQLite database
+│   │   ├── integrations/      # External integrations (bond scoring, GoodDollar, Telegram)
+│   │   ├── api/               # REST API handlers (payouts)
+│   │   ├── server/            # HTTP server + direct client routes
+│   │   ├── jobs/              # Scheduled jobs (DailyTakeGenerator, BondScoreScheduler)
+│   │   ├── database/          # SQLite initialization
+│   │   ├── migrations/        # Database migrations
+│   │   ├── hedera/            # Hedera setup helpers
+│   │   └── character/         # Character JSON loader
+│   └── data/                   # SQLite database (runtime)
+├── client/                     # Frontend (Next.js 16 on Netlify)
+│   ├── app/
+│   │   ├── page.tsx           # Home page (daily council preview)
+│   │   ├── today/             # Full daily council view
+│   │   ├── dashboard/         # Family dashboard
+│   │   ├── chat/[agentId]/    # Agent chat interface
+│   │   └── api/               # Next.js API routes (proxy to backend)
+│   ├── components/            # React components (chat, dashboard, layout, UI)
+│   ├── hooks/                 # Custom React hooks
+│   └── lib/                   # Shared utilities (agents, fonts, API client)
+├── characters/                 # Agent persona definitions (JSON)
 ├── packages/
-│   ├── agent/                 # @elizaos/agent-services (shared services)
-│   ├── core/                  # @elizaos/core (core utilities)
+│   ├── agent/                 # @elizaos/agent-services (payout, anomaly detection, HCS logger)
+│   ├── core/                  # @elizaos/core (core utilities, model config, embeddings)
 │   ├── core-lite/             # @familexyz/core-lite (lightweight core)
 │   ├── family/                # Family-specific agents
 │   │   ├── plugin-wisdom/     # Wisdom agent
@@ -23,14 +40,23 @@ familexyz/
 │   │   ├── plugin-generational-bridge/
 │   │   ├── plugin-presence/
 │   │   ├── plugin-growth/
+│   │   ├── plugin-savings/    # Savings agent (Bonzo Finance)
+│   │   ├── a2a-protocol/      # Agent-to-Agent trading
+│   │   ├── metrics/           # Agent metrics tracking
 │   │   └── nlp-utils/         # NLP utilities
 │   ├── blockchain/
-│   │   └── hedera-core/       # Core Hedera services
+│   │   └── hedera-core/       # Core Hedera services (HCS, HTS, token service)
 │   ├── config/                # Shared configuration (Zod-validated)
-│   ├── adapters/              # Database adapters
-│   └── clients/              # Platform clients (Telegram, XMTP)
-├── config/                    # Configuration files
-└── docs/                     # Documentation
+│   ├── adapters/              # Database adapters (PostgreSQL)
+│   ├── clients/               # Platform clients
+│   │   ├── telegram/          # Grammy-based Telegram bot (~2100 lines)
+│   │   ├── xmtp/              # XMTP encrypted messaging client
+│   │   └── direct/            # Direct client (CLI/API)
+│   ├── monetization/          # Subscription tiers, usage tracking, feature gates
+│   └── auth/                  # Authentication services
+├── config/                    # Configuration files (biome, etc.)
+├── tests/                     # E2E tests
+└── docs/                      # Documentation
 ```
 
 ### Core Technologies
@@ -114,10 +140,12 @@ Execute Transfer (HederaTokenService)
 
 ### Server Ports
 
-| Port | Purpose |
-|------|---------|
-| **3004** | Main REST API |
-| **3005** | Health check endpoint |
+Ports are configured via environment variables with fallback defaults:
+
+| Port | Env Var | Default | Purpose |
+|------|---------|---------|---------|
+| **31337** | `SERVER_PORT` | 31337 | Main REST API (production sets `SERVER_PORT=3004`) |
+| **31338** | `HEALTH_PORT` | 31338 | Health check endpoint |
 
 ### Core Agent Endpoints
 
@@ -424,23 +452,38 @@ tests/
 
 ## 🚀 Deployment Architecture
 
+### Current Production Setup
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                    Production Stack                          │
+├──────────────────────────────────────────────────────────────┤
+│ Frontend:  Netlify (Next.js, auto-deploys from develop)      │
+│ Backend:   Hetzner VPS (api.famile.xyz:443 via Nginx)        │
+│ LLM:       Grok 4.1 Fast (primary) / Venice AI (fallback)    │
+│ Embeddings: Ollama (nomic-embed-text, 768-dim, self-hosted)  │
+│ Database:  SQLite (agent/data/db.sqlite)                     │
+│ Blockchain: Hedera Testnet                                   │
+│ Process:   PM2 with ecosystem.config.cjs                     │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### Frontend (Netlify)
+- Auto-deploys from `develop` branch
+- Available at `https://familexyz.netlify.app`
+- API routes proxy to backend via `NEXT_PUBLIC_API_BASE_URL`
+- Static assets cached with immutable headers
+
+### Backend (Hetzner VPS)
+- Nginx reverse proxy with HTTPS at `api.famile.xyz:443`
+- PM2 process management with auto-restart
+- Symlinked deployment: `/opt/familexyz/current` → `releases/{timestamp}`
+- Shared state in `/opt/familexyz/shared/` (`.env`, `data/`, `logs/`)
+
 ### Development
 - Local machine with SQLite
 - Hot reload for fast iteration
-- Debug logging available
-
-### Staging
-- Hedera testnet
-- SQLite database
-- Docker containers
-- CI/CD pipeline
-
-### Production
-- Hedera mainnet
-- SQLite with backups
-- PM2 process management
-- Nginx reverse proxy
-- Monitoring & alerting
+- `pnpm start` starts backend, `pnpm dev` starts with debug logging
 
 ---
 

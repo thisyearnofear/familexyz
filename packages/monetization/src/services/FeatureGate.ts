@@ -103,7 +103,7 @@ export class FeatureGate implements IFeatureGate {
      * Check if feature is enabled in feature_gates table
      */
     async isFeatureEnabled(featureKey: string, tier: SubscriptionTier): Promise<boolean> {
-        const row = await (this.db.db as any).get(
+        const row = await this.db.get(
             `SELECT * FROM feature_gates WHERE feature_key = ?`,
             [featureKey]
         );
@@ -143,7 +143,7 @@ export class FeatureGate implements IFeatureGate {
         const column = columnMap[tier];
         const now = Math.floor(Date.now() / 1000);
 
-        await (this.db.db as any).run(
+        await this.db.run(
             `UPDATE feature_gates
              SET ${column} = ?, updated_at = ?
              WHERE feature_key = ?`,
@@ -160,7 +160,7 @@ export class FeatureGate implements IFeatureGate {
         description: string;
         tiers: Record<SubscriptionTier, boolean>;
     }[]> {
-        const rows = await (this.db.db as any).all(
+        const rows = await this.db.all(
             `SELECT * FROM feature_gates ORDER BY feature_name`
         );
 
@@ -206,7 +206,7 @@ export class FeatureGate implements IFeatureGate {
      * Get subscription for user
      */
     private async getSubscription(userId: string): Promise<Subscription> {
-        const row = await (this.db.db as any).get(
+        const row = await this.db.get(
             `SELECT * FROM subscriptions
              WHERE user_id = ? AND status = 'active'
              ORDER BY created_at DESC LIMIT 1`,

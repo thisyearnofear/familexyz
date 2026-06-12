@@ -6,7 +6,8 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { AGENTS, type DailyTake } from "@/lib/agents";
+import { useDailyTake } from "@/hooks/use-daily-take";
+import { AGENTS } from "@/lib/agents";
 import { fontVariables } from "@/lib/fonts";
 import Link from "next/link";
 
@@ -27,8 +28,7 @@ function MobileHeader() {
 }
 
 function HomePage() {
-    const [data, setData] = useState<DailyTake | null>(null);
-    const [loading, setLoading] = useState(true);
+    const { data, isLoading: loading } = useDailyTake();
     const [showIntro, setShowIntro] = useState(false);
 
     useEffect(() => {
@@ -38,14 +38,6 @@ function HomePage() {
             localStorage.setItem('famile-visited', '1');
             setTimeout(() => setShowIntro(false), 2500);
         }
-    }, []);
-
-    useEffect(() => {
-        fetch('/api/today')
-            .then(res => res.json())
-            .then(setData)
-            .catch(() => {})
-            .finally(() => setLoading(false));
     }, []);
 
     const today = new Date();

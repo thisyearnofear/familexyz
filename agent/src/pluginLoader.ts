@@ -49,16 +49,17 @@ export function getEnabledPlugins(): PluginConfig[] {
 
   // Family plugins - always enabled for our use case
   const familyPlugins = [
-    "@elizaos/family-plugin-wisdom",
-    "@elizaos/family-plugin-intimacy",
-    "@elizaos/family-plugin-generational-bridge",
-    "@elizaos/family-plugin-presence",
-    "@elizaos/family-plugin-growth",
+    "@elizaos/family/plugin-wisdom",
+    "@elizaos/family/plugin-intimacy",
+    "@elizaos/family/plugin-generational-bridge",
+    "@elizaos/family/plugin-presence",
+    "@elizaos/family/plugin-growth",
+    "@elizaos/family/plugin-savings",
   ];
 
   for (const pluginPath of familyPlugins) {
     plugins.push({
-      name: pluginPath.replace("@elizaos/family-plugin-", ""),
+      name: pluginPath.replace("@elizaos/family/plugin-", ""),
       path: pluginPath,
       enabled: true,
     });

@@ -1,349 +1,306 @@
-# FamilyXYZ Development Roadmap
+# FamilyXYZ Roadmap
 
-## Current Phase: Backend-Only API Server 🚀
+## Current State
 
-### 🎯 Active Focus: Backend Production Readiness
-**Status:** Complete | **Priority:** HIGH
+**What's live today:**
+- Backend API server (Hetzner VPS via PM2, Grok AI primary LLM)
+- Five specialized agents: Wisdom, Intimacy, Presence, Growth, Bridge
+- Daily Council: RSS/web story → 5 agent perspectives (`/daily-take` API + `/today` web page)
+- Next.js frontend on Netlify: home, `/today`, `/dashboard`, `/chat/[agentId]`
+- Telegram bot: check-ins, mood tracking, agent routing, family members, bond score, privacy, Hedera commands (~2100 lines)
+- Hedera testnet: HCS topic (0.0.7304500), FAM token (0.0.7304501), operator account (0.0.6511978)
+- Payout engine: calculation, anomaly detection, HCS audit trail, API endpoints
+- Bond scoring: 7 signal aggregators, weekly scheduler, composite 0-100 score
+- AG-UI protocol: SSE streaming for agent chat
+- Monetization package: subscription tiers, usage tracking, feature gates (scaffolded, not wired)
+- XMTP client: encrypted messaging client (scaffolded, not production-connected)
+- A2A protocol: agent registry + trade executor (exists, not exposed via API)
+- Savings agent: Bonzo Finance plugin (minimal — single action, no balance/yield logic)
 
----
-
-## Completed ✅
-
-### Phase 1: Backend Core Setup ✅ COMPLETED
-**Status:** Complete
-
-#### 1a. Agent Server Structure ✅
-- Modular agent architecture
-- REST API on port 3004
-- Health endpoint on port 3005
-
-#### 1b. Environment Configuration ✅
-- Grok AI API (primary)
-- Venice AI API (fallback)
-- Ollama embeddings (free)
-- Hedera credentials
-
-#### 1c. Health & Status Endpoints ✅
-- `GET /health` - Basic health check
-- `GET /api/status` - Full system status
-
----
-
-### Phase 2: Agent Messaging ✅ COMPLETED
-**Status:** Complete
-
-#### 2a. Agent Message Handling ✅
-- `POST /:agentId/message` - Send message to agent
-- Agent routing based on agentId
-- Response streaming support
-
-#### 2b. AG-UI Protocol ✅
-- `POST /:agentId/ag-ui` - SSE stream
-- Event types: RunStarted, StepStarted, TextMessageContent, StateSnapshot
-- JSON Patch RFC 6902 for state deltas
-
-#### 2c. Agent Insights API ✅
-- `GET /agents/insights` - All agents' insights
-- `GET /agents/:agentId/insights` - Single agent insights
-- Real-time data from runtime metadata
+**What's not built:**
+- Agent Marketplace (creator profiles, agent catalog, subscription billing)
+- Payment processing (no Stripe, crypto checkout, or any real payment flow)
+- User authentication (all interactions are anonymous)
+- Real SSE streaming in the frontend chat (currently simulates word-by-word)
+- WebSocket push notifications
+- OpenAPI documentation
+- Rate limiting
+- Smart contracts (treasury, escrow, governance DAOs)
+- NFT badges, multi-sig wallets, cross-family consensus
 
 ---
 
-### Phase 3: Payout System ✅ COMPLETED
-**Status:** Complete
+## Guiding Principles
 
-#### 3a. Payout Calculation Engine ✅
-- Base rate: $50 × score delta
-- Performance multiplier: 1.0-1.5x
-- Recency weight: 0.8-1.0
-- Weekly caps enforcement
-
-#### 3b. Anomaly Detection ✅
-- Suspicious large jumps detection
-- Unrealistic perfection detection
-- Rapid consecutive improvements detection
-- Cooling period management
-
-#### 3c. Payout API Endpoints ✅
-- `GET /api/agents/:agentId/payouts`
-- `GET /api/agents/:agentId/performance`
-- `GET /api/families/:familyId/payouts`
-- `GET /api/payouts/pending`
-- `POST /api/payouts/calculate`
-
-#### 3d. HCS Audit Trail ✅
-- Payout records logged to HCS Topic
-- SQLite persistence
-- Dual-layer cache
+1. **CONSOLIDATE before enhancing** — remove dead code, unify duplication, then build on clean foundations
+2. **Backend before frontend** — stabilize the data layer and API contract, then upgrade the UI
+3. **Product before infrastructure** — ship features families can use before optimizing what already works
+4. **Each phase is shippable** — no phase depends on a later phase to be useful
 
 ---
 
-### Phase 4: Production Deployment ✅ COMPLETED
-**Status:** Complete
+## Phase 0 — Consolidation & Cleanup
 
-#### 4a. Server Configuration ✅
-- `SERVER_PORT=3004`
-- `HEALTH_PORT=3005`
-- Nginx reverse proxy with HTTPS
-- CORS configuration
+**Goal:** Remove dead code, fix contradictions, establish a single source of truth. Zero new features.
 
-#### 4b. Model Configuration ✅
-- Grok 4.1 Fast (primary)
-- Venice qwen3-4b (fallback)
-- Ollama nomic-embed-text (embeddings)
+### 0a. Delete unused character files
+The `characters/` directory has 8 files inherited from the ElizaOS fork that don't belong to FamilyXYZ.
 
-#### 4c. PM2 Process Management ✅
-- Process management with ecosystem.config.cjs
-- Auto-restart on failure
-- Log rotation
+**Delete:**
+- `characters/c3po.character.json`
+- `characters/cosmosHelper.character.json`
+- `characters/dobby.character.json`
+- `characters/eternalai.character.json`
+- `characters/savings.character.json`
+- `characters/sbf.character.json`
+- `characters/simsai.character.json`
+- `characters/trump.character.json`
+- `characters/wisdom-test.character.json` (test artifact)
 
----
+**Keep:** wisdom, intimacy, presence, growth, generationalBridge, family-wellness-agent
 
-## Legacy Phases (Pre-Backend-Only) ✅
+### 0b. Fix port configuration
+Currently three conflicting port references exist. Standardize:
 
-#### Hedera Integration Foundation
-- Basic agent runtime
-- Agent character system with plugins
-- Hedera wallet authentication setup
-- Hedera service integration
+| Location | Current | Corrected |
+|----------|---------|-----------|
+| `agent/src/index.ts` | defaults to 31337/31338 | Keep as fallback defaults |
+| `README.md` | :31337, :31338 | Reference env vars, remove hardcoded ports |
+| `IMPLEMENTATION_PLAN.md` | :3004, :3005 | Mark doc as stale (see Phase 0g) |
+| `ecosystem.config.js` | PORT: 3000 | Already marked deprecated — leave or remove |
+| `.env.example` | SERVER_PORT=3004 | Keep — production uses this via env var |
 
-#### Objective Family Bond Scoring System
-- Behavioral signal aggregation (7 metrics)
-- Composite Family Bond Score (0-100)
-- Weekly scheduler (Sundays 00:00 UTC)
-- API endpoint: `GET /api/families/:familyId/bond-score`
+**Single truth:** Server reads `SERVER_PORT` and `HEALTH_PORT` from env, with defaults 31337/31338 in `agent/src/index.ts`. Production sets `SERVER_PORT=3004` in `.env`.
 
-#### Agent Payout & Reward Distribution
-- Payout formula engine
-- Anti-gaming anomaly detection
-- HCS immutable audit trail
-- Token distribution service
-- Full API integration
+### 0c. Fix package.json description
+Change: `"Cache cleared for mega nuclear deployment"` → remove that suffix, keep the real description.
 
-#### A2A Protocol - Agent-to-Agent Trading
-- Agent registry with capability tracking
-- Trade executor with HCS audit trail
-- Pre-registered agents
+### 0d. Fix character JSON navigation references
+Replace `[NAVIGATE: /dashboard?tab=activities]` references (tabs don't exist) with natural language suggestions to visit `/dashboard` or `/today`.
 
-#### Scaling & Caching
-- TTL cache in HederaService
-- Cache invalidation and statistics
+### 0e. Remove dead code paths
+- `agent/src/index.ts` — delete the `cachedDbAdapter`/`cachedFilePath` dead block (always null, `if (false && ...)` guard)
+- `agent/src/health.ts` — simplify dual-mode readiness check to only return a value
 
----
+### 0f. Consolidate duplicate CSS animations
+`client/app/globals.css` has duplicate `fade-in-*` animations that overlap with `reveal-*`. Delete the `fade-in` block and replace any references with `reveal-up` equivalents.
 
-## Active Issues & Near-Term Fixes
+### 0g. Mark stale docs
+Add deprecation notice to `IMPLEMENTATION_PLAN.md` pointing to `docs/ARCHITECTURE.md` and this roadmap.
 
-### 1. Frontend Removal ✅ RESOLVED
-**Status:** Frontend removed, backend-only repository
-
-- Old Vite/React frontend deleted
-- New Next.js frontend structure added but not finalized
-- Repository now focused on backend API only
+**Validation:** `pnpm build` passes after all Phase 0 changes.
 
 ---
 
-## Future Roadmap (Backend Extensions)
+## Phase 1 — Ship What's Built
 
-### Phase 5: Messaging Integrations 🔄 PLANNED
-**Priority:** MEDIUM | **Status:** Planned
+**Goal:** Wire up existing code that's functional but disconnected. Get the Telegram bot running end-to-end, connect the frontend to real backend data, and confirm the full stack works together.
 
-#### 5a. Telegram Integration ⬜
-Create `packages/clients/telegram/`:
-- Real Telegram bot with grammy
-- Slash commands: `/start`, `/agents`, `/ask`, `/status`
-- Group mapper: Telegram group ID → familyId
+### 1a. Connect frontend to live backend
+The Next.js frontend proxies to `api.famile.xyz` but may have stale or broken connections.
 
-#### 5b. XMTP Integration ⬜
-Create `packages/clients/xmtp/`:
-- Web3-native encrypted messaging
-- Agent identities derived from Hedera keys
-- 1:1 and group conversation management
+- Verify `/api/today` route fetches from backend `/daily-take` (fallback exists — confirm primary path works)
+- Verify `/api/agents` route returns real agent data
+- Verify `/chat/[agentId]` actually sends messages to `/:agentId/message` and receives responses
+- Fix any CORS issues between Netlify frontend and Hetzner backend
 
-#### 5c. On-Chain Message Receipts ⬜
-- Log content hash to HCS for messages
-- Verifiable record without revealing content
+### 1b. Deploy and verify Telegram bot
+The Telegram client is 2100+ lines of feature-rich code but its production status is unclear.
 
----
+- Wire `TelegramFamilyClient` into the agent server startup (`agent/src/integrations/telegram.ts`)
+- Confirm bot token is configured and bot starts without errors
+- Test end-to-end: `/start` → check-in → mood → agent chat → bond score → `/council`
+- Verify daily check-in scheduler fires and sends messages
 
-### Phase 6: Hedera Deep Integration 🔄 PLANNED
-**Priority:** MEDIUM | **Status:** Planned
+### 1c. Wire up the Savings agent properly
+The submission doc claims Bonzo Finance integration but the plugin has a single action stub.
 
-#### 6a. Hedera Token Service (HTS) Integration ⬜
-- Create and manage family tokens
-- Token-based reward distribution
-- NFT-based family member badges
-- Token governance for family decisions
+- Implement balance查询 (query Bonzo Finance for family savings balance)
+- Implement deposit/withdraw actions
+- Log savings interactions to HCS for bond score contribution
+- Expose savings data in the dashboard
 
-#### 6b. Hedera Consensus Service (HCS) Deep Integration ⬜
-- Family activity logging on-chain
-- Immutable family records
-- Agent performance & payout verification logs
-- Cross-family consensus protocols
+### 1d. Add LLM retry with exponential backoff
+Wrap all `generateText` calls (DailyTakeGenerator, telegram message responses) with retry logic:
+- Max 2 retries, exponential delay (1s, 2s)
+- Graceful fallback messaging on total failure
 
-#### 6c. Smart Contract Services ⬜
-- Family treasury smart contracts
-- Automated agent reward distribution
-- Multi-signature wallet contracts
-- Governance DAOs per family
-- Agent performance escrow
+### 1e. Parallelize Daily Take generation
+Current: sequential loop over 5 agents (~12s). Change to `Promise.allSettled` (~3s).
+
+**Validation:** Open familexyz.netlify.app, verify Daily Council loads real data. Send a Telegram message, get an agent response. Check savings balance displays on dashboard.
 
 ---
 
-### Phase 7: API Enhancements 🔄 PLANNED
-**Priority:** LOW | **Status:** Planned
+## Phase 2 — Frontend Data Layer
 
-#### 7a. OpenAPI Documentation ⬜
-- Swagger/OpenAPI spec generation
-- Interactive API documentation
-- Request/response examples
+**Goal:** Replace manual fetch/useState patterns with TanStack Query, add real SSE streaming to chat, and persist conversation state.
 
-#### 7b. Rate Limiting & Throttling ⬜
-- Per-endpoint rate limits
-- Request throttling
-- Quota management
+### 2a. Install TanStack Query
+- Add `@tanstack/react-query` to client
+- Create shared hooks: `useDailyTake()`, `useBondScore()`, `useAgentStatuses()`
+- Refactor `page.tsx`, `today/page.tsx`, `EnhancedFamilyDashboard.tsx` to use hooks
+- Set `staleTime` appropriately (1hr for daily content, 30s for agent status)
 
-#### 7c. WebSocket Support ⬜
-- Real-time agent updates
-- Push notifications
-- Live bond score updates
+### 2b. Add real SSE streaming to chat
+Current: `ChatInterface` waits for full response, then simulates word-by-word typing.
+New: consume SSE from `/:agentId/ag-ui`, parse `TextMessageContent` events, append to `streamingContent` in real-time.
 
----
+### 2c. Fix Cache-Control headers
+- Let `/api/today` use its existing `revalidate = 3600`
+- Add `public, max-age=31536000, immutable` for `/_next/static/` assets
+- Keep `no-cache` for other `/api/` routes
 
-### Phase 8: Platform & Marketplace 🔄 PLANNED
-**Priority:** HIGH | **Status:** Planned
+### 2d. Persist chat conversation state
+- Store last 50 messages per agent in localStorage
+- Load history on mount, save after each exchange
 
-*Vision: Transform FamilyXYZ from a product into a platform where practitioners distribute research-backed agents to families.*
+### 2e. Upgrade chat input to auto-growing textarea
+Replace single-line `<input>` with `<textarea>` that grows up to 120px. Submit on Enter, newline on Shift+Enter.
 
-#### 8a. Agent Marketplace ⬜
-- Creator profiles with credentials
-- Research-backed agent descriptions
-- Family ratings & reviews
-- Subscription or one-time access
-
-#### 8b. Practitioner Tier ⬜
-- Practitioner accounts with client management
-- Outcome analytics (aggregated, anonymized)
-- Research-backed agent curation
-
-#### 8c. Enterprise Distribution ⬜
-- Employer wellness benefit integration
-- Family account licensing
-- Usage dashboards (no content access)
-
-#### 8d. Trust Layer ⬜
-- Creator credential verification
-- Research citation requirements
-- Immutable audit trail for agent actions
-- On-chain verification of family milestones
+**Validation:** Open the app, verify daily council loads instantly from cache, send a chat message and see tokens stream in real-time, refresh and confirm history persists.
 
 ---
 
-## Competitive Positioning
+## Phase 3 — Backend Foundation
 
-### Market Gap
-No platform occupies: **Research-Backed + Blockchain-Verified + Family-Focused + Marketplace**
+**Goal:** Replace the hand-rolled HTTP server with a proper framework, extract global state, and add resilience. This enables Phase 4 (marketplace) by providing clean middleware and routing.
 
-| Competitor | Family Focus | Marketplace | Research-Backed | Blockchain |
-|------------|:------------:|:-----------:|:--------------:|:---------:|
-| Replika | Individual | ❌ | ❌ | ❌ |
-| Relish | Couples | ❌ | ✅ | ❌ |
-| BetterHelp | Individual | ✅ Human | ✅ | ❌ |
-| Character.AI | Individual | ✅ AI | ❌ | ❌ |
-| **FamilyXYZ** | ✅ Core | 🔜 | ✅ | ✅ |
+### 3a. Replace hand-rolled HTTP with Hono
+`agent/src/server/http-server.ts` (518 lines) manually parses URLs and handles CORS. Replace with Hono (14kB, zero-dependency, TypeScript-native):
 
-### Unfair Advantages
-1. **Multi-agent family coordination** — No competitor coordinates multiple AI agents across a family unit
-2. **Hedera-verified "Wisdom Blocks"** — Immutable audit trail creates trust layer competitors lack
-3. **HCS-10 compliant messaging** — Interoperability with Hedera ecosystem
-4. **FAM token incentive system** — On-chain economy of emotional wealth
-5. **Practitioner-to-family distribution** — Network effects (creators → families → creators)
-
-### Brand Positioning
-**"The emotional intelligence platform for families"** — Consumer + practitioners served by same platform.
-
-- Families get expert-curated agents (better than generic AI)
-- Practitioners get distribution + monetization
-- Enterprise gets "family wellness benefits" they can offer
-
----
-
-## Dependencies & External References
-
-### LLM Providers
-- **Grok AI** — Primary chat model (very fast, high quality)
-- **Venice AI** — Fallback chat model (cheap)
-- **Ollama** — Self-hosted embeddings (free)
-
-### Blockchain
-- **Hedera SDK** — Blockchain integration
-- **HCS-10** — Consensus message standard
-- **HTS** — Token service
-
-### Messaging (Planned)
-- **grammy** — Telegram bot framework
-- **XMTP** — Encrypted messaging protocol
-
-### Documentation
-- [Hedera Docs](https://docs.hedera.com/)
-- [Grok API Docs](https://docs.x.ai/)
-- [Venice AI Docs](https://venice.ai/docs)
-- [grammy Docs](https://grammy.dev/)
-- [XMTP Docs](https://xmtp.org/docs)
-
----
-
-## Configuration Reference
-
-### Required Environment Variables
-```bash
-# Server Configuration
-SERVER_PORT=3004
-HEALTH_PORT=3005
-
-# Grok AI (Primary)
-GROK_API_KEY=your_grok_api_key
-SMALL_GROK_MODEL=grok-4-1-fast
-MEDIUM_GROK_MODEL=grok-4-1-fast
-LARGE_GROK_MODEL=grok-4-1-fast
-
-# Venice AI (Fallback)
-VENICE_API_KEY=your_venice_key
-SMALL_VENICE_MODEL=qwen3-4b
-
-# Ollama (Embeddings)
-USE_OLLAMA_EMBEDDING=true
-OLLAMA_SERVER_URL=http://localhost:11434
-
-# Hedera Network
-HEDERA_NETWORK=testnet
-HEDERA_OPERATOR_ID=your_operator_id
-HEDERA_OPERATOR_KEY=your_operator_key
-
-# CORS
-CORS_ORIGINS=https://your-frontend-domain.com
+```
+agent/src/server/
+├── app.ts              # Hono app + middleware
+├── http-server.ts       # Server startup only
+├── routes/
+│   ├── health.ts
+│   ├── bondScore.ts
+│   ├── payouts.ts
+│   └── dailyTake.ts
 ```
 
----
+### 3b. Extract global mutable state into a ServiceRegistry
+Replace `global.payoutApiHandler`, module-level `let telegramClient`, `let runtimeInstance`, `let cachedTake`, `let _primaryDb` with a singleton `ServiceRegistry` class.
 
-## Testing Checklist
+### 3c. Strengthen health check
+Add dependency checks: database connectivity, LLM provider reachability, Hedera connection. Return 503 if any service is down.
 
-### Backend Verification ✅
-- [x] Server starts on port 3004
-- [x] Health endpoint responds on port 3005
-- [x] Agent message endpoint works
-- [x] Agent insights endpoint returns data
-- [x] Payout calculation endpoint works
-- [x] Bond score endpoint returns data
+### 3d. Add CORS_ORIGINS to environment
+Read from `CORS_ORIGINS` env var (comma-separated) instead of hardcoded array.
 
-### Integration Verification (Planned)
-- [ ] Telegram bot connection and commands
-- [ ] XMTP client initialization
-- [ ] HCS message logging verification
-- [ ] Hedera token transfer verification
+**Validation:** `pnpm build` and `pnpm test` pass. `/health` returns dependency status. All existing endpoints work identically.
 
 ---
 
-**Last Updated:** May 30, 2026
-**Current Phase:** Backend-Only API Server
-**Next Milestone:** Phase 8 — Platform & Marketplace
-**Next Review:** Bounty submission (May 31)
+## Phase 4 — Marketplace MVP
+
+**Goal:** Ship the minimum viable marketplace — families can discover agents, subscribe, and practitioners can publish. This is the core business model from the roadmap's Phase 8.
+
+### 4a. Wire the monetization package
+The `packages/monetization/` package has `SubscriptionService`, `UsageTracker`, `FeatureGate`, usage tracking middleware, and cron-based usage reset — all scaffolded but disconnected.
+
+- Connect `SubscriptionService` to a real data store (SQLite table for subscriptions)
+- Wire `UsageTracker` middleware into the Hono app from Phase 3
+- Configure tier limits (Free: 10 messages/day, Pro: unlimited, Enterprise: custom)
+- Add `FeatureGate` checks to agent endpoints
+
+### 4b. Add user authentication
+Lightweight JWT-based auth — no heavy framework, just enough to identify family members:
+
+- `packages/auth/src/` — create/verify session tokens
+- Session middleware on API routes
+- Frontend: store token in localStorage, attach `Authorization` header
+- Onboarding flow: name → family code → meet the agents (3-step modal)
+
+### 4c. Agent catalog API
+New endpoints for the marketplace:
+
+- `GET /api/marketplace/agents` — list available agents with descriptions, creator, ratings
+- `GET /api/marketplace/agents/:id` — agent detail with methodology, research citations
+- `POST /api/marketplace/subscribe` — subscribe a family to an agent
+- `GET /api/marketplace/family/:id/subscriptions` — family's active subscriptions
+
+### 4d. Marketplace frontend
+New pages in the Next.js client:
+
+- `/marketplace` — browse agents by category, see ratings and descriptions
+- `/marketplace/[agentId]` — agent detail page with subscribe button
+- `/account` — manage subscriptions, view usage, billing history
+
+### 4e. Practitioner publishing (minimal)
+- Practitioner signup page (credentials, methodology description)
+- Agent submission form (name, description, intellectual tradition, research citations)
+- Admin review queue (list of pending agents, approve/reject)
+
+**Validation:** A practitioner can submit an agent. An admin approves it. A family discovers it in the marketplace, subscribes, and uses it. Usage is tracked and tier limits are enforced.
+
+---
+
+## Phase 5 — Production Hardening
+
+**Goal:** Operational excellence — graceful shutdown, deployment rollback, API documentation, structured logging.
+
+### 5a. Graceful shutdown
+Handle SIGTERM/SIGINT: stop accepting connections, disconnect Telegram, close database, exit cleanly.
+
+### 5b. Deployment rollback
+Add `make rollback` target that swaps the symlink to the previous release and restarts PM2.
+
+### 5c. OpenAPI documentation
+Generate OpenAPI 3.0 spec from route definitions. Serve Swagger UI at `/docs` in development.
+
+### 5d. Structured logging
+Replace scattered `elizaLogger.*` calls with JSON structured logger for production log aggregation.
+
+### 5e. Rate limiting
+Per-endpoint rate limits using Hono middleware. Per-user quotas enforced via the monetization package's `UsageTracker`.
+
+**Validation:** Deploy to staging, verify health check reports all services, test graceful shutdown with `kill -SIGTERM`, confirm rollback works, browse Swagger UI.
+
+---
+
+## Future (Post-MVP)
+
+These are documented in the vision but correctly deferred until the marketplace proves traction:
+
+- **Hedera deep integration:** HTS family badges/NFTs, treasury smart contracts, multi-sig wallets, governance DAOs, agent performance escrow
+- **XMTP production:** Connect the existing XMTP client to the live agent server for web3-native encrypted messaging
+- **WebSocket push:** Real-time bond score updates, agent activity notifications
+- **Enterprise tier:** Employer wellness benefit integration, usage dashboards (no content access)
+- **Cross-family consensus protocols**
+- **SQLite → PostgreSQL migration** (only when scale demands it)
+
+---
+
+## Phase Dependency Graph
+
+```
+Phase 0 (Consolidation)
+  │
+  ├──→ Phase 1 (Ship What's Built) ──→ Phase 2 (Frontend Data Layer)
+  │                                        │
+  ├──→ Phase 3 (Backend Foundation)        │
+          │                                │
+          └──→ Phase 4 (Marketplace MVP) ←─┘
+                   │
+                   └──→ Phase 5 (Production Hardening)
+```
+
+## Estimated Effort
+
+| Phase | Effort | Dependencies |
+|-------|--------|-------------|
+| 0 — Consolidation | 1-2 days | None |
+| 1 — Ship What's Built | 3-4 days | Phase 0 |
+| 2 — Frontend Data Layer | 2-3 days | Phase 1 |
+| 3 — Backend Foundation | 3-4 days | Phase 0 |
+| 4 — Marketplace MVP | 5-7 days | Phases 2, 3 |
+| 5 — Production Hardening | 2-3 days | Phase 3 |
+| **Total** | **16-23 days** | |
+
+---
+
+**Last Updated:** June 12, 2026
+**Current Phase:** Phase 0 — Consolidation
+**Next Milestone:** Phase 1 — Ship What's Built (Telegram bot + frontend connectivity)

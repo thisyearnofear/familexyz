@@ -153,7 +153,8 @@
     }
   },
   "plugins": [
-    "@elizaos/family/plugin-wisdom"
+    "@elizaos/family/plugin-wisdom",
+    "@elizaos/family/plugin-savings"
   ],
   "clientConfig": {
     "discord": {

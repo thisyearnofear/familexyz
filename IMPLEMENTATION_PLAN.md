@@ -1,4 +1,16 @@
-# Implementation Plan: Backend-Only API Server
+# ⚠️ DEPRECATED — This document is stale
+
+**This implementation plan is no longer the source of truth.** It was written for an earlier phase when the project was backend-only and the frontend had been removed. The project now includes a Next.js frontend, a Telegram bot, and additional packages not referenced here.
+
+**Current documentation:**
+- **[Roadmap](docs/ROADMAP.md)** — Phased plan from consolidation through marketplace MVP
+- **[Architecture](docs/ARCHITECTURE.md)** — System design, monorepo structure, API reference, deployment
+
+Port numbers, phase references, and "backend-only" framing in this document are outdated. See the docs linked above for the current state.
+
+---
+
+# Implementation Plan: Backend-Only API Server (Historical)
 
 ## Objective
 Transform FamilyXYZ into a **backend-only API server** that provides agent interactions, messaging integrations, and payout management via REST endpoints. The frontend will be a separate repository or future addition.

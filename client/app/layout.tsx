@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { fontVariables } from "@/lib/fonts";
+import { Providers } from "@/components/providers";
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://famile.xyz";
 
@@ -29,7 +30,9 @@ export default function RootLayout({
 }) {
     return (
         <html lang="en" className="dark">
-            <body className={`font-sans antialiased ${fontVariables}`}>{children}</body>
+            <body className={`font-sans antialiased ${fontVariables}`}>
+                <Providers>{children}</Providers>
+            </body>
         </html>
     );
 }

@@ -9,11 +9,11 @@
 
 import { elizaLogger, type AgentRuntime, ModelClass } from "@elizaos/core";
 import type { IDatabaseAdapter } from "@elizaos/core";
-
-let dbRef: IDatabaseAdapter | null = null;
+import { withRetry } from "../services/llm-resilience.js";
+import { ServiceRegistry } from "../server/service-registry.js";
 
 export async function initializeDailyTakePersistence(db: IDatabaseAdapter): Promise<void> {
-    dbRef = db;
+    ServiceRegistry.set("primaryDb", db);
     try {
         const today = new Date().toISOString().split("T")[0];
         if ('query' in db && typeof (db as any).query === 'function') {
@@ -116,35 +116,40 @@ export async function generateDailyTake(runtime: AgentRuntime): Promise<DailyTak
             bridge: "🧓",
         };
 
-        const takes: DailyTake["takes"] = [];
+        const agentEntries = Object.entries(AGENT_PROMPTS);
 
-        for (const [agentId, config] of Object.entries(AGENT_PROMPTS)) {
-            try {
+        const results = await Promise.allSettled(
+            agentEntries.map(async ([agentId, config]) => {
                 const prompt = `Here is today's story:\n\nHeadline: ${story.headline}\nSource: ${story.source}\nSummary: ${story.summary}\n\n${config.prompt}\n\nRespond with ONLY your 2-3 sentence take, no preamble or labels.`;
 
                 const { generateText } = await import("@elizaos/core");
-                const take = await generateText({
-                    runtime,
-                    context: prompt,
-                    modelClass: ModelClass.LARGE,
-                });
+                const take = await withRetry(() =>
+                    generateText({
+                        runtime,
+                        context: prompt,
+                        modelClass: ModelClass.LARGE,
+                    })
+                );
 
-                takes.push({
+                return {
                     agent: agentId.charAt(0).toUpperCase() + agentId.slice(1),
                     emoji: agentEmojis[agentId] || "🤖",
                     influence: config.influence,
                     take: trimToSentences(take.trim(), 3),
-                });
-            } catch (err) {
-                elizaLogger.warn(`[DailyTake] Failed to generate ${agentId} take:`, err);
-                takes.push({
-                    agent: agentId.charAt(0).toUpperCase() + agentId.slice(1),
-                    emoji: agentEmojis[agentId] || "🤖",
-                    influence: config.influence,
+                };
+            })
+        );
+
+        const takes: DailyTake["takes"] = results.map((r, i) =>
+            r.status === "fulfilled"
+                ? r.value
+                : {
+                    agent: agentEntries[i][0].charAt(0).toUpperCase() + agentEntries[i][0].slice(1),
+                    emoji: agentEmojis[agentEntries[i][0]] || "🤖",
+                    influence: agentEntries[i][1].influence,
                     take: "Could not generate perspective today.",
-                });
-            }
-        }
+                }
+        );
 
         const dailyTake: DailyTake = {
             date: today,
@@ -156,6 +161,7 @@ export async function generateDailyTake(runtime: AgentRuntime): Promise<DailyTak
 
         cachedTake = dailyTake;
 
+        const dbRef = ServiceRegistry.get("primaryDb");
         if (dbRef && 'query' in dbRef && typeof (dbRef as any).query === 'function') {
             try {
                 await (dbRef as any).query(

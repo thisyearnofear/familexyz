@@ -18,8 +18,10 @@ import {
     shouldRespondFooter,
     ModelClass,
 } from "@elizaos/core";
+import { withRetry } from "../services/llm-resilience.js";
+import { ServiceRegistry } from "../server/service-registry.js";
 
-// Store Telegram client instance
+// Module-local refs (synced with ServiceRegistry)
 let telegramClient: TelegramFamilyClient | null = null;
 let runtimeInstance: AgentRuntime | null = null;
 
@@ -175,6 +177,8 @@ export async function initializeTelegram(runtime: AgentRuntime): Promise<Telegra
 
         // Store runtime for later use
         runtimeInstance = runtime;
+        ServiceRegistry.set("telegramClient", telegramClient);
+        ServiceRegistry.set("primaryRuntime", runtime);
 
         elizaLogger.info(`[Telegram] Initialized successfully (@${telegramClient.getStatus().details?.botUsername})`);
 
@@ -289,11 +293,13 @@ async function routeToAgent(
                 template: shouldRespondTemplate,
             });
 
-            const shouldRespond = await generateShouldRespond({
-                runtime,
-                context: shouldRespondContext,
-                modelClass: ModelClass.SMALL,
-            });
+            const shouldRespond = await withRetry(() =>
+                generateShouldRespond({
+                    runtime,
+                    context: shouldRespondContext,
+                    modelClass: ModelClass.SMALL,
+                })
+            );
 
             if (shouldRespond === "IGNORE" || shouldRespond === "STOP") {
                 elizaLogger.debug(
@@ -321,11 +327,13 @@ async function routeToAgent(
             template: responseTemplate + agentPrefix,
         });
 
-        const responseContent = await generateMessageResponse({
-            runtime,
-            context: responseContext,
-            modelClass: ModelClass.LARGE,
-        });
+        const responseContent = await withRetry(() =>
+            generateMessageResponse({
+                runtime,
+                context: responseContext,
+                modelClass: ModelClass.LARGE,
+            })
+        );
 
         if (responseContent?.text) {
             const responseMemory: Memory = {
@@ -425,11 +433,13 @@ async function handleCouncilRequest(
                 template: responseTemplate + agentPrefix,
             });
 
-            const responseContent = await generateMessageResponse({
-                runtime,
-                context: responseContext,
-                modelClass: ModelClass.LARGE,
-            });
+            const responseContent = await withRetry(() =>
+                generateMessageResponse({
+                    runtime,
+                    context: responseContext,
+                    modelClass: ModelClass.LARGE,
+                })
+            );
 
             if (responseContent?.text) {
                 responses.push({

@@ -29,18 +29,20 @@ Five specialized AI agents that strengthen family bonds. Each agent is shaped by
 
 ```
 familexyz/
-├── agent/                 # Backend (ElizaOS runtime, 5 agents, Venice AI)
+├── agent/                 # Backend (ElizaOS runtime, 5 agents, Grok/Venice AI)
 ├── client/                # Frontend (Next.js on Netlify)
 ├── characters/            # Agent persona definitions (JSON)
 ├── packages/
 │   ├── clients/telegram/  # Grammy-based Telegram bot
-│   ├── family/            # Agent plugins (wisdom, intimacy, etc.)
-│   ├── blockchain/        # Hedera services
+│   ├── clients/xmtp/      # XMTP encrypted messaging
+│   ├── family/            # Agent plugins (wisdom, intimacy, presence, growth, bridge, savings)
+│   ├── blockchain/        # Hedera services (HCS, HTS)
+│   ├── monetization/      # Subscription tiers, usage tracking, feature gates
 │   └── core/              # ElizaOS core
 └── docs/                  # Detailed documentation
 ```
 
-**Stack:** TypeScript, pnpm monorepo, ElizaOS, Venice AI (llama-3.3-70b), Grammy, Next.js 16, SQLite, Hedera SDK.
+**Stack:** TypeScript, pnpm monorepo, ElizaOS, Grok AI (primary) / Venice AI (fallback), Grammy, Next.js 16, SQLite, Hedera SDK.
 
 ## Quick Start
 
@@ -48,8 +50,10 @@ familexyz/
 git clone https://github.com/thisyearnofear/familexyz.git && cd familexyz
 pnpm install && pnpm build
 cp .env.example .env  # Add Venice API key + Telegram bot token
-pnpm start            # Starts all 5 agents on :31337, health on :31338
+pnpm start            # Starts all 5 agents, health endpoint on separate port
 ```
+
+Ports are configured via `SERVER_PORT` and `HEALTH_PORT` env vars (defaults: 31337 and 31338). Production sets `SERVER_PORT=3004`.
 
 ## Build Notes
 

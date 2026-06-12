@@ -40,6 +40,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const hasSentRef = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const agent = getAgent(agentId);
   const profile = agent ?? { name: agentId, emoji: "\u{1F916}", tagline: "AI Agent" };
@@ -48,6 +49,32 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, streamingContent]);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(`chat-${agentId}`);
+      if (stored) {
+        const parsed: Message[] = JSON.parse(stored);
+        setMessages(parsed.slice(-50));
+        setExchangeCount(Math.floor(parsed.filter((m: Message) => m.role === "user").length));
+      } else {
+        setMessages([]);
+        setExchangeCount(0);
+      }
+    } catch {
+      setMessages([]);
+    }
+  }, [agentId]);
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      try {
+        localStorage.setItem(`chat-${agentId}`, JSON.stringify(messages.slice(-50)));
+      } catch {
+        // storage full — silently drop oldest
+      }
+    }
+  }, [messages, agentId]);
 
   useEffect(() => {
     if (context === "today") {
@@ -75,32 +102,43 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+    }
     setIsLoading(true);
     setStreamingContent("");
     setError(null);
     setExchangeCount((c) => c + 1);
 
-    abortRef.current = new AbortController();
+    const abort = new AbortController();
+    abortRef.current = abort;
 
     try {
-      const data = await apiClient.sendMessage(agentId, textToSend);
-      const reply = Array.isArray(data)
-        ? data.map((d: any) => d.text || d.content || "").filter(Boolean).join("\n\n")
-        : data.text || data.content || data.response || JSON.stringify(data);
+      let accumulated = "";
 
-      let displayed = "";
-      const words = reply.split(" ");
-      for (let i = 0; i < words.length; i++) {
-        displayed += (i > 0 ? " " : "") + words[i];
-        setStreamingContent(displayed);
-        await new Promise((r) => setTimeout(r, 15 + Math.random() * 25));
+      for await (const event of apiClient.sendMessageStream(agentId, textToSend, abort.signal)) {
+        if (event.type === "TextMessageContent") {
+          accumulated += event.content ?? event.delta ?? "";
+          setStreamingContent(accumulated);
+        } else if (event.type === "TextMessageEnd") {
+          setMessages((prev) => [
+            ...prev,
+            { role: "assistant", content: accumulated, id: event.messageId ?? crypto.randomUUID() },
+          ]);
+          setStreamingContent("");
+        } else if (event.type === "RunError") {
+          setError(event.message ?? event.error ?? "Agent error");
+        }
       }
 
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: reply, id: crypto.randomUUID() },
-      ]);
-      setStreamingContent("");
+      if (accumulated && !abort.signal.aborted) {
+        setMessages((prev) => {
+          const last = prev[prev.length - 1];
+          if (last?.role === "assistant" && last.content === accumulated) return prev;
+          return [...prev, { role: "assistant", content: accumulated, id: crypto.randomUUID() }];
+        });
+        setStreamingContent("");
+      }
     } catch (err: any) {
       if (err.name === "AbortError") return;
       setError(err.message || "Failed to get response");
@@ -127,10 +165,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   const switchAgent = (newAgentId: string) => {
     setAgentId(newAgentId);
-    setMessages([]);
     setStreamingContent("");
     setError(null);
-    setExchangeCount(0);
     hasSentRef.current = false;
   };
 
@@ -294,11 +330,17 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               </button>
             </div>
           )}
-          <div className="flex gap-2">
-            <input
-              type="text"
+          <div className="flex gap-2 items-end">
+            <textarea
+              ref={textareaRef}
+              rows={1}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                setInput(e.target.value);
+                const el = e.target;
+                el.style.height = "auto";
+                el.style.height = Math.min(el.scrollHeight, 120) + "px";
+              }}
               onKeyDown={handleKeyDown}
               placeholder={
                 isLoading
@@ -306,7 +348,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   : `Ask ${profile.name} something...`
               }
               disabled={isLoading}
-              className="flex-1 rounded-xl border border-editorial-subtle/15 bg-editorial-surface/30 px-4 py-2.5 text-sm text-editorial-cream placeholder:text-editorial-faint focus:outline-none focus:border-editorial-subtle/30 disabled:opacity-50 transition-colors"
+              className="flex-1 rounded-xl border border-editorial-subtle/15 bg-editorial-surface/30 px-4 py-2.5 text-sm text-editorial-cream placeholder:text-editorial-faint focus:outline-none focus:border-editorial-subtle/30 disabled:opacity-50 transition-colors resize-none overflow-y-auto"
             />
             <button
               onClick={handleSend}

@@ -1,55 +1,39 @@
-// Use minimal types to avoid requiring Express type definitions
+import { ServiceRegistry } from "./server/service-registry.js";
 
 export const healthCheck = (req: any, res: any) => {
-    const healthData = {
+    const status = ServiceRegistry.getStatus();
+    res.status(200).json({
         status: "healthy",
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
         environment: process.env.NODE_ENV || "development",
-        version: process.env.npm_package_version || "1.0.0",
         memory: {
-            used:
-                Math.round(
-                    (process.memoryUsage().heapUsed / 1024 / 1024) * 100,
-                ) / 100,
-            total:
-                Math.round(
-                    (process.memoryUsage().heapTotal / 1024 / 1024) * 100,
-                ) / 100,
-            external:
-                Math.round(
-                    (process.memoryUsage().external / 1024 / 1024) * 100,
-                ) / 100,
+            used: Math.round((process.memoryUsage().heapUsed / 1024 / 1024) * 100) / 100,
+            total: Math.round((process.memoryUsage().heapTotal / 1024 / 1024) * 100) / 100,
         },
-        cpu: process.cpuUsage(),
-    };
-
-    res.status(200).json(healthData);
+        services: status,
+    });
 };
 
 export const readinessCheck = (req?: any, res?: any) => {
-    // Add any readiness checks here (database connectivity, etc.)
-    const isReady = true; // Replace with actual readiness logic
+    const status = ServiceRegistry.getStatus();
+    const isReady = status.hasDb && status.hasRuntime;
 
-    // If called with Express req/res, respond directly
+    const result = {
+        status: isReady ? "ready" : "not ready",
+        timestamp: new Date().toISOString(),
+        checks: {
+            database: status.hasDb ? "ok" : "missing",
+            runtime: status.hasRuntime ? "ok" : "missing",
+            payoutService: status.hasPayoutHandler ? "ok" : "not initialized",
+            telegram: status.hasTelegram ? "ok" : "not configured",
+        },
+    };
+
     if (req && res) {
-        if (isReady) {
-            res.status(200).json({
-                status: "ready",
-                timestamp: new Date().toISOString(),
-            });
-        } else {
-            res.status(503).json({
-                status: "not ready",
-                timestamp: new Date().toISOString(),
-            });
-        }
+        res.status(isReady ? 200 : 503).json(result);
         return;
     }
 
-    // If called without req/res, return the readiness status
-    return {
-        status: isReady ? "ready" : "not ready",
-        timestamp: new Date().toISOString(),
-    };
+    return result;
 };

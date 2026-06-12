@@ -58,6 +58,12 @@ const fetcher = async ({
     });
 };
 
+export interface AgUiEvent {
+    type: string;
+    timestamp?: number;
+    [key: string]: any;
+}
+
 export const apiClient = {
     sendMessage: (
         agentId: string,
@@ -83,6 +89,54 @@ export const apiClient = {
             body: formData,
         });
     },
+
+    sendMessageStream: async function* (
+        agentId: string,
+        message: string,
+        signal?: AbortSignal
+    ): AsyncGenerator<AgUiEvent> {
+        const res = await fetch(`${BASE_URL}/${agentId}/ag-ui`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
+            body: JSON.stringify({ text: message, userId: "user" }),
+            signal,
+        });
+
+        if (!res.ok || !res.body) {
+            throw new Error(`AG-UI request failed: ${res.status}`);
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() ?? "";
+
+            for (const line of lines) {
+                if (line.startsWith("data: ")) {
+                    try {
+                        yield JSON.parse(line.slice(6));
+                    } catch {
+                        // skip malformed events
+                    }
+                }
+            }
+        }
+
+        if (buffer.startsWith("data: ")) {
+            try {
+                yield JSON.parse(buffer.slice(6));
+            } catch {
+                // skip malformed final event
+            }
+        }
+    },
     getAgents: () => fetcher({ url: "/agents" }).then((res: any) => res.data ?? res),
     getAgent: (agentId: string): Promise<{ id: string; character: Character }> =>
         fetcher({ url: `/agents/${agentId}` }),
@@ -106,4 +160,25 @@ export const apiClient = {
             body: formData,
         });
     },
+
+    createSession: (accountId: string, familyId?: string) =>
+        fetcher({ url: "/api/auth/session", method: "POST", body: { accountId, familyId } }),
+
+    getMarketplaceAgents: (category?: string) => {
+        const params = category ? `?category=${category}` : "";
+        return fetcher({ url: `/api/marketplace/agents${params}` });
+    },
+
+    getMarketplaceAgent: (slug: string) =>
+        fetcher({ url: `/api/marketplace/agents/${slug}` }),
+
+    subscribeToAgent: (agentSlug: string) =>
+        fetcher({
+            url: "/api/marketplace/subscribe",
+            method: "POST",
+            body: { agentSlug },
+        }),
+
+    getSubscriptionStatus: () =>
+        fetcher({ url: "/api/subscription/status" }),
 };

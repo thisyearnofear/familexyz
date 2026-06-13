@@ -1,6 +1,7 @@
 #!/bin/bash
 # FamilyXYZ - Deploy (Build local, rsync)
 # Syncs only agent runtime packages, installs prod deps on server.
+# Uses releases/ + current symlink for atomic deployments.
 # Requires: pnpm, rsync, ssh access to $VPS_HOST
 
 set -e
@@ -9,11 +10,13 @@ VPS_HOST="${VPS_HOSTNAME:-snel-bot}"
 VPS_USER="${VPS_USER:-deploy}"
 VPS_TARGET="/home/deploy/familexyz"
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+RELEASE_NAME="familexyz-$(date +%Y%m%d-%H%M%S)"
 
 echo "=========================================="
 echo "FamilyXYZ - Deploy"
 echo "=========================================="
 echo "Target: ${VPS_HOST}:${VPS_TARGET}"
+echo "Release: ${RELEASE_NAME}"
 echo ""
 
 # --- Build temp directory with only essential files ---
@@ -51,6 +54,7 @@ fi
 ESSENTIAL_PKGS="
   core
   config
+  monetization
   blockchain/hedera-core
   blockchain/plugin-familyxyz
   clients/direct
@@ -94,6 +98,7 @@ cp "${PROJECT_ROOT}/tsconfig.json" "${TEMP_DEPLOY}/" 2>/dev/null || true
 
 cat > "${TEMP_DEPLOY}/.deployment.json" << EOF
 {
+  "release": "${RELEASE_NAME}",
   "deployed_from": "$(git -C "${PROJECT_ROOT}" branch --show-current 2>/dev/null || echo "unknown")",
   "git_commit": "$(git -C "${PROJECT_ROOT}" rev-parse HEAD 2>/dev/null || echo "unknown")",
   "git_commit_short": "$(git -C "${PROJECT_ROOT}" rev-parse --short HEAD 2>/dev/null || echo "unknown")",
@@ -107,6 +112,7 @@ cat > "${TEMP_DEPLOY}/pnpm-workspace.yaml" << 'WORKSPACE'
 packages:
   - "packages/core"
   - "packages/config"
+  - "packages/monetization"
   - "packages/adapters/sqlite"
   - "packages/clients/direct"
   - "packages/clients/telegram"
@@ -127,112 +133,83 @@ echo "Deployment size:"
 du -sh "${TEMP_DEPLOY}"
 echo ""
 
-# --- Rsync to server ---
-echo "[1/4] Syncing to server..."
+# --- Rsync to new release dir on server ---
+echo "[1/5] Syncing to server (releases/${RELEASE_NAME})..."
+ssh "${VPS_USER}@${VPS_HOST}" "mkdir -p ${VPS_TARGET}/releases/${RELEASE_NAME}"
 rsync -avz --delete \
     --exclude 'node_modules' \
     --exclude '**/node_modules' \
     --exclude '.turbo' \
     --exclude '*.log' \
     --exclude '*.tsbuildinfo' \
-    "${TEMP_DEPLOY}/" "${VPS_USER}@${VPS_HOST}:${VPS_TARGET}/current/"
+    "${TEMP_DEPLOY}/" "${VPS_USER}@${VPS_HOST}:${VPS_TARGET}/releases/${RELEASE_NAME}/"
 
 rm -rf "${TEMP_DEPLOY}"
 
-# --- Install production deps on server ---
-echo "[2/4] Installing production dependencies..."
+# --- Install deps and set up release on server ---
+echo "[2/5] Installing production dependencies..."
 ssh "${VPS_USER}@${VPS_HOST}" "
-cd ${VPS_TARGET}/current
+RELEASE_DIR=${VPS_TARGET}/releases/${RELEASE_NAME}
+cd \$RELEASE_DIR
 
 # Create shared dir symlinks (persistent data)
 ln -sfn ${VPS_TARGET}/shared/env/.env .env 2>/dev/null || true
 ln -sfn ${VPS_TARGET}/shared/data ./data 2>/dev/null || true
 
-# Install prod deps (tsx+typescript in root deps so .bin/tsx works)
-pnpm install --prod 2>&1 | tail -5
-
-# Fix tsx/typescript symlinks (pnpm --prod sometimes skips .bin symlinks)
-mkdir -p node_modules/.bin
-TSX_DIR=\$(ls -d node_modules/.pnpm/tsx@*/node_modules/tsx 2>/dev/null | head -1)
-if [ -n \"\$TSX_DIR\" ] && [ ! -f node_modules/.bin/tsx ]; then
-  ln -sf \"../.pnpm/tsx@\$(ls -d node_modules/.pnpm/tsx@*/node_modules/tsx 2>/dev/null | head -1 | sed 's|.*node_modules/\\.pnpm/tsx@||' | sed 's|/node_modules.*||')/node_modules/tsx/dist/cli.mjs\" node_modules/.bin/tsx 2>/dev/null || true
-fi
-TS_DIR=\$(ls -d node_modules/.pnpm/typescript@*/node_modules/typescript 2>/dev/null | head -1)
-if [ -n \"\$TS_DIR\" ] && [ ! -f node_modules/.bin/tsc ]; then
-  ln -sf \"../.pnpm/typescript@\$(ls -d node_modules/.pnpm/typescript@*/node_modules/typescript 2>/dev/null | head -1 | sed 's|.*node_modules/\\.pnpm/typescript@||' | sed 's|/node_modules.*||')/node_modules/typescript/bin/tsc\" node_modules/.bin/tsc 2>/dev/null || true
-fi
+# Install deps (--no-frozen-lockfile in case lockfile drifts)
+pnpm install --no-frozen-lockfile 2>&1 | tail -5
 
 # Rebuild native modules (better-sqlite3 needs node-gyp for target Node version)
-# pnpm rebuild can fail on canvas etc, so target specific packages
 for ver in 9.6.0 11.6.0; do
   BETTER_DIR=\"node_modules/.pnpm/better-sqlite3@\${ver}/node_modules/better-sqlite3\"
   if [ -d \"\$BETTER_DIR\" ] && [ ! -f \"\$BETTER_DIR/build/Release/better_sqlite3.node\" ]; then
     echo \"  Building better-sqlite3@\${ver}...\"
     cd \"\$BETTER_DIR\"
-    rm -rf build 2>/dev/null
     /usr/bin/node /usr/lib/node_modules/pnpm/dist/node_modules/node-gyp/bin/node-gyp.js configure --release 2>&1 | tail -1
-    mkdir -p build/node_gyp_bins
-    ln -sf /usr/bin/node build/node_gyp_bins/node
-    ln -sf /usr/bin/npm build/node_gyp_bins/npm
     /usr/bin/node /usr/lib/node_modules/pnpm/dist/node_modules/node-gyp/bin/node-gyp.js build --release 2>&1 | tail -1
-    cd ${VPS_TARGET}/current
+    cd \$RELEASE_DIR
   fi
 done
 "
 
-# --- Regenerate ecosystem config (rsync --delete may have removed it) ---
-echo "[3/4] Regenerating PM2 ecosystem config and restarting..."
+# --- Atomically switch current symlink ---
+echo "[3/5] Switching current symlink to new release..."
 ssh "${VPS_USER}@${VPS_HOST}" "
-cd ${VPS_TARGET}/current
-cat > ecosystem.config.js << 'PM2EOF'
-const path = require('path');
-const TARGET = '${VPS_TARGET}';
-module.exports = {
-  apps: [{
-    name: 'familexyz-agent',
-    cwd: path.join(TARGET, 'current'),
-    script: './agent/src/index.ts',
-    args: '--characters=\"./characters/wisdom.character.json\"',
-    interpreter: path.join(TARGET, 'current', 'node_modules', '.bin', 'tsx'),
-    instances: 1,
-    exec_mode: 'fork',
-    env: {
-      NODE_ENV: 'production',
-      SERVER_PORT: '31337',
-      HEALTH_PORT: '31338',
-    },
-    error_file: path.join(TARGET, 'shared', 'logs', 'error.log'),
-    out_file: path.join(TARGET, 'shared', 'logs', 'out.log'),
-    log_file: path.join(TARGET, 'shared', 'logs', 'combined.log'),
-    time: true,
-    merge_logs: true,
-    autorestart: true,
-    watch: false,
-    max_memory_restart: '1G',
-  }],
-};
-PM2EOF
+# Point current to the new release
+ln -sfn releases/${RELEASE_NAME} ${VPS_TARGET}/current.new
+mv -T ${VPS_TARGET}/current.new ${VPS_TARGET}/current 2>/dev/null || \
+  mv ${VPS_TARGET}/current.new ${VPS_TARGET}/current
 
+# Clean up old releases (keep last 3)
+cd ${VPS_TARGET}/releases
+ls -t | tail -n +4 | xargs -r rm -rf
+"
+
+# --- Restart PM2 ---
+echo "[4/5] Restarting application..."
+ssh "${VPS_USER}@${VPS_HOST}" "
 # Reload .env into pm2's env
 set -a
 . ${VPS_TARGET}/shared/env/.env 2>/dev/null || true
 set +a
 
-pm2 restart familexyz-agent --update-env 2>/dev/null || pm2 start ecosystem.config.js
+pm2 restart familexyz-agent --update-env 2>/dev/null || pm2 start ${VPS_TARGET}/current/ecosystem.config.cjs
 pm2 save
 echo ''
 pm2 status familexyz-agent
 "
 
 # --- Verify ---
-echo "[4/4] Verifying health endpoint..."
-sleep 3
+echo "[5/5] Verifying health endpoint..."
+sleep 5
 ssh "${VPS_USER}@${VPS_HOST}" "curl -s http://localhost:31338/health 2>&1 | head -c 200" || echo 'Health check not ready yet'
 
 echo ""
 echo "=========================================="
 echo "Done!"
 echo "=========================================="
-echo "  SSH:   ssh ${VPS_USER}@${VPS_HOST}"
-echo "  Logs:  pm2 logs familexyz-agent"
+echo "  Release: ${RELEASE_NAME}"
+echo "  SSH:     ssh ${VPS_USER}@${VPS_HOST}"
+echo "  Logs:    pm2 logs familexyz-agent"
+echo "  Rollback: ln -sfn releases/<old-release> ${VPS_TARGET}/current && pm2 restart familexyz-agent"
 echo "=========================================="

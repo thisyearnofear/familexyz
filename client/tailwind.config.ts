@@ -94,6 +94,29 @@ const config: Config = {
             animation: {
                 "accordion-down": "accordion-down 0.2s ease-out",
                 "accordion-up": "accordion-up 0.2s ease-out",
+                "skel-pulse": "t-skel-pulse var(--pulse-dur) ease-in-out var(--pulse-count)",
+                shimmer: "t-shimmer var(--shimmer-dur) linear infinite",
+                "fade-in": "revealUp var(--duration-slow) var(--ease-smooth-out) both",
+                "scale-in": "revealScale var(--duration-slow) var(--ease-smooth-out) both",
+            },
+            transitionDuration: {
+                stagger: "40ms",
+                micro: "80ms",
+                quick: "150ms",
+                fast: "250ms",
+                medium: "350ms",
+                slow: "400ms",
+                "very-slow": "500ms",
+            },
+            transitionTimingFunction: {
+                "smooth-out": "cubic-bezier(0.22, 1, 0.36, 1)",
+                bounce: "cubic-bezier(0.34, 1.36, 0.64, 1)",
+            },
+            backgroundImage: {
+                shimmer: "linear-gradient(90deg, var(--shimmer-base) 25%, var(--shimmer-highlight) 50%, var(--shimmer-base) 75%)",
+            },
+            backgroundSize: {
+                shimmer: "400% 100%",
             },
         },
     },

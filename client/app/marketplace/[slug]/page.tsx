@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useMarketplaceAgent } from '@/hooks/use-marketplace';
 import { fontVariables } from '@/lib/fonts';
 import { AGENTS } from '@/lib/agents';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function AgentDetailPage() {
     const params = useParams();
@@ -16,8 +17,23 @@ export default function AgentDetailPage() {
 
     if (isLoading) {
         return (
-            <div className={`${fontVariables} min-h-screen bg-editorial-bg flex items-center justify-center`}>
-                <p className="text-editorial-faint text-sm animate-pulse">Loading...</p>
+            <div className={`${fontVariables} min-h-screen bg-editorial-bg bg-noise`}>
+                <div className="max-w-3xl mx-auto px-6 py-12 sm:py-16">
+                    <Skeleton variant="bar" className="h-3 w-24 mb-10" />
+                    <div className="flex items-center gap-4 mb-6">
+                        <Skeleton variant="circle" className="h-16 w-16" />
+                        <div className="space-y-2">
+                            <Skeleton variant="bar" className="h-10 w-48" />
+                            <Skeleton variant="bar" className="h-3 w-24" />
+                        </div>
+                    </div>
+                    <div className="space-y-3 mb-8">
+                        <Skeleton variant="bar" className="h-4 w-full" />
+                        <Skeleton variant="bar" className="h-4 w-[85%]" />
+                        <Skeleton variant="bar" className="h-4 w-[70%]" />
+                    </div>
+                    <Skeleton variant="card" className="h-28" />
+                </div>
             </div>
         );
     }

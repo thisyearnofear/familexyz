@@ -9,6 +9,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useDailyTake } from "@/hooks/use-daily-take";
 import { AGENTS } from "@/lib/agents";
 import { fontVariables } from "@/lib/fonts";
+import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
+import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 
 function MobileHeader() {
@@ -29,14 +31,13 @@ function MobileHeader() {
 
 function HomePage() {
     const { data, isLoading: loading } = useDailyTake();
-    const [showIntro, setShowIntro] = useState(false);
+    const [showOnboarding, setShowOnboarding] = useState(false);
 
     useEffect(() => {
         const visited = localStorage.getItem('famile-visited');
         if (!visited) {
-            setShowIntro(true);
+            setShowOnboarding(true);
             localStorage.setItem('famile-visited', '1');
-            setTimeout(() => setShowIntro(false), 2500);
         }
     }, []);
 
@@ -45,23 +46,21 @@ function HomePage() {
         weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
     });
 
+    // ESC key to dismiss
+    useEffect(() => {
+        if (!showOnboarding) return;
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setShowOnboarding(false);
+        };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+    }, [showOnboarding]);
+
     return (
         <div className={`${fontVariables} min-h-screen bg-editorial-bg bg-noise`}>
-            {/* First-visit intro overlay */}
-            {showIntro && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-editorial-bg"
-                    style={{ animation: 'fadeOut 0.6s ease-in 2s forwards' }}>
-                    <div className="text-center">
-                        <p className="font-[family-name:var(--font-playfair)] text-display font-bold text-editorial-cream"
-                            style={{ animation: 'revealScale 0.8s ease-out forwards' }}>
-                            famile.xyz
-                        </p>
-                        <p className="mt-3 text-editorial-muted text-sm opacity-0"
-                            style={{ animation: 'revealUp 0.6s ease-out 0.8s forwards' }}>
-                            Five minds. One family.
-                        </p>
-                    </div>
-                </div>
+            {/* Onboarding wizard for first-time visitors */}
+            {showOnboarding && (
+                <OnboardingWizard onComplete={() => setShowOnboarding(false)} />
             )}
 
             <div className="max-w-4xl mx-auto px-6 py-12 sm:py-16">
@@ -141,10 +140,14 @@ function HomePage() {
                 )}
 
                 {loading && (
-                    <section className="mb-16 text-center">
-                        <p className="text-editorial-subtle text-sm animate-pulse">
-                            Loading today&rsquo;s council...
-                        </p>
+                    <section className="mb-16">
+                        <div className="max-w-prose mx-auto space-y-6">
+                            <div className="space-y-3 text-center">
+                                <Skeleton variant="bar" className="h-3 w-24 mx-auto" />
+                                <Skeleton variant="bar" className="h-10 w-[80%] mx-auto" />
+                            </div>
+                            <Skeleton variant="text" className="max-w-lg mx-auto" />
+                        </div>
                     </section>
                 )}
 

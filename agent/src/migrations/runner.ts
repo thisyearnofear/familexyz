@@ -34,8 +34,8 @@ export async function runMigrations(db: IDatabaseAdapter): Promise<void> {
 
     try {
       // Use raw query execution if available
-      if ('query' in db && typeof (db as any).query === 'function') {
-        await (db as any).query(createMigrationsTable, []);
+      if ('all' in db && typeof (db as any).all === 'function') {
+        await (db as any).run(createMigrationsTable, []);
       }
     } catch (err) {
       // Schema migrations table might not be accessible via all adapters
@@ -64,8 +64,8 @@ export async function runMigrations(db: IDatabaseAdapter): Promise<void> {
         let alreadyRan = false;
         try {
           const checkQuery = `SELECT id FROM schema_migrations WHERE name = ?`;
-          if ('query' in db && typeof (db as any).query === 'function') {
-            const result = await (db as any).query(checkQuery, [migrationName]);
+          if ('all' in db && typeof (db as any).all === 'function') {
+            const result = await (db as any).all(checkQuery, [migrationName]);
             alreadyRan = result && result.length > 0;
           }
         } catch (err) {
@@ -91,8 +91,8 @@ export async function runMigrations(db: IDatabaseAdapter): Promise<void> {
         // Execute each statement
         for (const statement of statements) {
           try {
-            if ('query' in db && typeof (db as any).query === 'function') {
-              await (db as any).query(statement, []);
+            if ('run' in db && typeof (db as any).run === 'function') {
+              await (db as any).run(statement, []);
             }
           } catch (err) {
             // Some CREATE IF NOT EXISTS statements might fail in some adapters
@@ -108,8 +108,8 @@ export async function runMigrations(db: IDatabaseAdapter): Promise<void> {
             VALUES (?, ?)
             ON CONFLICT(id) DO NOTHING
           `;
-          if ('query' in db && typeof (db as any).query === 'function') {
-            await (db as any).query(recordQuery, [
+          if ('run' in db && typeof (db as any).run === 'function') {
+            await (db as any).run(recordQuery, [
               `${Date.now()}-${migrationName}`,
               migrationName
             ]);

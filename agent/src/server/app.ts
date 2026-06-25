@@ -75,12 +75,12 @@ app.get("/api/families/:familyId/bond-score", async (c) => {
     const { familyId } = c.req.param();
     const db = ServiceRegistry.get("primaryDb");
 
-    if (!db || !('query' in db)) {
+    if (!db || !('all' in db)) {
         return c.json({ error: "Database not available" }, 503);
     }
 
     try {
-        const scores = await (db as any).query(
+        const scores = await (db as any).all(
             `SELECT id, family_id, week_number, timestamp,
                     generational_interaction_score, response_reciprocity_score,
                     sentiment_trajectory_score, challenge_completion_score,
@@ -324,7 +324,7 @@ app.post("/api/subscription/upgrade", async (c) => {
 // ── Monetization: Agent Catalog ───────────────────────
 app.get("/api/marketplace/agents", async (c) => {
     const db = ServiceRegistry.get("primaryDb");
-    if (!db || !('query' in db)) {
+    if (!db || !('all' in db)) {
         return c.json({ error: "Database not available" }, 503);
     }
     try {
@@ -346,7 +346,7 @@ app.get("/api/marketplace/agents", async (c) => {
             params.push(...tiers);
         }
         sql += ` ORDER BY name`;
-        const agents = await (db as any).query(sql, params);
+        const agents = await (db as any).all(sql, params);
         return c.json({ agents: agents || [] });
     } catch (err: any) {
         elizaLogger.error("Agent catalog query error:", err);
@@ -356,12 +356,12 @@ app.get("/api/marketplace/agents", async (c) => {
 
 app.get("/api/marketplace/agents/:slug", async (c) => {
     const db = ServiceRegistry.get("primaryDb");
-    if (!db || !('query' in db)) {
+    if (!db || !('all' in db)) {
         return c.json({ error: "Database not available" }, 503);
     }
     try {
         const { slug } = c.req.param();
-        const rows = await (db as any).query(
+        const rows = await (db as any).all(
             `SELECT * FROM agent_catalog WHERE slug = ? AND is_active = 1`,
             [slug]
         );
@@ -404,7 +404,7 @@ app.post("/api/marketplace/subscribe", async (c) => {
     if (!mono) return c.json({ error: "Monetization services not available" }, 503);
 
     const db = ServiceRegistry.get("primaryDb");
-    if (!db || !('query' in db)) {
+    if (!db || !('all' in db)) {
         return c.json({ error: "Database not available" }, 503);
     }
 
@@ -415,7 +415,7 @@ app.post("/api/marketplace/subscribe", async (c) => {
             return c.json({ error: "agentSlug is required" }, 400);
         }
 
-        const agents = await (db as any).query(
+        const agents = await (db as any).all(
             `SELECT * FROM agent_catalog WHERE slug = ? AND is_active = 1`,
             [agentSlug]
         );
@@ -450,13 +450,13 @@ app.post("/api/marketplace/subscribe", async (c) => {
 
 app.get("/api/marketplace/family/:familyId/subscriptions", async (c) => {
     const db = ServiceRegistry.get("primaryDb");
-    if (!db || !('query' in db)) {
+    if (!db || !('all' in db)) {
         return c.json({ error: "Database not available" }, 503);
     }
 
     try {
         const { familyId } = c.req.param();
-        const agents = await (db as any).query(
+        const agents = await (db as any).all(
             `SELECT * FROM agent_catalog WHERE is_active = 1 ORDER BY name`,
             []
         );
@@ -505,7 +505,7 @@ app.post("/api/marketplace/submit", async (c) => {
         return c.json({ error: "Authentication required" }, 401);
     }
     const db = ServiceRegistry.get("primaryDb");
-    if (!db || !('query' in db)) {
+    if (!db || !('all' in db)) {
         return c.json({ error: "Database not available" }, 503);
     }
     try {
@@ -518,7 +518,7 @@ app.post("/api/marketplace/submit", async (c) => {
         const id = `sub-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
         const now = Math.floor(Date.now() / 1000);
 
-        await (db as any).query(
+        await (db as any).run(
             `INSERT INTO agent_submissions (id, name, slug, description, category, tier_required, publisher_id, publisher_name, publisher_email, character_json, status, created_at)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)`,
             [id, name, slug, description, category || "general", tierRequired || "FREE", user.sub, publisherName || null, publisherEmail || null, characterJson ? JSON.stringify(characterJson) : null, now]
@@ -535,11 +535,11 @@ app.post("/api/marketplace/submit", async (c) => {
 
 app.get("/api/marketplace/pending", async (c) => {
     const db = ServiceRegistry.get("primaryDb");
-    if (!db || !('query' in db)) {
+    if (!db || !('all' in db)) {
         return c.json({ error: "Database not available" }, 503);
     }
     try {
-        const submissions = await (db as any).query(
+        const submissions = await (db as any).all(
             `SELECT * FROM agent_submissions WHERE status = 'pending' ORDER BY created_at DESC`,
             []
         );
@@ -555,7 +555,7 @@ app.post("/api/marketplace/review/:id", async (c) => {
         return c.json({ error: "Authentication required" }, 401);
     }
     const db = ServiceRegistry.get("primaryDb");
-    if (!db || !('query' in db)) {
+    if (!db || !('all' in db)) {
         return c.json({ error: "Database not available" }, 503);
     }
     try {
@@ -567,19 +567,19 @@ app.post("/api/marketplace/review/:id", async (c) => {
         }
 
         const now = Math.floor(Date.now() / 1000);
-        await (db as any).query(
+        await (db as any).run(
             `UPDATE agent_submissions SET status = ?, review_notes = ?, reviewed_at = ? WHERE id = ?`,
             [action, notes || null, now, id]
         );
 
         if (action === "approved") {
-            const subs = await (db as any).query(
+            const subs = await (db as any).all(
                 `SELECT * FROM agent_submissions WHERE id = ?`,
                 [id]
             );
             if (subs && subs.length > 0) {
                 const sub = subs[0];
-                await (db as any).query(
+                await (db as any).run(
                     `INSERT OR IGNORE INTO agent_catalog (id, name, slug, description, category, tier_required, is_active, publisher_id, created_at, updated_at)
                      VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?, ?)`,
                     [sub.id.replace("sub-", "agent-"), sub.name, sub.slug, sub.description, sub.category, sub.tier_required, sub.publisher_id, now, now]

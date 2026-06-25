@@ -15,11 +15,15 @@ export const healthCheck = (req: any, res: any) => {
     });
 };
 
-export const readinessCheck = (req?: any, res?: any) => {
+export function readinessCheck(): {
+    status: string;
+    timestamp: string;
+    checks: Record<string, string>;
+} {
     const status = ServiceRegistry.getStatus();
     const isReady = status.hasDb && status.hasRuntime;
 
-    const result = {
+    return {
         status: isReady ? "ready" : "not ready",
         timestamp: new Date().toISOString(),
         checks: {
@@ -29,11 +33,4 @@ export const readinessCheck = (req?: any, res?: any) => {
             telegram: status.hasTelegram ? "ok" : "not configured",
         },
     };
-
-    if (req && res) {
-        res.status(isReady ? 200 : 503).json(result);
-        return;
-    }
-
-    return result;
-};
+}

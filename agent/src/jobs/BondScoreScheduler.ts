@@ -84,8 +84,8 @@ export async function calculateFamilyBondScore(
 
     let previousScore: number | undefined;
     try {
-      if ('query' in db && typeof (db as any).query === 'function') {
-        const result = await (db as any).query(previousWeekQuery, [familyId]);
+      if ('all' in db && typeof (db as any).all === 'function') {
+        const result = await (db as any).all(previousWeekQuery, [familyId]);
         previousScore = result[0]?.bond_score;
       }
     } catch (err) {
@@ -116,8 +116,8 @@ export async function calculateFamilyBondScore(
     `;
 
     try {
-      if ('query' in db && typeof (db as any).query === 'function') {
-        await (db as any).query(insertSignalQuery, [
+      if ('run' in db && typeof (db as any).run === 'function') {
+        await (db as any).run(insertSignalQuery, [
           signalId,
           familyId,
           weekNumber,
@@ -148,8 +148,8 @@ export async function calculateFamilyBondScore(
     `;
 
     try {
-      if ('query' in db && typeof (db as any).query === 'function') {
-        await (db as any).query(insertScoreQuery, [
+      if ('run' in db && typeof (db as any).run === 'function') {
+        await (db as any).run(insertScoreQuery, [
           scoreId,
           familyId,
           weekNumber,
@@ -200,8 +200,8 @@ export async function runWeeklyBondScoreCalculation(
     // Get all rooms (families)
     let rooms: any[] = [];
     try {
-      if ('query' in db && typeof (db as any).query === 'function') {
-        rooms = await (db as any).query(
+      if ('all' in db && typeof (db as any).all === 'function') {
+        rooms = await (db as any).all(
           "SELECT DISTINCT r.id, r.id as room_id FROM rooms r",
           []
         );

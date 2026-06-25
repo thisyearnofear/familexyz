@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { Suspense } from "react";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -42,7 +42,9 @@ export default function DashboardPage() {
                             role="main"
                             aria-label="Main content"
                         >
-                            <EnhancedFamilyDashboard />
+                            <Suspense fallback={null}>
+                                <EnhancedFamilyDashboard />
+                            </Suspense>
                         </div>
                     </SidebarInset>
                 </SidebarProvider>

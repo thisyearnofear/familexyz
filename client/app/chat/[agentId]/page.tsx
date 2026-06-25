@@ -1,11 +1,13 @@
 'use client';
 
+import { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ChatInterface } from "@/components/chat/ChatInterface";
+import { ChatSkeleton } from "@/components/ui/skeleton";
 
 function MobileHeader() {
     const isMobile = useIsMobile();
@@ -25,6 +27,13 @@ export default function ChatPage() {
     const searchParams = useSearchParams();
     const agentId = params.agentId as string;
     const context = searchParams.get("context") || undefined;
+    const [ready, setReady] = useState(false);
+
+    useEffect(() => {
+        // Brief delay so skeleton shows before chat loads
+        const t = setTimeout(() => setReady(true), 120);
+        return () => clearTimeout(t);
+    }, []);
 
     if (!agentId) return <div className="min-h-screen bg-editorial-bg text-editorial-muted p-8">No agent selected.</div>;
 
@@ -36,7 +45,11 @@ export default function ChatPage() {
                     <SidebarInset className="h-screen">
                         <MobileHeader />
                         <div className="flex-1 h-full">
-                            <ChatInterface initialAgentId={agentId} context={context} />
+                            {ready ? (
+                                <ChatInterface initialAgentId={agentId} context={context} />
+                            ) : (
+                                <ChatSkeleton />
+                            )}
                         </div>
                     </SidebarInset>
                 </SidebarProvider>

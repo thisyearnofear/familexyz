@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { fontVariables } from '@/lib/fonts';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function useSubscriptionStatus() {
     return useQuery({
@@ -70,8 +71,9 @@ export default function AccountPage() {
                 </header>
 
                 {isLoading ? (
-                    <div className="py-20 text-center">
-                        <p className="text-editorial-faint text-sm animate-pulse">Loading...</p>
+                    <div className="space-y-8">
+                        <Skeleton variant="card" className="h-40" />
+                        <Skeleton variant="card" className="h-52" />
                     </div>
                 ) : (
                     <>

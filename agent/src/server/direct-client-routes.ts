@@ -24,7 +24,11 @@ export function patchDirectClientRoutes(): void {
     DirectClient.prototype.start = function (...args: any[]) {
         // Health check endpoints
         this.app.get("/health", healthCheck);
-        this.app.get("/ready", readinessCheck);
+        this.app.get("/ready", (_req: any, res: any) => {
+            const result = readinessCheck();
+            const ok = result.status === "ready";
+            res.status(ok ? 200 : 503).json(result);
+        });
         
         // GoodDollar endpoints
         const gd = new GoodDollarService();

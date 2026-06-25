@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useMarketplaceAgents, type CatalogAgent } from '@/hooks/use-marketplace';
 import { fontVariables } from '@/lib/fonts';
 import { AGENTS } from '@/lib/agents';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const CATEGORIES = ['all', 'family', 'wellness', 'education'] as const;
 
@@ -114,8 +115,10 @@ export default function MarketplacePage() {
                 </div>
 
                 {isLoading ? (
-                    <div className="py-20 text-center">
-                        <p className="text-editorial-faint text-sm animate-pulse">Loading agents...</p>
+                    <div className="grid gap-4 reveal-up reveal-d2">
+                        {[1, 2, 3, 4].map((i) => (
+                            <Skeleton key={i} variant="card" />
+                        ))}
                     </div>
                 ) : (
                     <div className="grid gap-4 reveal-up reveal-d2">

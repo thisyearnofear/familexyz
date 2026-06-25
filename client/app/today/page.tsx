@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { AGENTS, type DailyTake } from "@/lib/agents";
 import { useDailyTake } from "@/hooks/use-daily-take";
 import { fontVariables } from "@/lib/fonts";
+import { PageSkeleton } from "@/components/ui/skeleton";
 
 function ShareLink({ take, story }: { take: DailyTake['takes'][0]; story: DailyTake['story'] }) {
     const [copied, setCopied] = useState(false);
@@ -161,8 +162,8 @@ export default function TodayPage() {
 
     if (loading) {
         return (
-            <div className={`${fontVariables} min-h-screen bg-[#1a1614] flex items-center justify-center`}>
-                <div className="animate-pulse text-[#a09890] text-sm">Loading today&rsquo;s council...</div>
+            <div className={`${fontVariables} min-h-screen bg-editorial-bg bg-noise`}>
+                <PageSkeleton />
             </div>
         );
     }

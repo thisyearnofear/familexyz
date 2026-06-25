@@ -39,16 +39,16 @@ export class GenerationalInteractionAggregator {
         FROM memories m
         LEFT JOIN accounts a ON m.userId = a.id
         WHERE m.roomId = ?
-          AND m.type = 'message'
-          AND datetime(m.createdAt) >= ?
-          AND datetime(m.createdAt) <= ?
+          AND m.type = 'messages'
+          AND m.createdAt >= ?
+          AND m.createdAt <= ?
         ORDER BY m.createdAt ASC
       `;
 
-      const messages = await ctx.db.query(query, [
+      const messages = await ctx.db.all(query, [
         ctx.roomId,
-        ctx.startDate.toISOString(),
-        ctx.endDate.toISOString(),
+        ctx.startDate.getTime(),
+        ctx.endDate.getTime(),
       ]);
 
       // Parse age groups from account details
@@ -146,16 +146,16 @@ export class ResponseReciprocityAggregator {
           m.content
         FROM memories m
         WHERE m.roomId = ?
-          AND m.type = 'message'
-          AND datetime(m.createdAt) >= ?
-          AND datetime(m.createdAt) <= ?
+          AND m.type = 'messages'
+          AND m.createdAt >= ?
+          AND m.createdAt <= ?
         ORDER BY m.createdAt ASC
       `;
 
-      const messages = await ctx.db.query(query, [
+      const messages = await ctx.db.all(query, [
         ctx.roomId,
-        ctx.startDate.toISOString(),
-        ctx.endDate.toISOString(),
+        ctx.startDate.getTime(),
+        ctx.endDate.getTime(),
       ]);
 
       if (messages.length === 0) {
@@ -183,7 +183,7 @@ export class ResponseReciprocityAggregator {
           currentConversationLength++;
         } else {
           // Different user responded
-          const responseTime = (new Date(current.createdAt).getTime() - new Date(previous.createdAt).getTime()) / (1000 * 60 * 60); // hours
+          const responseTime = (current.createdAt - previous.createdAt) / (1000 * 60 * 60); // hours
           totalResponseTime += responseTime;
           responseCount++;
           lastUserId = current.userId;
@@ -252,16 +252,16 @@ export class SentimentTrajectoryAggregator {
           m.createdAt
         FROM memories m
         WHERE m.roomId = ?
-          AND m.type = 'message'
-          AND datetime(m.createdAt) >= ?
-          AND datetime(m.createdAt) <= ?
+          AND m.type = 'messages'
+          AND m.createdAt >= ?
+          AND m.createdAt <= ?
         ORDER BY m.createdAt ASC
       `;
 
-      const messages = await ctx.db.query(query, [
+      const messages = await ctx.db.all(query, [
         ctx.roomId,
-        ctx.startDate.toISOString(),
-        ctx.endDate.toISOString(),
+        ctx.startDate.getTime(),
+        ctx.endDate.getTime(),
       ]);
 
       if (messages.length === 0) {
@@ -346,14 +346,14 @@ export class ChallengeCompletionAggregator {
           createdAt
         FROM goals
         WHERE roomId = ?
-          AND datetime(createdAt) >= ?
-          AND datetime(createdAt) <= ?
+          AND createdAt >= ?
+          AND createdAt <= ?
       `;
 
-      const goals = await ctx.db.query(query, [
+      const goals = await ctx.db.all(query, [
         ctx.roomId,
-        ctx.startDate.toISOString(),
-        ctx.endDate.toISOString(),
+        ctx.startDate.getTime(),
+        ctx.endDate.getTime(),
       ]);
 
       if (goals.length === 0) {
@@ -373,7 +373,7 @@ export class ChallengeCompletionAggregator {
         FROM participants
         WHERE roomId = ?
       `;
-      const participantResult = await ctx.db.query(participantsQuery, [ctx.roomId]);
+      const participantResult = await ctx.db.all(participantsQuery, [ctx.roomId]);
       const totalParticipants = participantResult[0]?.count || 1;
 
       // Estimate participation diversity (would need enhanced schema in future)
@@ -403,19 +403,19 @@ export class PresenceConsistencyAggregator {
     try {
       const query = `
         SELECT DISTINCT
-          DATE(m.createdAt) as date,
+          (m.createdAt / 86400000) as day_num,
           m.userId
         FROM memories m
         WHERE m.roomId = ?
-          AND m.type = 'message'
-          AND datetime(m.createdAt) >= ?
-          AND datetime(m.createdAt) <= ?
+          AND m.type = 'messages'
+          AND m.createdAt >= ?
+          AND m.createdAt <= ?
       `;
 
-      const activity = await ctx.db.query(query, [
+      const activity = await ctx.db.all(query, [
         ctx.roomId,
-        ctx.startDate.toISOString(),
-        ctx.endDate.toISOString(),
+        ctx.startDate.getTime(),
+        ctx.endDate.getTime(),
       ]);
 
       if (activity.length === 0) {
@@ -428,8 +428,8 @@ export class PresenceConsistencyAggregator {
         };
       }
 
-      // Count unique days
-      const uniqueDays = new Set(activity.map((a: any) => a.date)).size;
+      // Count unique days from day_num (integer days since epoch)
+      const uniqueDays = new Set(activity.map((a: any) => a.day_num)).size;
 
       // Count users and their activity frequency
       const userDays: Map<string, number> = new Map();
@@ -477,7 +477,7 @@ export class NetworkTopologyAggregator {
         FROM participants
         WHERE roomId = ?
       `;
-      const participants = await ctx.db.query(participantsQuery, [ctx.roomId]);
+      const participants = await ctx.db.all(participantsQuery, [ctx.roomId]);
 
       if (participants.length < 2) {
         return {
@@ -497,19 +497,19 @@ export class NetworkTopologyAggregator {
         FROM memories m1
         JOIN memories m2 ON m1.roomId = m2.roomId
           AND m1.userId != m2.userId
-          AND datetime(m1.createdAt) <= datetime(m2.createdAt)
-          AND datetime(m2.createdAt) - datetime(m1.createdAt) < '01:00:00'
+          AND m1.createdAt <= m2.createdAt
+          AND (m2.createdAt - m1.createdAt) < 3600000
         WHERE m1.roomId = ?
-          AND m1.type = 'message'
-          AND m2.type = 'message'
-          AND datetime(m1.createdAt) >= ?
-          AND datetime(m2.createdAt) <= ?
+          AND m1.type = 'messages'
+          AND m2.type = 'messages'
+          AND m1.createdAt >= ?
+          AND m2.createdAt <= ?
       `;
 
-      const interactions = await ctx.db.query(messagesQuery, [
+      const interactions = await ctx.db.all(messagesQuery, [
         ctx.roomId,
-        ctx.startDate.toISOString(),
-        ctx.endDate.toISOString(),
+        ctx.startDate.getTime(),
+        ctx.endDate.getTime(),
       ]);
 
       const possiblePairs = (participants.length * (participants.length - 1)) / 2;
@@ -551,14 +551,14 @@ export class HederaConsensusAggregator {
         SELECT COUNT(*) as total
         FROM goals
         WHERE roomId = ?
-          AND datetime(createdAt) >= ?
-          AND datetime(createdAt) <= ?
+          AND createdAt >= ?
+          AND createdAt <= ?
       `;
 
-      const decisions = await ctx.db.query(decisionQuery, [
+      const decisions = await ctx.db.all(decisionQuery, [
         ctx.roomId,
-        ctx.startDate.toISOString(),
-        ctx.endDate.toISOString(),
+        ctx.startDate.getTime(),
+        ctx.endDate.getTime(),
       ]);
 
       const decisionsLogged = decisions[0]?.total || 0;

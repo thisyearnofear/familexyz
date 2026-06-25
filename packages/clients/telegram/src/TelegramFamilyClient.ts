@@ -503,11 +503,18 @@ export class TelegramFamilyClient implements FamilyMessagingAdapter {
         });
 
         this.bot.command("deletedata", async (ctx) => {
+            const chatId = ctx.chat?.id.toString();
+            const userId = ctx.from?.id.toString();
+            const isGroup = ctx.chat?.type === "group" || ctx.chat?.type === "supergroup";
+            const btn = dashboardUrlButton(chatId, userId, isGroup);
+
             const { InlineKeyboard } = await import("grammy");
             const kb = new InlineKeyboard()
                 .text("\u{274C} Yes, delete everything", "privacy:delete_final")
                 .row()
-                .text("\u{2190} Cancel", "privacy:cancel");
+                .text("\u{2190} Cancel", "privacy:cancel")
+                .row()
+                .url(btn.text, btn.url);
             await ctx.reply(
                 "*Delete all data?* \u{26A0}\u{FE0F}\n\n" +
                 "This will permanently remove your profile, check-in history, " +

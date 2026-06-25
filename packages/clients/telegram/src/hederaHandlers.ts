@@ -10,8 +10,10 @@
  */
 
 import type { Context } from "grammy";
+import { InlineKeyboard } from "grammy";
 import { Client, AccountId } from "@hashgraph/sdk";
 import { elizaLogger } from "@elizaos/core";
+import { dashboardUrlButton } from "./keyboards.js";
 import {
     transferFamilyTokens,
     logFamilyMilestone,
@@ -93,6 +95,12 @@ export async function handleHederaStatus(ctx: Context): Promise<void> {
     const client = getHederaClient();
     const isConnected = !!client;
 
+    const chatId = ctx.chat?.id.toString();
+    const userId = ctx.from?.id.toString();
+    const isGroup = ctx.chat?.type === "group" || ctx.chat?.type === "supergroup";
+    const btn = dashboardUrlButton(chatId, userId, isGroup);
+    const kb = new InlineKeyboard().url(btn.text, btn.url);
+
     let statusText = `${EMOJI.bank} *Hedera Status*\n\n`;
     statusText += `Connection: ${isConnected ? EMOJI.check + " Online" : EMOJI.cross + " Offline"}\n`;
     statusText += `Network: Testnet\n\n`;
@@ -111,7 +119,7 @@ export async function handleHederaStatus(ctx: Context): Promise<void> {
         statusText += `_Set HEDERA_OPERATOR_ID and HEDERA_OPERATOR_KEY to enable Hedera features._`;
     }
 
-    await ctx.reply(statusText, { parse_mode: "Markdown" });
+    await ctx.reply(statusText, { parse_mode: "Markdown", reply_markup: kb });
 }
 
 /**
@@ -167,6 +175,12 @@ export async function handleMilestone(ctx: Context): Promise<void> {
             input
         );
 
+        const chatId = ctx.chat?.id.toString();
+        const userId2 = ctx.from?.id.toString();
+        const isGroup = ctx.chat?.type === "group" || ctx.chat?.type === "supergroup";
+        const btn2 = dashboardUrlButton(chatId, userId2, isGroup);
+        const milestoneKb = new InlineKeyboard().url(btn2.text, btn2.url);
+
         if (result.success) {
             await ctx.reply(
                 `${EMOJI.checkmark} *Milestone Logged!*\n\n` +
@@ -174,7 +188,7 @@ export async function handleMilestone(ctx: Context): Promise<void> {
                 `${EMOJI.clock2} Timestamp: \`${result.timestamp}\`\n` +
                 `${EMOJI.link} Topic: \`${DEFAULT_CONFIG.hcsTopicId}\`\n\n` +
                 "_This record is immutable on Hedera._",
-                { parse_mode: "Markdown" }
+                { parse_mode: "Markdown", reply_markup: milestoneKb }
             );
         } else {
             await ctx.reply(
@@ -277,6 +291,12 @@ export async function handleReward(ctx: Context): Promise<void> {
             transferInput
         );
 
+        const chatId = ctx.chat?.id.toString();
+        const userId2 = ctx.from?.id.toString();
+        const isGroup = ctx.chat?.type === "group" || ctx.chat?.type === "supergroup";
+        const btn2 = dashboardUrlButton(chatId, userId2, isGroup);
+        const rewardKb = new InlineKeyboard().url(btn2.text, btn2.url);
+
         if (transferResult.success) {
             await ctx.reply(
                 `${EMOJI.checkmark} *Reward Payout Complete!*\n\n` +
@@ -286,7 +306,7 @@ export async function handleReward(ctx: Context): Promise<void> {
                 `${EMOJI.link} TX ID: \`${transferResult.transactionId}\`\n` +
                 `${EMOJI.clock2} Time: \`${transferResult.timestamp}\`\n\n` +
                 "_All transactions recorded on Hedera._",
-                { parse_mode: "Markdown" }
+                { parse_mode: "Markdown", reply_markup: rewardKb }
             );
         } else {
             await ctx.reply(
@@ -357,6 +377,12 @@ export async function handleTransfer(ctx: Context): Promise<void> {
             }
         );
 
+        const chatId = ctx.chat?.id.toString();
+        const userId2 = ctx.from?.id.toString();
+        const isGroup = ctx.chat?.type === "group" || ctx.chat?.type === "supergroup";
+        const btn2 = dashboardUrlButton(chatId, userId2, isGroup);
+        const transferKb = new InlineKeyboard().url(btn2.text, btn2.url);
+
         if (result.success) {
             await ctx.reply(
                 `${EMOJI.checkmark} *Transfer Complete!*\n\n` +
@@ -364,7 +390,7 @@ export async function handleTransfer(ctx: Context): Promise<void> {
                 `To: \`${accountId}\`\n` +
                 `${EMOJI.link} TX: \`${result.transactionId}\`\n` +
                 `${EMOJI.clock2} ${result.timestamp}`,
-                { parse_mode: "Markdown" }
+                { parse_mode: "Markdown", reply_markup: transferKb }
             );
         } else {
             await ctx.reply(`${EMOJI.cross} *Transfer Failed*\n\n${result.message}`);
@@ -389,6 +415,12 @@ export async function handleBalance(ctx: Context): Promise<void> {
         return;
     }
 
+    const chatId = ctx.chat?.id.toString();
+    const userId2 = ctx.from?.id.toString();
+    const isGroup = ctx.chat?.type === "group" || ctx.chat?.type === "supergroup";
+    const btn2 = dashboardUrlButton(chatId, userId2, isGroup);
+    const balanceKb = new InlineKeyboard().url(btn2.text, btn2.url);
+
     try {
         const operatorId = client.operatorAccountId?.toString() || "unknown";
 
@@ -397,7 +429,7 @@ export async function handleBalance(ctx: Context): Promise<void> {
             `Operator: \`${operatorId}\`\n` +
             `FAM Token: \`${DEFAULT_CONFIG.famTokenId}\`\n\n` +
             "_Balance check requires mirror node query - coming soon!_",
-            { parse_mode: "Markdown" }
+            { parse_mode: "Markdown", reply_markup: balanceKb }
         );
     } catch (error) {
         elizaLogger.error("[Hedera] Balance error:", error);
@@ -409,6 +441,12 @@ export async function handleBalance(ctx: Context): Promise<void> {
  * Handle /demo command - Showcase the full Hedera integration
  */
 export async function handleDemo(ctx: Context): Promise<void> {
+    const chatId = ctx.chat?.id.toString();
+    const userId = ctx.from?.id.toString();
+    const isGroup = ctx.chat?.type === "group" || ctx.chat?.type === "supergroup";
+    const btn = dashboardUrlButton(chatId, userId, isGroup);
+    const demoKb = new InlineKeyboard().url(btn.text, btn.url);
+
     await ctx.reply(
         `${EMOJI.rocket} *FamilyXYZ on Hedera - Demo Walkthrough*\n\n` +
         "_Here\u2019s how our ecosystem works end-to-end:_\n\n" +
@@ -434,7 +472,7 @@ export async function handleDemo(ctx: Context): Promise<void> {
         "/transfer <account> <amount> - Send FAM tokens\n" +
         "/balance - Check token info\n\n" +
         "_Built for Hedera Hello Future: Ascension - AI & Agents Track_",
-        { parse_mode: "Markdown" }
+        { parse_mode: "Markdown", reply_markup: demoKb }
     );
 }
 

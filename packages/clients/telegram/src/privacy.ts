@@ -13,6 +13,7 @@ import {
     updateUser,
 } from "./userStore.js";
 import type { SessionData } from "./handlers.js";
+import { dashboardUrlButton } from "./keyboards.js";
 
 type BotContext = Context & { session: SessionData };
 
@@ -42,6 +43,12 @@ export async function handleMe(ctx: BotContext): Promise<void> {
         ? `Active agent: *${user.preferred_agent}*`
         : "No agent selected";
 
+    const chatId = ctx.chat?.id.toString();
+    const userId = ctx.from?.id.toString();
+    const isGroup = ctx.chat?.type === "group" || ctx.chat?.type === "supergroup";
+    const btn = dashboardUrlButton(chatId, userId, isGroup);
+    const meKb = new InlineKeyboard().url(btn.text, btn.url);
+
     await ctx.reply(
         `*Hey ${name}!* \u{1F44B}\n\n` +
         `\u{1F4C5} Member since: ${joined}\n` +
@@ -52,15 +59,22 @@ export async function handleMe(ctx: BotContext): Promise<void> {
         `\u{1F916} ${agentLine}\n` +
         (moodSummary ? `\n\u{1F4CA} Top moods: ${moodSummary}\n` : "") +
         `\n_Use /privacy to see data policies, or /export for your data._`,
-        { parse_mode: "Markdown" }
+        { parse_mode: "Markdown", reply_markup: meKb }
     );
 }
 
 export async function handlePrivacy(ctx: BotContext): Promise<void> {
+    const chatId = ctx.chat?.id.toString();
+    const userId = ctx.from?.id.toString();
+    const isGroup = ctx.chat?.type === "group" || ctx.chat?.type === "supergroup";
+    const btn = dashboardUrlButton(chatId, userId, isGroup);
+
     const kb = new InlineKeyboard()
         .text("\u{1F4E6} Export My Data", "privacy:export")
         .row()
-        .text("\u{1F5D1}\u{FE0F} Delete All My Data", "privacy:delete_confirm");
+        .text("\u{1F5D1}\u{FE0F} Delete All My Data", "privacy:delete_confirm")
+        .row()
+        .url(btn.text, btn.url);
 
     await ctx.reply(
         "*Your Privacy* \u{1F512}\n\n" +
@@ -87,9 +101,15 @@ export async function handleExport(ctx: BotContext): Promise<void> {
     const telegramId = ctx.from?.id.toString();
     if (!telegramId) return;
 
+    const chatId = ctx.chat?.id.toString();
+    const userId = ctx.from?.id.toString();
+    const isGroup = ctx.chat?.type === "group" || ctx.chat?.type === "supergroup";
+    const btn = dashboardUrlButton(chatId, userId, isGroup);
+    const exportKb = new InlineKeyboard().url(btn.text, btn.url);
+
     const data = exportUserData(telegramId);
     if (!data) {
-        await ctx.reply("No data found for your account.");
+        await ctx.reply("No data found for your account.", { reply_markup: exportKb });
         return;
     }
 
@@ -101,8 +121,13 @@ export async function handleExport(ctx: BotContext): Promise<void> {
         for (const chunk of chunks) {
             await ctx.reply(chunk, { parse_mode: "Markdown" });
         }
+        // Send dashboard button separately as the final message
+        await ctx.reply("\u{1F4FA} *Family Dashboard*", {
+            parse_mode: "Markdown",
+            reply_markup: exportKb,
+        });
     } else {
-        await ctx.reply(summary, { parse_mode: "Markdown" });
+        await ctx.reply(summary, { parse_mode: "Markdown", reply_markup: exportKb });
     }
 }
 

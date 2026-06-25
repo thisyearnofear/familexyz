@@ -294,6 +294,12 @@ Phase 4 (Marketplace MVP)   — ✅ COMPLETE
 - **Bond score scheduler**: Weekly cron (Sundays 00:00 UTC) auto-calculates, first run successful — 10 families scored
 - **Nginx routing**: `/daily-take` and `/api/*` paths route to Hono app (port 31338) — marketplace, bond score, and subscription APIs publicly accessible
 - **SQLite adapter fix**: 27 `.query()` → `.all()`/`.run()` changes across 4 backend files (`app.ts`, `BondScoreScheduler.ts`, `bondScoring.ts`, `migrations/runner.ts`)
+- **Telegram dashboard deep-link rollout**:
+  - Added `dashboardUrlButton()` helper in `keyboards.ts` — resolves familyId per chat context (group: `telegram_{chatId}`, private: `user_{userId}`)
+  - Dashboard "📊 Family Dashboard" URL button added to all 18 Telegram touchpoints: `/start`, `/bondscore`, `/status`, check-in complete, `/help`, onboarding keyboard, `/agents`, agent selection confirmation, `/council`, `/challenge`, `/savings`, `/me`, `/privacy`, `/export`, `/deletedata`, `/hedera`, `/milestone`, `/reward`, `/transfer`, `/balance`, `/demo`
+  - Configurable via `FRONTEND_URL` env var (default: `https://familexyz.netlify.app`)
+  - All 5 Telegram files updated (`handlers.ts`, `keyboards.ts`, `TelegramFamilyClient.ts`, `privacy.ts`, `hederaHandlers.ts`), deployed, PM2 restarted
+  - Fixed orphaned `reply_markup` in `/demo` handler — keyboard was created but never passed to the reply
 - **Infrastructure**: Bond score scheduler deployed, temp files cleaned up, ROADMAP updated with June 26 changelog
 
 ### June 25, 2026

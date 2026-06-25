@@ -3,6 +3,7 @@ import {
     agentSelectorKeyboard,
     moodKeyboard,
     bondScoreKeyboard,
+    dashboardUrlButton,
     savingsKeyboard,
     checkinFollowUpKeyboard,
     formatBondScore,
@@ -59,9 +60,18 @@ export async function handleBondScore(ctx: Context): Promise<void> {
         consensus: 68,
     });
 
+    const chatId = ctx.chat?.id.toString();
+    const userId = ctx.from?.id.toString();
+    const isGroup = ctx.chat?.type === "group" || ctx.chat?.type === "supergroup";
+    const btn = dashboardUrlButton(chatId, userId, isGroup);
+
+    const { InlineKeyboard } = await import("grammy");
+    const kb = bondScoreKeyboard();
+    kb.row().url(btn.text, btn.url);
+
     await ctx.reply(
         score + "\n\n_Updated weekly. Keep engaging to improve!_",
-        { parse_mode: "Markdown", reply_markup: bondScoreKeyboard() }
+        { parse_mode: "Markdown", reply_markup: kb }
     );
 }
 
@@ -70,15 +80,28 @@ export async function handleAgents(ctx: Context): Promise<void> {
         ([, a]) => `${a.emoji} *${a.name}* — ${a.desc}`
     );
 
+    const chatId = ctx.chat?.id.toString();
+    const userId = ctx.from?.id.toString();
+    const isGroup = ctx.chat?.type === "group" || ctx.chat?.type === "supergroup";
+    const btn = dashboardUrlButton(chatId, userId, isGroup);
+
+    const kb = agentSelectorKeyboard();
+    kb.row().url(btn.text, btn.url);
+
     await ctx.reply(
         "*Choose an Agent*\n\n" +
         lines.join("\n") +
         "\n\n_Select one to switch your coaching focus:_",
-        { parse_mode: "Markdown", reply_markup: agentSelectorKeyboard() }
+        { parse_mode: "Markdown", reply_markup: kb }
     );
 }
 
 export async function handleChallenge(ctx: Context): Promise<void> {
+    const chatId = ctx.chat?.id.toString();
+    const userId = ctx.from?.id.toString();
+    const isGroup = ctx.chat?.type === "group" || ctx.chat?.type === "supergroup";
+    const btn = dashboardUrlButton(chatId, userId, isGroup);
+
     const { InlineKeyboard } = await import("grammy");
     const suggestedChallenges = new InlineKeyboard()
         .text("\u{1F4F1} Device-Free Dinner", "challenge:pick:devicefree")
@@ -87,7 +110,9 @@ export async function handleChallenge(ctx: Context): Promise<void> {
         .row()
         .text("\u{1F4DE} Call a Relative", "challenge:pick:call")
         .row()
-        .text("\u{1F3B2} Random Challenge", "challenge:pick:random");
+        .text("\u{1F3B2} Random Challenge", "challenge:pick:random")
+        .row()
+        .url(btn.text, btn.url);
 
     await ctx.reply(
         "*Family Challenges* \u{1F3AF}\n\n" +
@@ -98,24 +123,39 @@ export async function handleChallenge(ctx: Context): Promise<void> {
 }
 
 export async function handleSavings(ctx: Context): Promise<void> {
+    const chatId = ctx.chat?.id.toString();
+    const userId = ctx.from?.id.toString();
+    const isGroup = ctx.chat?.type === "group" || ctx.chat?.type === "supergroup";
+    const btn = dashboardUrlButton(chatId, userId, isGroup);
+
+    const kb = savingsKeyboard();
+    kb.row().url(btn.text, btn.url);
+
     await ctx.reply(
         "*Family Savings Vault*\n\n" +
         "\u{1F4B0} Balance: *0 FAM*\n" +
         "\u{1F4C8} APY: *4.5%* (Bonzo Finance)\n" +
         "\u{1F3AF} Goal: _Not set_\n\n" +
         "_Grow your family fund together._",
-        { parse_mode: "Markdown", reply_markup: savingsKeyboard() }
+        { parse_mode: "Markdown", reply_markup: kb }
     );
 }
 
 export async function handleHelp(ctx: Context): Promise<void> {
+    const chatId = ctx.chat?.id.toString();
+    const userId = ctx.from?.id.toString();
+    const isGroup = ctx.chat?.type === "group" || ctx.chat?.type === "supergroup";
+    const btn = dashboardUrlButton(chatId, userId, isGroup);
+
     const { InlineKeyboard } = await import("grammy");
     const quickStart = new InlineKeyboard()
         .text("\u{1F4AC} Try Check-In", "action:checkin")
         .text("\u{1F916} Pick Agent", "action:agents")
         .row()
         .text("\u{1F4CA} Bond Score", "action:bondscore")
-        .text("\u{1F3AF} Challenge", "action:challenge");
+        .text("\u{1F3AF} Challenge", "action:challenge")
+        .row()
+        .url(btn.text, btn.url);
 
     await ctx.reply(
         "*FamilyXYZ — Your Family Companion* \u{1F3E1}\n\n" +
@@ -216,10 +256,17 @@ export async function handleCheckInComplete(
         rough: "\u{1F614}",
     };
 
+    const chatId = ctx.chat?.id.toString();
+    const userId = ctx.from?.id.toString();
+    const isGroup = ctx.chat?.type === "group" || ctx.chat?.type === "supergroup";
+    const btn = dashboardUrlButton(chatId, userId, isGroup);
+
     const { InlineKeyboard } = await import("grammy");
     const nextSteps = new InlineKeyboard()
         .text("\u{1F4CA} See Bond Score", "action:bondscore")
-        .text("\u{1F3AF} Try a Challenge", "action:challenge");
+        .text("\u{1F3AF} Try a Challenge", "action:challenge")
+        .row()
+        .url(btn.text, btn.url);
 
     let encouragement = "";
     if (session.checkInStreak >= 7) {
@@ -258,6 +305,14 @@ export async function handleAgentSelection(
     }
     await ctx.answerCallbackQuery({ text: `Switched to ${agent.name}` });
 
+    const chatId = ctx.chat?.id.toString();
+    const userId = ctx.from?.id.toString();
+    const isGroup = ctx.chat?.type === "group" || ctx.chat?.type === "supergroup";
+    const btn = dashboardUrlButton(chatId, userId, isGroup);
+
+    const { InlineKeyboard } = await import("grammy");
+    const agentKb = new InlineKeyboard().url(btn.text, btn.url);
+
     const starters: Record<string, string[]> = {
         wisdom: ["How can I resolve a conflict with my partner?", "What does healthy boundaries look like?"],
         intimacy: ["How do we reconnect after a busy week?", "Tips for deeper conversations?"],
@@ -277,7 +332,7 @@ export async function handleAgentSelection(
             `${agent.emoji} *Now chatting with ${agent.name}*\n_${agent.desc}_\n\n` +
             `Try asking:\n${promptText}\n\n` +
             `Or just type your question — I'm here to help.`,
-            { parse_mode: "Markdown" }
+            { parse_mode: "Markdown", reply_markup: agentKb }
         );
     }
 }
@@ -349,12 +404,21 @@ export async function handleOnboardCallback(ctx: Context, topic: string): Promis
         case "help":
         default: {
             const { onboardingKeyboard } = await import("./keyboards.js");
+
+            const chatId = ctx.chat?.id.toString();
+            const userId = ctx.from?.id.toString();
+            const isGroup = ctx.chat?.type === "group" || ctx.chat?.type === "supergroup";
+            const btn = dashboardUrlButton(chatId, userId, isGroup);
+
+            const kb = onboardingKeyboard();
+            kb.row().url(btn.text, btn.url);
+
             if (ctx.callbackQuery?.message) {
                 await ctx.api.editMessageText(
                     ctx.callbackQuery.message.chat.id,
                     ctx.callbackQuery.message.message_id,
                     "\u{2753} *Getting Started*\n\nJust talk naturally! I'll route your message to the right agent.\n\nOr use the menu buttons below for quick actions.\n\n_Tap any feature to try it:_",
-                    { parse_mode: "Markdown", reply_markup: onboardingKeyboard() }
+                    { parse_mode: "Markdown", reply_markup: kb }
                 );
             }
             return;

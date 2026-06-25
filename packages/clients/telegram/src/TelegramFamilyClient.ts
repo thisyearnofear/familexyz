@@ -23,6 +23,7 @@ import {
     persistentKeyboard,
     onboardingKeyboard,
     agentSelectorKeyboard,
+    dashboardUrlButton,
     REPLY_KEYBOARD_ACTIONS,
     AGENT_PROFILES,
 } from "./keyboards.js";
@@ -269,16 +270,25 @@ export class TelegramFamilyClient implements FamilyMessagingAdapter {
             const chatId = ctx.chat?.id.toString();
             const chatTitle = ctx.chat?.title || "Private Chat";
             const isGroup = ctx.chat?.type === "group" || ctx.chat?.type === "supergroup";
+            const userId = ctx.from?.id.toString();
+
+            // Determine dashboard link with familyId
+            const FRONTEND_URL = process.env.FRONTEND_URL || "https://familexyz.netlify.app";
 
             if (isGroup) {
+                const familyId = `telegram_${chatId}`;
                 const mapping: GroupMapping = {
                     telegramGroupId: chatId!,
                     telegramGroupTitle: chatTitle,
-                    familyId: `telegram_${chatId}`,
+                    familyId,
                     enabledAgents: ["wisdom", "intimacy", "presence", "growth", "bridge", "savings"],
                     createdAt: Date.now(),
                 };
                 this.addGroupMapping(mapping);
+
+                const { InlineKeyboard } = await import("grammy");
+                const dashboardKb = new InlineKeyboard()
+                    .url("\u{1F4CA} Family Dashboard", `${FRONTEND_URL}/dashboard?familyId=${familyId}`);
 
                 await ctx.reply(
                     `*Welcome to FamilyXYZ* \u{1F3E1}\n\n` +
@@ -292,8 +302,20 @@ export class TelegramFamilyClient implements FamilyMessagingAdapter {
                     `Use the menu below or just talk naturally — I'll route to the right agent!`,
                     { parse_mode: "Markdown", reply_markup: persistentKeyboard() }
                 );
+
+                await ctx.reply(
+                    `\u{1F4CA} *View your dashboard:*`, 
+                    { parse_mode: "Markdown", reply_markup: dashboardKb }
+                );
             } else {
                 ctx.session.onboardingComplete = false;
+
+                const safeFamilyId = userId ? `user_${userId}` : 'primary';
+                const familyId = safeFamilyId;
+
+                const { InlineKeyboard } = await import("grammy");
+                const dashboardKb = new InlineKeyboard()
+                    .url("\u{1F4CA} Family Dashboard", `${FRONTEND_URL}/dashboard?familyId=${familyId}`);
 
                 await ctx.reply(
                     `*Welcome to FamilyXYZ* \u{1F44B}\n\n` +
@@ -311,6 +333,11 @@ export class TelegramFamilyClient implements FamilyMessagingAdapter {
                     `\u{2728} *Just type naturally* — I'll detect the topic and route to the right agent. Or use /council to hear from all 5 at once.\n\n` +
                     `_Try it now — what's on your mind about your family?_`,
                     { parse_mode: "Markdown", reply_markup: persistentKeyboard() }
+                );
+
+                await ctx.reply(
+                    `\u{1F4CA} *View your dashboard:*`, 
+                    { parse_mode: "Markdown", reply_markup: dashboardKb }
                 );
 
                 // Show privacy disclosure for first-time users
@@ -427,7 +454,14 @@ export class TelegramFamilyClient implements FamilyMessagingAdapter {
 
         this.bot.command("status", async (ctx) => {
             const hederaEnabled = !!(process.env.HEDERA_OPERATOR_ID && process.env.HEDERA_OPERATOR_KEY);
-            
+            const chatId = ctx.chat?.id.toString();
+            const userId = ctx.from?.id.toString();
+            const isGroup = ctx.chat?.type === "group" || ctx.chat?.type === "supergroup";
+            const btn = dashboardUrlButton(chatId, userId, isGroup);
+
+            const { InlineKeyboard } = await import("grammy");
+            const statusKb = new InlineKeyboard().url(btn.text, btn.url);
+
             await ctx.reply(
                 `📊 *FamilyXYZ Status*\n\n` +
                 `Connection: ${this.status.isConnected ? "✅ Online" : "❌ Offline"}\n` +
@@ -445,7 +479,7 @@ export class TelegramFamilyClient implements FamilyMessagingAdapter {
                 `/demo — Full Hedera walkthrough\n` +
                 `/ask <agent> <q> — Ask a specific agent\n` +
                 `/help — Feature overview`,
-                { parse_mode: "Markdown" }
+                { parse_mode: "Markdown", reply_markup: statusKb }
             );
         });
 

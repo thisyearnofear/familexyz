@@ -464,7 +464,18 @@ async function handleCouncilRequest(
 
     const reply = `*Family Council* 🏛️\n_\"${text.length > 80 ? text.substring(0, 77) + "..." : text}\"_\n\n${formatted}`;
 
-    await sendTelegramMessage(conversationId, reply);
+    // Build dashboard link button
+    const chatId = conversationId.replace("telegram:", "");
+    const frontendUrl = process.env.FRONTEND_URL || "https://familexyz.netlify.app";
+    const familyId = isPrivate
+        ? `user_${userId}`
+        : `telegram_${chatId}`;
+    const dashboardUrl = `${frontendUrl}/dashboard?familyId=${familyId}`;
+
+    const dashboardKb = new InlineKeyboard()
+        .url("\u{1F4CA} Family Dashboard", dashboardUrl);
+
+    await sendTelegramMessage(conversationId, reply, undefined, dashboardKb);
 }
 
 /**

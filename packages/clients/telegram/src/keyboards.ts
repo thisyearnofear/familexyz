@@ -104,6 +104,24 @@ export function helpKeyboard(): InlineKeyboard {
         .text("\u{1F4B0} Savings", "help:savings");
 }
 
+const FRONTEND_URL = () => process.env.FRONTEND_URL || "https://familexyz.netlify.app";
+
+export function dashboardUrlButton(
+    chatId?: string,
+    userId?: string,
+    isGroup?: boolean,
+): { url: string; text: string } {
+    const familyId = isGroup && chatId
+        ? `telegram_${chatId}`
+        : userId
+        ? `user_${userId}`
+        : 'primary';
+    return {
+        url: `${FRONTEND_URL()}/dashboard?familyId=${familyId}`,
+        text: "\u{1F4CA} Family Dashboard",
+    };
+}
+
 export const REPLY_KEYBOARD_ACTIONS: Record<string, string> = {
     "\u{1F4AC} Check In": "checkin",
     "\u{1F493} Family": "family",

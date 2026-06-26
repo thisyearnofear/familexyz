@@ -104,6 +104,87 @@ function HomePage() {
                     </div>
                 </nav>
 
+                {/* ── Loading State — Gathering Council ── */}
+                {loading && (
+                    <section className="mb-16">
+                        {/* Animated gathering message */}
+                        <div className="text-center mb-12 reveal-up">
+                            <div className="flex items-center justify-center gap-3 mb-4">
+                                <span className="text-2xl animate-pulse">\u{1F3DB}\u{FE0F}</span>
+                            </div>
+                            <p className="text-editorial-subtle text-sm font-[family-name:var(--font-playfair)] italic">
+                                Gathering today&rsquo;s council
+                                <span className="inline-flex ml-1">
+                                    <span className="w-1 h-1 rounded-full bg-editorial-accent/60 animate-bounce" style={{ animationDelay: "0ms" }} />
+                                    <span className="w-1 h-1 rounded-full bg-editorial-accent/60 animate-bounce ml-1" style={{ animationDelay: "150ms" }} />
+                                    <span className="w-1 h-1 rounded-full bg-editorial-accent/60 animate-bounce ml-1" style={{ animationDelay: "300ms" }} />
+                                </span>
+                            </p>
+                            <p className="text-[0.55rem] tracking-[0.2em] uppercase text-editorial-faint/60 mt-4">
+                                Five minds on today&rsquo;s world
+                            </p>
+                        </div>
+
+                        {/* Story skeleton */}
+                        <div className="text-center mb-14">
+                            <div className="space-y-3">
+                                <Skeleton variant="bar" className="h-3 w-24 mx-auto" />
+                                <Skeleton variant="bar" className="h-10 w-[80%] mx-auto max-w-2xl" />
+                                <Skeleton variant="bar" className="h-3 w-32 mx-auto mt-3" />
+                            </div>
+                            <div className="mt-4 mx-auto max-w-lg">
+                                <Skeleton variant="text" />
+                            </div>
+                        </div>
+
+                        {/* Agent takes skeletons — stable layout placeholder */}
+                        <div className="mb-16">
+                            <div className="flex items-center gap-3 justify-center mb-10">
+                                <span className="w-12 h-px bg-editorial-faint/10" />
+                                <Skeleton variant="bar" className="h-3 w-32" />
+                                <span className="w-12 h-px bg-editorial-faint/10" />
+                            </div>
+
+                            {/* Featured take skeleton */}
+                            <div className="mb-12">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <Skeleton variant="circle" className="h-8 w-8" />
+                                    <div className="space-y-2">
+                                        <Skeleton variant="bar" className="h-4 w-28" />
+                                        <Skeleton variant="bar" className="h-3 w-20" />
+                                    </div>
+                                </div>
+                                <div className="border-l-2 border-editorial-faint/10 pl-6">
+                                    <Skeleton variant="text" className="max-w-2xl" />
+                                </div>
+                            </div>
+
+                            {/* 2-column agent skeletons */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
+                                {[0, 1, 2, 3].map((i) => (
+                                    <div key={i} className="reveal-up" style={{ animationDelay: `${(i + 3) * 60}ms` }}>
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <Skeleton variant="circle" className="h-6 w-6" />
+                                            <Skeleton variant="bar" className="h-4 w-20" />
+                                            <Skeleton variant="bar" className="h-3 w-24" />
+                                        </div>
+                                        <Skeleton variant="text" />
+                                        <div className="flex items-center gap-4 mt-3">
+                                            <Skeleton variant="bar" className="h-3 w-16" />
+                                            <Skeleton variant="bar" className="h-3 w-32" />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* CTA skeleton — stable footer */}
+                        <div className="text-center mb-14">
+                            <Skeleton variant="bar" className="h-4 w-48 mx-auto" />
+                        </div>
+                    </section>
+                )}
+
                 {/* ── Feature Story (if available) ── */}
                 {data && (
                     <section className="mb-16 reveal-up reveal-d2">
@@ -136,18 +217,6 @@ function HomePage() {
                         <p className="text-editorial-subtle text-sm italic">
                             Today&rsquo;s council is being prepared. Check back soon.
                         </p>
-                    </section>
-                )}
-
-                {loading && (
-                    <section className="mb-16">
-                        <div className="max-w-prose mx-auto space-y-6">
-                            <div className="space-y-3 text-center">
-                                <Skeleton variant="bar" className="h-3 w-24 mx-auto" />
-                                <Skeleton variant="bar" className="h-10 w-[80%] mx-auto" />
-                            </div>
-                            <Skeleton variant="text" className="max-w-lg mx-auto" />
-                        </div>
                     </section>
                 )}
 

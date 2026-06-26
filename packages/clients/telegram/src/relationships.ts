@@ -1,6 +1,7 @@
 import type { Context } from "grammy";
 import { InlineKeyboard } from "grammy";
 import type { SessionData } from "./handlers.js";
+import { dashboardUrlButton } from "./keyboards.js";
 
 export interface FamilyMember {
     name: string;
@@ -128,9 +129,16 @@ function formatPulse(member: FamilyMember): string {
 export async function handleFamilyCommand(ctx: Context & { session: SessionData }): Promise<void> {
     const members = ctx.session.familyMembers || [];
 
+    const chatId = ctx.chat?.id.toString();
+    const userId = ctx.from?.id.toString();
+    const isGroup = ctx.chat?.type === "group" || ctx.chat?.type === "supergroup";
+    const btn = dashboardUrlButton(chatId, userId, isGroup);
+
     if (members.length === 0) {
         const kb = new InlineKeyboard()
-            .text("\u{2795} Add my first person", "family:add");
+            .text("\u{2795} Add my first person", "family:add")
+            .row()
+            .url(btn.text, btn.url);
 
         await ctx.reply(
             "*Family Connections* \u{1F493}\n\n" +
@@ -148,9 +156,12 @@ export async function handleFamilyCommand(ctx: Context & { session: SessionData 
         ? `*Your Connections* \u{1F493}\n\n${pulses.join("\n\n")}`
         : "*Your Connections* \u{1F493}\n\n_Add people below to start tracking._";
 
+    const kb = familyListKeyboard(members);
+    kb.row().url(btn.text, btn.url);
+
     await ctx.reply(text, {
         parse_mode: "Markdown",
-        reply_markup: familyListKeyboard(members),
+        reply_markup: kb,
     });
 }
 

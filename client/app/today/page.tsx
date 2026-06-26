@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { AGENTS, type DailyTake } from "@/lib/agents";
 import { useDailyTake } from "@/hooks/use-daily-take";
 import { fontVariables } from "@/lib/fonts";
-import { PageSkeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function ShareLink({ take, story }: { take: DailyTake['takes'][0]; story: DailyTake['story'] }) {
     const [copied, setCopied] = useState(false);
@@ -147,6 +147,130 @@ const TAKE_COMPONENTS: Record<string, React.FC<TakeProps>> = {
     Bridge: BridgeTake,
 };
 
+/**
+ * Rich loading skeleton that mirrors the /today page layout,
+ * with per-agent styled placeholders matching each agent's visual treatment.
+ */
+function TodayCouncilSkeleton() {
+    return (
+        <div className="min-h-screen bg-editorial-bg bg-noise">
+            <div className="max-w-4xl mx-auto px-6 py-12 sm:py-16">
+                {/* Back link skeleton */}
+                <Skeleton variant="bar" className="h-3 w-20 mb-10" />
+
+                {/* Branded gathering animation */}
+                <div className="mb-14">
+                    <p className="text-[0.55rem] tracking-[0.25em] uppercase text-editorial-faint mb-4">
+                        Loading&hellip;
+                    </p>
+                    <div className="flex items-center gap-3 mb-6">
+                        <span className="text-2xl animate-pulse">\u{1F3DB}\u{FE0F}</span>
+                        <p className="text-editorial-subtle text-sm font-[family-name:var(--font-playfair)] italic">
+                            Gathering today&rsquo;s council
+                            <span className="inline-flex ml-1">
+                                <span className="w-1 h-1 rounded-full bg-editorial-accent/60 animate-bounce" style={{ animationDelay: "0ms" }} />
+                                <span className="w-1 h-1 rounded-full bg-editorial-accent/60 animate-bounce ml-1" style={{ animationDelay: "150ms" }} />
+                                <span className="w-1 h-1 rounded-full bg-editorial-accent/60 animate-bounce ml-1" style={{ animationDelay: "300ms" }} />
+                            </span>
+                        </p>
+                    </div>
+                    <Skeleton variant="bar" className="h-10 w-[60%]" />
+                </div>
+
+                {/* Story skeleton */}
+                <div className="mb-16">
+                    <Skeleton variant="bar" className="h-3 w-24 mb-6" />
+                    <Skeleton variant="bar" className="h-8 w-[85%] mb-4" />
+                    <Skeleton variant="bar" className="h-8 w-[55%] mb-6" />
+                    <Skeleton variant="text" className="max-w-prose" />
+                    <Skeleton variant="bar" className="h-3 w-32 mt-4" />
+                </div>
+
+                {/* Five Perspectives divider skeleton */}
+                <div className="flex items-center gap-4 mb-12">
+                    <span className="h-px flex-1 bg-editorial-subtle/10" />
+                    <Skeleton variant="bar" className="h-3 w-32" />
+                    <span className="h-px flex-1 bg-editorial-subtle/10" />
+                </div>
+
+                {/* Per-agent styled skeletons */}
+                <section className="space-y-14 sm:space-y-20">
+                    {/* Wisdom — letter format with border-left */}
+                    <div className="pl-6 sm:pl-10 border-l-2 border-editorial-faint/10 py-2">
+                        <Skeleton variant="bar" className="h-3 w-40 mb-4" />
+                        <Skeleton variant="bar" className="h-5 w-full max-w-2xl mb-2" />
+                        <Skeleton variant="bar" className="h-5 w-[85%] max-w-2xl mb-2" />
+                        <Skeleton variant="bar" className="h-5 w-[60%] max-w-2xl mb-4" />
+                        <div className="flex items-center gap-4 mt-4">
+                            <Skeleton variant="bar" className="h-3 w-28" />
+                            <Skeleton variant="bar" className="h-3 w-12" />
+                        </div>
+                    </div>
+
+                    {/* Intimacy — two-column grid with sidebar */}
+                    <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-6 sm:gap-10 items-start">
+                        <div>
+                            <Skeleton variant="bar" className="h-3 w-48 mb-4" />
+                            <Skeleton variant="bar" className="h-4 w-full mb-2" />
+                            <Skeleton variant="bar" className="h-4 w-[80%] mb-2" />
+                            <Skeleton variant="bar" className="h-4 w-[60%]" />
+                        </div>
+                        <div className="sm:border-l sm:pl-6 sm:pt-8" style={{ borderColor: "rgba(219,39,119,0.08)" }}>
+                            <Skeleton variant="bar" className="h-3 w-16" />
+                        </div>
+                    </div>
+
+                    {/* Presence — centered meditation */}
+                    <div className="text-center py-8 sm:py-12">
+                        <Skeleton variant="bar" className="h-3 w-24 mx-auto mb-6" />
+                        <div className="max-w-md mx-auto">
+                            <Skeleton variant="bar" className="h-5 w-full mb-2" />
+                            <Skeleton variant="bar" className="h-5 w-[80%] mx-auto mb-2" />
+                            <Skeleton variant="bar" className="h-5 w-[55%] mx-auto" />
+                        </div>
+                        <div className="flex items-center justify-center gap-6 mt-8">
+                            <Skeleton variant="bar" className="h-3 w-20" />
+                            <Skeleton variant="bar" className="h-3 w-12" />
+                        </div>
+                    </div>
+
+                    {/* Growth — manifesto with accent line */}
+                    <div>
+                        <Skeleton variant="bar" className="h-3 w-48 mb-4" />
+                        <Skeleton variant="bar" className="h-6 w-full max-w-2xl mb-2" />
+                        <Skeleton variant="bar" className="h-6 w-[75%] max-w-2xl mb-4" />
+                        <Skeleton variant="bar" className="h-0.5 w-16 mb-4" />
+                        <div className="flex items-center gap-4 mt-4">
+                            <Skeleton variant="bar" className="h-3 w-20" />
+                            <Skeleton variant="bar" className="h-3 w-12" />
+                        </div>
+                    </div>
+
+                    {/* Bridge — divided layout with center line */}
+                    <div className="relative py-4">
+                        <div className="absolute left-0 right-0 top-1/2 h-px bg-editorial-subtle/10" />
+                        <div className="relative bg-editorial-bg py-4">
+                            <Skeleton variant="bar" className="h-3 w-40 mb-4" />
+                            <Skeleton variant="bar" className="h-4 w-full max-w-xl mb-2" />
+                            <Skeleton variant="bar" className="h-4 w-[70%] max-w-xl mb-4" />
+                            <div className="flex items-center gap-4 mt-4">
+                                <Skeleton variant="bar" className="h-3 w-24" />
+                                <Skeleton variant="bar" className="h-3 w-12" />
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Footer skeleton */}
+                <footer className="mt-20 pt-10 border-t border-editorial-subtle/10">
+                    <Skeleton variant="bar" className="h-5 w-48 mx-auto" />
+                    <Skeleton variant="bar" className="h-3 w-32 mx-auto mt-5" />
+                </footer>
+            </div>
+        </div>
+    );
+}
+
 export default function TodayPage() {
     const { data, isLoading: loading } = useDailyTake();
     const router = useRouter();
@@ -161,17 +285,36 @@ export default function TodayPage() {
     });
 
     if (loading) {
-        return (
-            <div className={`${fontVariables} min-h-screen bg-editorial-bg bg-noise`}>
-                <PageSkeleton />
-            </div>
-        );
+        return <TodayCouncilSkeleton />;
     }
 
     if (!data) {
         return (
-            <div className={`${fontVariables} min-h-screen bg-[#1a1614] flex items-center justify-center`}>
-                <p className="text-[#a09890] text-sm">No take available yet today. Check back soon.</p>
+            <div className={`${fontVariables} min-h-screen bg-editorial-bg bg-noise flex items-center justify-center`}>
+                <div className="text-center max-w-xs">
+                    <p className="text-[0.55rem] tracking-[0.25em] uppercase text-editorial-faint mb-4">
+                        {formattedDate}
+                    </p>
+                    <p className="font-[family-name:var(--font-playfair)] text-lg italic text-editorial-subtle mb-6">
+                        The council hasn&rsquo;t gathered yet today.
+                    </p>
+                    <div className="space-y-3">
+                        <Link
+                            href="/"
+                            className="block text-[0.6rem] tracking-[0.2em] uppercase text-editorial-accent hover:text-editorial-cream transition-colors"
+                        >
+                            &larr; Back to home
+                        </Link>
+                        <a
+                            href="https://t.me/familexyzbot?start=subscribe_daily"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block text-[0.6rem] tracking-[0.2em] uppercase text-editorial-faint hover:text-editorial-accent transition-colors"
+                        >
+                            Get tomorrow&rsquo;s on Telegram &rarr;
+                        </a>
+                    </div>
+                </div>
             </div>
         );
     }

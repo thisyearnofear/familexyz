@@ -81,6 +81,38 @@ export interface DailyTake {
 
 let cachedTake: DailyTake | null = null;
 
+/**
+ * Initialize the daily take scheduler — runs at 06:00 UTC every day.
+ */
+export function initializeDailyScheduler(
+    db: IDatabaseAdapter,
+    runtime?: AgentRuntime,
+): NodeJS.Timer | null {
+    try {
+        try {
+            const cron = require("node-cron");
+            const job = cron.schedule("0 6 * * *", async () => {
+                elizaLogger.info("[DailyTake] Running scheduled generation...");
+                if (runtime) {
+                    await generateDailyTake(runtime);
+                }
+            });
+            elizaLogger.success("Daily take scheduler initialized (06:00 UTC daily)");
+            return job;
+        } catch (err) {
+            elizaLogger.warn("node-cron not available, daily take scheduler disabled:", err);
+            (global as any).triggerDailyTakeGeneration = () => {
+                elizaLogger.info("[DailyTake] Manual trigger...");
+                if (runtime) return generateDailyTake(runtime);
+            };
+            return null;
+        }
+    } catch (err) {
+        elizaLogger.error("Failed to initialize daily take scheduler:", err);
+        return null;
+    }
+}
+
 export function getCachedDailyTake(): DailyTake | null {
     if (!cachedTake) return null;
     const today = new Date().toISOString().split("T")[0];

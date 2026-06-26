@@ -296,9 +296,9 @@ Phase 4 (Marketplace MVP)   — ✅ COMPLETE
 - **SQLite adapter fix**: 27 `.query()` → `.all()`/`.run()` changes across 4 backend files (`app.ts`, `BondScoreScheduler.ts`, `bondScoring.ts`, `migrations/runner.ts`)
 - **Telegram dashboard deep-link rollout**:
   - Added `dashboardUrlButton()` helper in `keyboards.ts` — resolves familyId per chat context (group: `telegram_{chatId}`, private: `user_{userId}`)
-  - Dashboard "📊 Family Dashboard" URL button added to all 18 Telegram touchpoints: `/start`, `/bondscore`, `/status`, check-in complete, `/help`, onboarding keyboard, `/agents`, agent selection confirmation, `/council`, `/challenge`, `/savings`, `/me`, `/privacy`, `/export`, `/deletedata`, `/hedera`, `/milestone`, `/reward`, `/transfer`, `/balance`, `/demo`
+  - Dashboard "📊 Family Dashboard" URL button added to all **24 Telegram touchpoints**: `/start`, `/bondscore`, `/status`, check-in complete, `/help`, onboarding keyboard, `/agents`, agent selection confirmation, `/council`, `/challenge`, `/savings`, `/me`, `/privacy`, `/export`, `/deletedata`, `/hedera`, `/milestone`, `/reward`, `/transfer`, `/balance`, `/demo`, `/ask`, `/family`, mood selection prompt, gratitude prompt, challenge acceptance confirmation, post-deletion confirmation
   - Configurable via `FRONTEND_URL` env var (default: `https://familexyz.netlify.app`)
-  - All 5 Telegram files updated (`handlers.ts`, `keyboards.ts`, `TelegramFamilyClient.ts`, `privacy.ts`, `hederaHandlers.ts`), deployed, PM2 restarted
+  - All 6 Telegram files updated (`handlers.ts`, `keyboards.ts`, `TelegramFamilyClient.ts`, `privacy.ts`, `hederaHandlers.ts`, `relationships.ts`), deployed, PM2 restarted
   - Fixed orphaned `reply_markup` in `/demo` handler — keyboard was created but never passed to the reply
 - **Infrastructure**: Bond score scheduler deployed, temp files cleaned up, ROADMAP updated with June 26 changelog
 

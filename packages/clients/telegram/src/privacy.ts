@@ -169,6 +169,12 @@ export async function handleDeleteFinal(ctx: BotContext): Promise<void> {
     ctx.session.familyMembers = undefined;
     ctx.session.nudgePaused = false;
 
+    const chatId = ctx.chat?.id.toString();
+    const userId = ctx.from?.id.toString();
+    const isGroup = ctx.chat?.type === "group" || ctx.chat?.type === "supergroup";
+    const btn = dashboardUrlButton(chatId, userId, isGroup);
+    const deleteKb = new InlineKeyboard().url(btn.text, btn.url);
+
     if (ctx.callbackQuery?.message) {
         await ctx.api.editMessageText(
             ctx.callbackQuery.message.chat.id,
@@ -176,7 +182,7 @@ export async function handleDeleteFinal(ctx: BotContext): Promise<void> {
             "*All data deleted.* \u{2705}\n\n" +
             "Your account has been wiped. If you'd like to start fresh, just send /start.\n\n" +
             "_Take care_ \u{1F49B}",
-            { parse_mode: "Markdown" }
+            { parse_mode: "Markdown", reply_markup: deleteKb }
         );
     }
 }

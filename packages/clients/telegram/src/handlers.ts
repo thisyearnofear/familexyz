@@ -199,9 +199,17 @@ export async function handleMoodSelection(
         );
     }
 
+    const chatId = ctx.chat?.id.toString();
+    const userId = ctx.from?.id.toString();
+    const isGroup = ctx.chat?.type === "group" || ctx.chat?.type === "supergroup";
+    const btn = dashboardUrlButton(chatId, userId, isGroup);
+
+    const { InlineKeyboard } = await import("grammy");
+    const moodKb = new InlineKeyboard().url(btn.text, btn.url);
+
     await ctx.reply(
         "What's *one thing* you're grateful for in your family today?",
-        { parse_mode: "Markdown" }
+        { parse_mode: "Markdown", reply_markup: moodKb }
     );
 }
 
@@ -213,9 +221,17 @@ export async function handleGratitude(
     session.checkInData = { ...session.checkInData, gratitude: text };
     session.checkInState = "story";
 
+    const chatId = ctx.chat?.id.toString();
+    const userId = ctx.from?.id.toString();
+    const isGroup = ctx.chat?.type === "group" || ctx.chat?.type === "supergroup";
+    const btn = dashboardUrlButton(chatId, userId, isGroup);
+
+    const kb = checkinFollowUpKeyboard();
+    kb.row().url(btn.text, btn.url);
+
     await ctx.reply(
         "Beautiful. Would you like to share a family moment from today?",
-        { reply_markup: checkinFollowUpKeyboard() }
+        { reply_markup: kb }
     );
 }
 

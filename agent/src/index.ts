@@ -274,8 +274,9 @@ const startAgents = async () => {
         }
 
         try {
-            const { initializeDailyTakePersistence } = await import("./jobs/DailyTakeGenerator.js");
+            const { initializeDailyTakePersistence, initializeDailyScheduler } = await import("./jobs/DailyTakeGenerator.js");
             await initializeDailyTakePersistence(primaryDb);
+            initializeDailyScheduler(primaryDb, primaryRuntime || undefined);
         } catch (error) {
             elizaLogger.warn("Failed to initialize daily take persistence:", error);
         }

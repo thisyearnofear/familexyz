@@ -380,11 +380,18 @@ export class TelegramFamilyClient implements FamilyMessagingAdapter {
         this.bot.command("council", async (ctx) => {
             const question = ctx.match?.trim();
             if (!question) {
+                const chatId = ctx.chat?.id.toString();
+                const userId = ctx.from?.id.toString();
+                const isGroup = ctx.chat?.type === "group" || ctx.chat?.type === "supergroup";
+                const btn = dashboardUrlButton(chatId, userId, isGroup);
+                const { InlineKeyboard } = await import("grammy");
+                const councilKb = new InlineKeyboard().url(btn.text, btn.url);
+
                 await ctx.reply(
                     "Usage: `/council <question>`\n\n" +
                     "All 5 agents will share their perspective.\n\n" +
                     "Example: `/council How can we handle holiday planning stress?`",
-                    { parse_mode: "Markdown" }
+                    { parse_mode: "Markdown", reply_markup: councilKb }
                 );
                 return;
             }
@@ -412,12 +419,19 @@ export class TelegramFamilyClient implements FamilyMessagingAdapter {
         });
 
         this.bot.command("ask", async (ctx) => {
+            const chatId = ctx.chat?.id.toString();
+            const userId = ctx.from?.id.toString();
+            const isGroup = ctx.chat?.type === "group" || ctx.chat?.type === "supergroup";
+            const btn = dashboardUrlButton(chatId, userId, isGroup);
+
             const args = ctx.match?.split(" ");
             if (!args || args.length < 2) {
+                const { InlineKeyboard } = await import("grammy");
+                const askKb = new InlineKeyboard().url(btn.text, btn.url);
                 await ctx.reply(
                     "Usage: `/ask <agent> <question>`\n\nExample: `/ask wisdom How can we improve communication?`\n\n" +
                     "Available agents: wisdom, intimacy, growth, presence, bridge, savings",
-                    { parse_mode: "Markdown" }
+                    { parse_mode: "Markdown", reply_markup: askKb }
                 );
                 return;
             }
@@ -426,8 +440,11 @@ export class TelegramFamilyClient implements FamilyMessagingAdapter {
             const question = args.slice(1).join(" ");
 
             if (!AGENT_PROFILES[agentName]) {
+                const { InlineKeyboard } = await import("grammy");
+                const askKb = new InlineKeyboard().url(btn.text, btn.url);
                 await ctx.reply(
-                    `Unknown agent "${agentName}".\n\nAvailable: wisdom, intimacy, growth, presence, bridge, savings`
+                    `Unknown agent "${agentName}".\n\nAvailable: wisdom, intimacy, growth, presence, bridge, savings`,
+                    { reply_markup: askKb }
                 );
                 return;
             }
@@ -885,9 +902,17 @@ export class TelegramFamilyClient implements FamilyMessagingAdapter {
 
         const challenge = challenges[challengeId] || challenges.random;
         const { InlineKeyboard } = await import("grammy");
+
+        const chatId = ctx.chat?.id.toString();
+        const userId = ctx.from?.id.toString();
+        const isGroup = ctx.chat?.type === "group" || ctx.chat?.type === "supergroup";
+        const btn = dashboardUrlButton(chatId, userId, isGroup);
+
         const progressKb = new InlineKeyboard()
             .text("\u{2705} Mark Done", "challenge:complete:" + challengeId)
-            .text("\u{1F4AC} Share Progress", "challenge:progress:" + challengeId);
+            .text("\u{1F4AC} Share Progress", "challenge:progress:" + challengeId)
+            .row()
+            .url(btn.text, btn.url);
 
         if (ctx.callbackQuery?.message) {
             await ctx.api.editMessageText(

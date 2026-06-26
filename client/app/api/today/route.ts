@@ -7,7 +7,7 @@ export const revalidate = 3600;
 
 export async function GET() {
     try {
-        const res = await fetch(`${API_BASE}/daily-take`, { cache: "no-store" });
+        const res = await fetch(`${API_BASE}/daily-take`, { next: { revalidate: 3600 } });
         if (res.ok) {
             const data = await res.json();
             return NextResponse.json(data);

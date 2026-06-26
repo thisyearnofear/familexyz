@@ -72,8 +72,33 @@ export default function AccountPage() {
 
                 {isLoading ? (
                     <div className="space-y-8">
-                        <Skeleton variant="card" className="h-40" />
-                        <Skeleton variant="card" className="h-52" />
+                        {/* Current Plan card skeleton */}
+                        <div className="rounded-2xl border border-editorial-subtle/10 bg-editorial-surface/5 p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <Skeleton variant="bar" className="h-3 w-24" />
+                                <Skeleton variant="bar" className="h-5 w-16 rounded-full" />
+                            </div>
+                            <div className="flex items-baseline gap-1 mb-1">
+                                <Skeleton variant="bar" className="h-8 w-20" />
+                                <Skeleton variant="bar" className="h-3 w-14" />
+                            </div>
+                            <Skeleton variant="bar" className="h-3 w-24 mt-2" />
+                        </div>
+                        {/* Usage card skeleton */}
+                        <div className="rounded-2xl border border-editorial-subtle/10 bg-editorial-surface/5 p-6">
+                            <Skeleton variant="bar" className="h-3 w-32 mb-6" />
+                            {[1, 2, 3].map((i) => (
+                                <div key={i} className="mb-4">
+                                    <div className="flex items-center justify-between mb-1.5">
+                                        <Skeleton variant="bar" className="h-3 w-24" />
+                                        <Skeleton variant="bar" className="h-3 w-16" />
+                                    </div>
+                                    <Skeleton variant="bar" className="h-1.5 w-full rounded-full" />
+                                </div>
+                            ))}
+                        </div>
+                        {/* CTA button skeleton */}
+                        <Skeleton variant="bar" className="h-12 w-48 rounded-xl" />
                     </div>
                 ) : (
                     <>

@@ -24,7 +24,7 @@ WORKDIR /app
 
 # --- deps: install only essential deps for family agents
 FROM base AS deps
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml turbo.json ./
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml turbo.json tsconfig.json ./
 COPY agent/package.json ./agent/package.json
 # Copy only essential packages for family agents
 COPY packages/core ./packages/core

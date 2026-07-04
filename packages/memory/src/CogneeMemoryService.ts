@@ -7,7 +7,7 @@ import type { MemoryService, RememberMetadata } from "./MemoryService.js";
  *   remember() → POST /api/v1/remember        (multipart: text as .txt file + datasetName)
  *   recall()   → POST /api/v1/recall          (JSON: { query, datasets, searchType })
  *   improve()  → POST /api/v1/improve         (JSON: { datasetName, runInBackground })
- *   forget()   → DELETE /api/v1/datasets/{id} (requires dataset UUID lookup via GET /api/v1/datasets)
+ *   forget()   → POST /api/v1/forget         (JSON: { dataset })
  *
  * Every call is wrapped in try/catch. If Cognee is down, credits run out,
  * or the network fails, the method silently degrades — the caller's
@@ -116,21 +116,15 @@ export class CogneeMemoryService implements MemoryService {
     }
 
     async forget(userId: string): Promise<void> {
-        const datasetName = this.datasetFor(userId);
+        const dataset = this.datasetFor(userId);
 
         try {
-            // Cognee REST API has no /forget endpoint — deletion is via
-            // DELETE /api/v1/datasets/{dataset_id} which requires a UUID.
-            // Look up the dataset UUID by name first via GET /api/v1/datasets.
-            const datasetId = await this.findDatasetId(datasetName);
-            if (!datasetId) {
-                // Dataset doesn't exist (or was already deleted) — nothing to do.
-                return;
-            }
-
-            const res = await this.fetchWithTimeout(`/api/v1/datasets/${datasetId}`, {
-                method: "DELETE",
-                headers: this.authHeaders(),
+            // POST /api/v1/forget with { dataset } deletes the entire
+            // dataset (relational, graph, vector data) by name.
+            const res = await this.fetchWithTimeout("/api/v1/forget", {
+                method: "POST",
+                headers: this.authHeaders({ "Content-Type": "application/json" }),
+                body: JSON.stringify({ dataset }),
             });
 
             if (!res.ok) {
@@ -161,31 +155,6 @@ export class CogneeMemoryService implements MemoryService {
             .map(([k, v]) => `${k}: ${v}`)
             .join("\n");
         return `${content}\n\n---\n${metaLines}`;
-    }
-
-    /**
-     * Look up a dataset UUID by name via GET /api/v1/datasets.
-     * Returns null if the dataset doesn't exist (or on error).
-     */
-    private async findDatasetId(datasetName: string): Promise<string | null> {
-        try {
-            const res = await this.fetchWithTimeout("/api/v1/datasets", {
-                method: "GET",
-                headers: this.authHeaders(),
-            });
-
-            if (!res.ok) return null;
-
-            const datasets = await res.json();
-            if (!Array.isArray(datasets)) return null;
-
-            const match = datasets.find(
-                (d: any) => d.name === datasetName,
-            );
-            return match?.id ?? null;
-        } catch {
-            return null;
-        }
     }
 
     /**

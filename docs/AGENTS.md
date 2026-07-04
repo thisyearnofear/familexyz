@@ -75,6 +75,33 @@ The `/council` command sends the question to all 5 agents for multi-perspective 
 
 ---
 
+## 🧠 Cognee Memory Layer
+
+Agents have persistent, cross-session memory powered by Cognee's hybrid graph-vector layer. This means Wisdom remembers what you discussed last week, and any agent can reference past check-ins, family interactions, and conversation topics without being asked.
+
+### Automatic Context Injection
+
+When a user sends any message (free-text or `/ask`), the agent silently recalls relevant memories in parallel with state composition and injects them into the LLM context. The agent responds with awareness of past conversations without the user needing to explicitly ask.
+
+### Four Memory Operations
+
+| Operation | Telegram | Web | API |
+|-----------|----------|-----|-----|
+| **remember** | `/checkin`, `/family` log, every message | `/memory` page | `POST /api/memory/remember` |
+| **recall** | `/recall <question>`, automatic context injection | `/memory` page | `POST /api/memory/recall` |
+| **improve** | `/bondscore` refresh | `/memory` page | `POST /api/memory/improve` |
+| **forget** | `/deletedata` | `/memory` page | `POST /api/memory/forget` |
+
+### Per-User Isolation
+
+Each user gets a dedicated Cognee dataset: `familexyz_user_<telegramId>`. Memory is never shared between users.
+
+### Graceful Degradation
+
+The memory layer is optional. If `COGNEE_ENABLED` is not set or Cognee Cloud is unreachable, all operations silently degrade to no-ops. The app works identically with or without it.
+
+---
+
 ## 📡 Agent API Integration
 
 ### Agent Message Endpoint

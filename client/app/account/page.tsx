@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { fontVariables } from '@/lib/fonts';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useMemoryStatus } from '@/hooks/use-memory';
 
 function useSubscriptionStatus() {
     return useQuery({
@@ -50,6 +51,7 @@ function UsageBar({ label, used, limit }: { label: string; used: number; limit: 
 
 export default function AccountPage() {
     const { data, isLoading } = useSubscriptionStatus();
+    const { data: memoryStatus, isLoading: memoryLoading } = useMemoryStatus();
 
     return (
         <div className={`${fontVariables} min-h-screen bg-editorial-bg bg-noise`}>
@@ -142,12 +144,51 @@ export default function AccountPage() {
                             })}
                         </div>
 
+                        {/* Memory layer status */}
+                        <div className="rounded-2xl border border-editorial-subtle/10 bg-editorial-surface/5 p-6 mb-8 reveal-up reveal-d3">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-[0.6rem] tracking-[0.15em] uppercase text-editorial-faint">
+                                    Memory Layer
+                                </h2>
+                                {memoryLoading ? (
+                                    <Skeleton variant="bar" className="h-5 w-20 rounded-full" />
+                                ) : (
+                                    <span
+                                        className={`text-[0.6rem] tracking-[0.15em] uppercase px-3 py-1 rounded-full border ${
+                                            memoryStatus?.enabled
+                                                ? 'border-green-500/30 text-green-400'
+                                                : 'border-editorial-subtle/30 text-editorial-muted'
+                                        }`}
+                                    >
+                                        {memoryStatus?.enabled ? '🧠 Active' : '🔶 Disabled'}
+                                    </span>
+                                )}
+                            </div>
+                            <p className="text-sm text-editorial-muted">
+                                {memoryStatus?.enabled
+                                    ? 'Cognee is connected — your agents remember across sessions.'
+                                    : 'Memory layer is optional. Activate it to give your agents persistent memory.'}
+                            </p>
+                            <Link
+                                href="/memory"
+                                className="inline-block mt-3 text-xs text-editorial-accent hover:text-editorial-accent/80 transition-colors"
+                            >
+                                Manage memory &rarr;
+                            </Link>
+                        </div>
+
                         <div className="flex gap-3 reveal-up reveal-d3">
                             <Link
                                 href="/marketplace"
                                 className="px-6 py-3 rounded-xl text-sm font-medium border border-editorial-subtle/20 text-editorial-muted hover:text-editorial-cream hover:border-editorial-subtle/40 transition-colors"
                             >
                                 Browse Marketplace
+                            </Link>
+                            <Link
+                                href="/memory"
+                                className="px-6 py-3 rounded-xl text-sm font-medium border border-editorial-subtle/20 text-editorial-muted hover:text-editorial-cream hover:border-editorial-subtle/40 transition-colors"
+                            >
+                                Memory
                             </Link>
                         </div>
                     </>

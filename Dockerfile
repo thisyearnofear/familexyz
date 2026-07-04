@@ -31,8 +31,12 @@ COPY packages/core ./packages/core
 COPY packages/config ./packages/config
 COPY packages/family ./packages/family
 COPY packages/clients/direct ./packages/clients/direct
+COPY packages/clients/telegram ./packages/clients/telegram
+COPY packages/memory ./packages/memory
+COPY packages/monetization ./packages/monetization
 COPY packages/adapters/sqlite ./packages/adapters/sqlite
 COPY packages/blockchain/hedera-core ./packages/blockchain/hedera-core
+COPY packages/blockchain/plugin-familyxyz ./packages/blockchain/plugin-familyxyz
 COPY characters ./characters
 # Install only essential workspace dependencies
 ENV DOCKER_BUILD=true
@@ -45,6 +49,10 @@ RUN cd packages/family/nlp-utils && pnpm build && cd ../../..
 RUN cd packages/clients/direct && pnpm build && cd ../../..
 RUN cd packages/adapters/sqlite && pnpm build && cd ../../..
 RUN cd packages/blockchain/hedera-core && pnpm build && cd ../../..
+RUN cd packages/blockchain/plugin-familyxyz && pnpm build && cd ../../..
+RUN cd packages/memory && pnpm build && cd ../..
+RUN cd packages/clients/telegram && pnpm build && cd ../../..
+RUN cd packages/monetization && pnpm build && cd ../..
 RUN cd packages/family/plugin-intimacy && pnpm build && cd ../../..
 RUN cd packages/family/plugin-wisdom && pnpm build && cd ../../..
 RUN cd packages/family/plugin-presence && pnpm build && cd ../../..
@@ -79,8 +87,12 @@ COPY --from=deps /app/packages/core /app/packages/core
 COPY --from=deps /app/packages/config /app/packages/config
 COPY --from=deps /app/packages/family /app/packages/family
 COPY --from=deps /app/packages/clients/direct /app/packages/clients/direct
+COPY --from=deps /app/packages/clients/telegram /app/packages/clients/telegram
+COPY --from=deps /app/packages/memory /app/packages/memory
+COPY --from=deps /app/packages/monetization /app/packages/monetization
 COPY --from=deps /app/packages/adapters/sqlite /app/packages/adapters/sqlite
 COPY --from=deps /app/packages/blockchain/hedera-core /app/packages/blockchain/hedera-core
+COPY --from=deps /app/packages/blockchain/plugin-familyxyz /app/packages/blockchain/plugin-familyxyz
 COPY --from=build /app/agent /app/agent
 COPY characters ./characters
 

@@ -24,7 +24,10 @@ familexyz/
 │   │   ├── page.tsx           # Home page (daily council preview)
 │   │   ├── today/             # Full daily council view
 │   │   ├── dashboard/         # Family dashboard
+│   │   ├── memory/            # Cognee memory management (recall, remember, forget)
+│   │   ├── account/           # Subscription + memory status
 │   │   ├── chat/[agentId]/    # Agent chat interface
+│   │   ├── marketplace/       # Agent marketplace
 │   │   └── api/               # Next.js API routes (proxy to backend)
 │   ├── components/            # React components (chat, dashboard, layout, UI)
 │   ├── hooks/                 # Custom React hooks
@@ -53,6 +56,7 @@ familexyz/
 │   │   ├── xmtp/              # XMTP encrypted messaging client
 │   │   └── direct/            # Direct client (CLI/API)
 │   ├── monetization/          # Subscription tiers, usage tracking, feature gates
+│   ├── memory/                # Cognee memory layer (remember/recall/improve/forget)
 │   └── auth/                  # Authentication services
 ├── config/                    # Configuration files (biome, etc.)
 ├── tests/                     # E2E tests

@@ -55,6 +55,7 @@ ESSENTIAL_PKGS="
   core
   config
   monetization
+  memory
   blockchain/hedera-core
   blockchain/plugin-familyxyz
   clients/direct
@@ -113,6 +114,7 @@ packages:
   - "packages/core"
   - "packages/config"
   - "packages/monetization"
+  - "packages/memory"
   - "packages/adapters/sqlite"
   - "packages/clients/direct"
   - "packages/clients/telegram"

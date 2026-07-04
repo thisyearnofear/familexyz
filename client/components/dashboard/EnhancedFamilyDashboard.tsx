@@ -6,6 +6,7 @@ import { AGENTS } from "@/lib/agents";
 import { fontVariables } from "@/lib/fonts";
 import { useDailyTake } from "@/hooks/use-daily-take";
 import { useBondScore, type BondScoreSignals } from "@/hooks/use-bond-score";
+import { useMemoryStatus } from "@/hooks/use-memory";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from 'next/link';
 
@@ -161,6 +162,43 @@ function AgentStrip() {
     );
 }
 
+function MemoryIndicator() {
+    const { data: status, isLoading } = useMemoryStatus();
+    const enabled = status?.enabled ?? false;
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-between">
+                <Skeleton variant="bar" className="h-3 w-28" />
+                <Skeleton variant="bar" className="h-5 w-16 rounded-full" />
+            </div>
+        );
+    }
+
+    return (
+        <Link
+            href="/memory"
+            className="flex items-center justify-between group hover-scale motion-fade-in"
+        >
+            <div className="flex items-center gap-2">
+                <span className="text-sm">🧠</span>
+                <span className="text-xs text-editorial-muted group-hover:text-editorial-cream transition-colors">
+                    Memory
+                </span>
+            </div>
+            <span
+                className={`text-[0.55rem] tracking-[0.1em] uppercase px-2.5 py-1 rounded-full border ${
+                    enabled
+                        ? 'border-green-500/30 text-green-400'
+                        : 'border-editorial-subtle/20 text-editorial-faint'
+                }`}
+            >
+                {enabled ? 'Active' : 'Off'}
+            </span>
+        </Link>
+    );
+}
+
 function SparkBars({ data, loading }: { data: number[]; loading?: boolean }) {
     if (loading) {
         return (
@@ -280,6 +318,10 @@ export const EnhancedFamilyDashboard: React.FC = () => {
                 <div className="h-px bg-editorial-subtle/10" />
 
                 <AgentStrip />
+
+                <div className="h-px bg-editorial-subtle/10" />
+
+                <MemoryIndicator />
 
                 <div className="h-px bg-editorial-subtle/10" />
 

@@ -164,7 +164,7 @@ function TodayCouncilSkeleton() {
                         Loading&hellip;
                     </p>
                     <div className="flex items-center gap-3 mb-6">
-                        <span className="text-2xl animate-pulse">\u{1F3DB}\u{FE0F}</span>
+                        <span className="text-2xl animate-pulse">🏛️</span>
                         <p className="text-editorial-subtle text-sm font-[family-name:var(--font-playfair)] italic">
                             Gathering today&rsquo;s council
                             <span className="inline-flex ml-1">

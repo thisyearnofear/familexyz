@@ -10,7 +10,7 @@
 - Ollama for embeddings (nomic-embed-text, local)
 - **Hono** HTTP framework (replaced hand-rolled server) with CORS via `CORS_ORIGINS` env var
 - **ServiceRegistry** singleton replaces all module-level globals
-- Health check with dependency status: `hasDb`, `hasRuntime`, `hasDirectClient`, `hasTelegram`, `hasMonetization` — all active
+- Health check with dependency status: `hasDb`, `hasRuntime`, `hasDirectClient`, `hasTelegram`, `hasMonetization` — all active. Memory layer status in readiness check (`memory: ok | disabled`).
 - **5 agents**: Wisdom, Intimacy, Presence, Growth, Bridge with full specialized plugins
 - **Daily Council**: RSS/Web story → 5 agent perspectives (`/daily-take` API, cached)
 - **Bond scoring**: 7 signal aggregators, weekly scheduler, composite 0-100 score, HCS logging
@@ -28,9 +28,10 @@
 - `/dashboard` — Bond score bar, agent strip, weekly trend sparkline
 - `/marketplace` — Browse/search agents by category
 - `/marketplace/[slug]` — Agent detail pages
-- `/account` — Subscription management, usage, billing
+- `/account` — Subscription management, usage, billing, memory layer status
+- `/memory` — Cognee memory dashboard (recall search, remember input, improve/forget lifecycle controls)
 - `/publish` — Practitioner agent submission form
-- **TanStack Query** hooks: `useDailyTake`, `useAgentStatuses`, `useBondScore`, `useMarketplaceAgents`
+- **TanStack Query** hooks: `useDailyTake`, `useAgentStatuses`, `useBondScore`, `useMarketplaceAgents`, `useMemoryStatus`, `useRecallMemory`, `useRememberMemory`, `useForgetMemory`, `useImproveMemory`
 - **Chat persistence**: Last 50 messages per agent in localStorage
 - **Auto-growing textarea** in chat (up to 120px)
 - **Cache headers**: immutable for static assets, 3600s for `/api/today`, no-cache for other API routes
@@ -41,7 +42,8 @@
 
 ### Telegram Bot (@familexyzbot)
 - **Full production grammy bot** — 2,150+ lines across 8 modules
-- **20+ commands**: /start, /checkin, /family, /agents, /bondscore, /challenge, /savings, /council, /ask, /status, /help, /me, /privacy, /export, /deletedata, /hedera, /milestone, /reward, /transfer, /balance, /demo
+- **20+ commands**: /start, /checkin, /family, /agents, /bondscore, /challenge, /savings, /council, /ask, /recall, /status, /help, /me, /privacy, /export, /deletedata, /hedera, /milestone, /reward, /transfer, /balance, /demo
+- **Cognee memory layer**: `/recall` searches cross-session memory, automatic context injection on every message, `remember()` on check-ins/interactions/conversations, `improve()` on bond score refresh, `forget()` on data deletion. Graceful degradation — works fully without Cognee enabled.
 - **Session management** with SQLite-backed persistence (7 tables: users, checkins, family_members, interactions, mentions, etc.)
 - **Smart agent routing**: keyword detection routes messages to correct agent automatically
 - **Council requests**: `/council` sends to all 5 agents

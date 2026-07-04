@@ -110,7 +110,7 @@ function HomePage() {
                         {/* Animated gathering message */}
                         <div className="text-center mb-12 reveal-up">
                             <div className="flex items-center justify-center gap-3 mb-4">
-                                <span className="text-2xl animate-pulse">\u{1F3DB}\u{FE0F}</span>
+                                <span className="text-2xl animate-pulse">🏛️</span>
                             </div>
                             <p className="text-editorial-subtle text-sm font-[family-name:var(--font-playfair)] italic">
                                 Gathering today&rsquo;s council

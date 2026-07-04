@@ -14,7 +14,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { ExternalLink, Send, ShieldCheck, Hash, Sun, Home } from "lucide-react";
+import { ExternalLink, Send, ShieldCheck, Hash, Sun, Home, Brain } from "lucide-react";
 import { AGENTS } from "@/lib/agents";
 import { fontVariables } from "@/lib/fonts";
 
@@ -66,6 +66,17 @@ export function AppSidebar() {
                             >
                                 <Home className="h-3.5 w-3.5 mr-2" />
                                 Dashboard
+                            </SidebarMenuButton>
+                        </Link>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <Link href="/memory">
+                            <SidebarMenuButton
+                                isActive={pathname === "/memory"}
+                                className="text-[0.65rem] tracking-[0.1em] uppercase"
+                            >
+                                <Brain className="h-3.5 w-3.5 mr-2" />
+                                Memory
                             </SidebarMenuButton>
                         </Link>
                     </SidebarMenuItem>

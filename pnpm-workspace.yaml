@@ -8,6 +8,7 @@ packages:
   - "packages/blockchain/hedera-core"
   - "packages/blockchain/plugin-familyxyz"
   - "packages/family/*"
+  - "packages/memory"
   - "packages/agent"
   - "agent"
   - "client"

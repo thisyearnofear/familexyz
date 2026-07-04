@@ -207,3 +207,4 @@ hedera-keys/
 consensus-topics/
 family-topics.json
 .blackboxcli/
+*.tsbuildinfo

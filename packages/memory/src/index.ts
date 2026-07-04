@@ -35,6 +35,7 @@ export function initMemoryService(): MemoryService {
     const enabled = process.env.COGNEE_ENABLED === "true";
     const apiKey = process.env.COGNEE_API_KEY;
     const baseUrl = process.env.COGNEE_BASE_URL;
+    const tenantId = process.env.COGNEE_TENANT_ID;
 
     if (!enabled || !apiKey || !baseUrl) {
         instance = new NoopMemoryService();
@@ -43,7 +44,7 @@ export function initMemoryService(): MemoryService {
     }
 
     try {
-        instance = new CogneeMemoryService(baseUrl, apiKey);
+        instance = new CogneeMemoryService(baseUrl, apiKey, tenantId);
         console.info(`[Memory] Cognee enabled — pointing at ${baseUrl}`);
     } catch (err) {
         console.warn("[Memory] Cognee init failed, falling back to no-op:", err);

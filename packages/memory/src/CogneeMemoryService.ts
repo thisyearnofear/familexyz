@@ -22,10 +22,19 @@ const TIMEOUT_MS = 15000;
 export class CogneeMemoryService implements MemoryService {
     private readonly baseUrl: string;
     private readonly apiKey: string;
+    private readonly tenantId: string | undefined;
 
-    constructor(baseUrl: string, apiKey: string) {
+    constructor(baseUrl: string, apiKey: string, tenantId?: string) {
         this.baseUrl = baseUrl.replace(/\/+$/, "");
         this.apiKey = apiKey;
+        this.tenantId = tenantId;
+    }
+
+    /** Build the auth headers required by all Cognee API calls. */
+    private authHeaders(extra?: Record<string, string>): Record<string, string> {
+        const h: Record<string, string> = { "X-Api-Key": this.apiKey };
+        if (this.tenantId) h["X-Tenant-Id"] = this.tenantId;
+        return { ...h, ...extra };
     }
 
     async remember(userId: string, content: string, metadata?: RememberMetadata): Promise<void> {
@@ -40,7 +49,7 @@ export class CogneeMemoryService implements MemoryService {
 
             const res = await this.fetchWithTimeout("/api/v1/remember", {
                 method: "POST",
-                headers: { "X-Api-Key": this.apiKey },
+                headers: this.authHeaders(),
                 body: formData,
             });
 
@@ -59,10 +68,7 @@ export class CogneeMemoryService implements MemoryService {
         try {
             const res = await this.fetchWithTimeout("/api/v1/recall", {
                 method: "POST",
-                headers: {
-                    "X-Api-Key": this.apiKey,
-                    "Content-Type": "application/json",
-                },
+                headers: this.authHeaders({ "Content-Type": "application/json" }),
                 body: JSON.stringify({
                     query,
                     datasets: [dataset],
@@ -93,10 +99,7 @@ export class CogneeMemoryService implements MemoryService {
         try {
             const res = await this.fetchWithTimeout("/api/v1/improve", {
                 method: "POST",
-                headers: {
-                    "X-Api-Key": this.apiKey,
-                    "Content-Type": "application/json",
-                },
+                headers: this.authHeaders({ "Content-Type": "application/json" }),
                 body: JSON.stringify({
                     datasetName: dataset,
                     runInBackground: true,
@@ -127,7 +130,7 @@ export class CogneeMemoryService implements MemoryService {
 
             const res = await this.fetchWithTimeout(`/api/v1/datasets/${datasetId}`, {
                 method: "DELETE",
-                headers: { "X-Api-Key": this.apiKey },
+                headers: this.authHeaders(),
             });
 
             if (!res.ok) {
@@ -168,7 +171,7 @@ export class CogneeMemoryService implements MemoryService {
         try {
             const res = await this.fetchWithTimeout("/api/v1/datasets", {
                 method: "GET",
-                headers: { "X-Api-Key": this.apiKey },
+                headers: this.authHeaders(),
             });
 
             if (!res.ok) return null;

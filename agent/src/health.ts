@@ -1,4 +1,5 @@
 import { ServiceRegistry } from "./server/service-registry.js";
+import { getMemoryService } from "@familexyz/memory";
 
 export const healthCheck = (req: any, res: any) => {
     const status = ServiceRegistry.getStatus();
@@ -21,6 +22,7 @@ export function readinessCheck(): {
     checks: Record<string, string>;
 } {
     const status = ServiceRegistry.getStatus();
+    const memory = getMemoryService();
     const isReady = status.hasDb && status.hasRuntime;
 
     return {
@@ -31,6 +33,7 @@ export function readinessCheck(): {
             runtime: status.hasRuntime ? "ok" : "missing",
             payoutService: status.hasPayoutHandler ? "ok" : "not initialized",
             telegram: status.hasTelegram ? "ok" : "not configured",
+            memory: memory.isEnabled() ? "ok" : "disabled",
         },
     };
 }

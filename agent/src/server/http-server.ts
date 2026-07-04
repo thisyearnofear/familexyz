@@ -9,6 +9,7 @@ import { serve } from "@hono/node-server";
 import { elizaLogger, type IDatabaseAdapter } from "@elizaos/core";
 import { app } from "./app.js";
 import { ServiceRegistry } from "./service-registry.js";
+import { initMemoryService } from "@familexyz/memory";
 
 export interface HttpServerConfig {
     port: number;
@@ -21,6 +22,9 @@ export async function createHttpServer(config: HttpServerConfig): Promise<void> 
 
     ServiceRegistry.set("primaryDb", primaryDb);
     ServiceRegistry.set("primaryRuntime", runtime ?? null);
+
+    // Initialize Cognee memory layer (degrades to no-op if not configured)
+    initMemoryService();
 
     return new Promise<void>((resolve, reject) => {
         let retries = 0;

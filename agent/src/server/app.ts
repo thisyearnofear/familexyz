@@ -13,6 +13,7 @@ import { getCachedDailyTake, generateDailyTake } from "../jobs/DailyTakeGenerato
 import { readinessCheck } from "../health.js";
 import { authMiddleware, requireAuth } from "../auth/middleware.js";
 import { signToken } from "../auth/jwt.js";
+import { getMemoryService } from "@familexyz/memory";
 
 const app = new Hono();
 
@@ -590,6 +591,135 @@ app.post("/api/marketplace/review/:id", async (c) => {
         return c.json({ success: true, action });
     } catch (err: any) {
         return c.json({ error: err.message }, 500);
+    }
+});
+
+// ── Memory API (Cognee) ────────────────────────────────
+
+app.get("/api/memory/status", (c) => {
+    const memory = getMemoryService();
+    return c.json({
+        enabled: memory.isEnabled(),
+        service: memory.isEnabled() ? "cognee" : "noop",
+    });
+});
+
+app.post("/api/memory/recall", async (c) => {
+    const user = requireAuth(c);
+    if (!user) {
+        return c.json({ error: "Authentication required" }, 401);
+    }
+
+    try {
+        const body = await c.req.json();
+        const { query } = body;
+        if (!query || typeof query !== "string") {
+            return c.json({ error: "query is required" }, 400);
+        }
+
+        const memory = getMemoryService();
+        if (!memory.isEnabled()) {
+            return c.json({
+                enabled: false,
+                results: [],
+                count: 0,
+                message: "Memory layer is not enabled. Set COGNEE_ENABLED=true to activate.",
+            });
+        }
+
+        const results = await memory.recall(user.sub, query);
+
+        return c.json({
+            enabled: true,
+            userId: user.sub,
+            query,
+            results,
+            count: results.length,
+        });
+    } catch (err: any) {
+        elizaLogger.error("Memory recall error:", err);
+        return c.json({ error: "Failed to recall memory" }, 500);
+    }
+});
+
+app.post("/api/memory/remember", async (c) => {
+    const user = requireAuth(c);
+    if (!user) {
+        return c.json({ error: "Authentication required" }, 401);
+    }
+
+    try {
+        const body = await c.req.json();
+        const { content, metadata } = body;
+        if (!content || typeof content !== "string") {
+            return c.json({ error: "content is required" }, 400);
+        }
+
+        const memory = getMemoryService();
+        if (!memory.isEnabled()) {
+            return c.json({
+                enabled: false,
+                success: false,
+                message: "Memory layer is not enabled. Set COGNEE_ENABLED=true to activate.",
+            });
+        }
+
+        await memory.remember(user.sub, content, metadata);
+
+        return c.json({ enabled: true, success: true });
+    } catch (err: any) {
+        elizaLogger.error("Memory remember error:", err);
+        return c.json({ error: "Failed to store memory" }, 500);
+    }
+});
+
+app.post("/api/memory/forget", async (c) => {
+    const user = requireAuth(c);
+    if (!user) {
+        return c.json({ error: "Authentication required" }, 401);
+    }
+
+    try {
+        const memory = getMemoryService();
+        if (!memory.isEnabled()) {
+            return c.json({
+                enabled: false,
+                success: false,
+                message: "Memory layer is not enabled.",
+            });
+        }
+
+        await memory.forget(user.sub);
+
+        return c.json({ enabled: true, success: true });
+    } catch (err: any) {
+        elizaLogger.error("Memory forget error:", err);
+        return c.json({ error: "Failed to forget memory" }, 500);
+    }
+});
+
+app.post("/api/memory/improve", async (c) => {
+    const user = requireAuth(c);
+    if (!user) {
+        return c.json({ error: "Authentication required" }, 401);
+    }
+
+    try {
+        const memory = getMemoryService();
+        if (!memory.isEnabled()) {
+            return c.json({
+                enabled: false,
+                success: false,
+                message: "Memory layer is not enabled.",
+            });
+        }
+
+        await memory.improve(user.sub);
+
+        return c.json({ enabled: true, success: true });
+    } catch (err: any) {
+        elizaLogger.error("Memory improve error:", err);
+        return c.json({ error: "Failed to improve memory" }, 500);
     }
 });
 

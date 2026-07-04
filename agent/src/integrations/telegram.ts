@@ -20,6 +20,7 @@ import {
 } from "@elizaos/core";
 import { withRetry } from "../services/llm-resilience.js";
 import { ServiceRegistry } from "../server/service-registry.js";
+import { getMemoryService } from "@familexyz/memory";
 
 // Module-local refs (synced with ServiceRegistry)
 let telegramClient: TelegramFamilyClient | null = null;
@@ -281,7 +282,14 @@ async function routeToAgent(
             options.isPrivate ||
             process.env.TELEGRAM_ALWAYS_RESPOND?.toLowerCase() === "true";
 
-        const state = await runtime.composeState(memory);
+        // Run composeState and memory recall in parallel — no added latency
+        const memoryService = getMemoryService();
+        const [state, recalledMemories] = await Promise.all([
+            runtime.composeState(memory),
+            memoryService.isEnabled()
+                ? memoryService.recall(userId, text).catch(() => [] as string[])
+                : Promise.resolve([] as string[]),
+        ]);
 
         if (!alwaysRespond) {
             const shouldRespondTemplate =
@@ -316,6 +324,15 @@ async function routeToAgent(
             const profile = AGENT_PROFILES[activeAgent];
             agentPrefix = `\n\nYou are currently acting as the ${profile.name} agent (${profile.desc}). ` +
                 `Stay focused on ${profile.desc.toLowerCase()} topics while remaining warm and helpful.\n`;
+        }
+
+        // Inject recalled memories as context so the agent has cross-session awareness
+        if (recalledMemories.length > 0) {
+            const memoryContext = recalledMemories
+                .slice(0, 5)
+                .map((m) => `- ${m}`)
+                .join("\n");
+            agentPrefix += `\n\nRelevant memories from past conversations with this user:\n${memoryContext}\nUse these naturally — don't list them explicitly.\n`;
         }
 
         const responseTemplate =

@@ -14,6 +14,7 @@ import {
 } from "./userStore.js";
 import type { SessionData } from "./handlers.js";
 import { dashboardUrlButton } from "./keyboards.js";
+import { getMemoryService } from "@familexyz/memory";
 
 type BotContext = Context & { session: SessionData };
 
@@ -160,6 +161,9 @@ export async function handleDeleteFinal(ctx: BotContext): Promise<void> {
     if (!telegramId) return;
 
     deleteUser(telegramId);
+
+    // Cognee: surgically forget this user's entire memory graph
+    getMemoryService().forget(telegramId).catch(() => {});
 
     // Reset session
     ctx.session.onboardingComplete = false;

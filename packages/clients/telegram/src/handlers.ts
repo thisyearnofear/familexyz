@@ -10,6 +10,7 @@ import {
     AGENT_PROFILES,
 } from "./keyboards.js";
 import { saveCheckin, updateUser, getUser } from "./userStore.js";
+import { getMemoryService } from "@familexyz/memory";
 
 export interface SessionData {
     userId: string;
@@ -64,6 +65,11 @@ export async function handleBondScore(ctx: Context): Promise<void> {
     const userId = ctx.from?.id.toString();
     const isGroup = ctx.chat?.type === "group" || ctx.chat?.type === "supergroup";
     const btn = dashboardUrlButton(chatId, userId, isGroup);
+
+    // Cognee: enrich the memory graph when bond score is checked
+    if (userId) {
+        getMemoryService().improve(userId).catch(() => {});
+    }
 
     const { InlineKeyboard } = await import("grammy");
     const kb = bondScoreKeyboard();
@@ -164,6 +170,7 @@ export async function handleHelp(ctx: Context): Promise<void> {
         "\u{1F916} `/agents` — Switch coaching agent\n" +
         "\u{1F3DB} `/council <question>` — All 5 agents weigh in\n" +
         "\u{1F4AD} `/ask <agent> <question>` — Ask a specific agent\n" +
+        "\u{1F9E0} `/recall <question>` — Search your cross-session memory\n" +
         "\u{1F4CA} `/bondscore` — Family health metrics\n" +
         "\u{1F3AF} `/challenge` — Weekly family goals\n" +
         "\u{1F4B0} `/savings` — FAM token vault\n\n" +
@@ -250,6 +257,11 @@ export async function handleCheckInComplete(
             session.checkInStreak = user.checkin_streak;
             session.lastCheckIn = user.last_checkin_at || undefined;
         }
+
+        // Cognee: remember this check-in for cross-session memory
+        const memory = getMemoryService();
+        const content = `Daily check-in — Mood: ${mood}${gratitude ? `. Grateful for: ${gratitude}` : ""}. Streak: ${session.checkInStreak} day(s).`;
+        memory.remember(session.userId, content, { source: "checkin", mood, streak: session.checkInStreak }).catch(() => {});
     } else {
         // Fallback: session-only streak calc
         const today = new Date().toDateString();

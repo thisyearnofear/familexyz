@@ -2,6 +2,7 @@ import type { Context } from "grammy";
 import { InlineKeyboard } from "grammy";
 import type { SessionData } from "./handlers.js";
 import { dashboardUrlButton } from "./keyboards.js";
+import { getMemoryService } from "@familexyz/memory";
 
 export interface FamilyMember {
     name: string;
@@ -270,6 +271,19 @@ export async function handleInteractionLog(
 
     const typeInfo = INTERACTION_LABELS[interactionType];
     const total = member.interactions.length;
+
+    // Cognee: remember this family interaction for cross-session memory
+    const userId = ctx.from?.id?.toString();
+    if (userId) {
+        const memory = getMemoryService();
+        const content = `Family interaction logged — ${typeInfo ? typeInfo.label : interactionType} with ${memberName} (${member.relationship}). Total interactions with ${memberName}: ${total}.`;
+        memory.remember(userId, content, {
+            source: "interaction",
+            member: memberName,
+            relationship: member.relationship,
+            interaction_type: interactionType,
+        }).catch(() => {});
+    }
 
     await ctx.answerCallbackQuery({ text: `${typeInfo.emoji} Logged!` });
 

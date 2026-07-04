@@ -81,6 +81,7 @@ import {
     handleBalance,
     handleDemo,
 } from "./hederaHandlers.js";
+import { getMemoryService } from "@familexyz/memory";
 
 export interface TelegramChannelConfig extends ChannelConfig {
     credentials: {
@@ -469,8 +470,81 @@ export class TelegramFamilyClient implements FamilyMessagingAdapter {
             this.updateActivity();
         });
 
+        this.bot.command("recall", async (ctx) => {
+            const query = ctx.match?.trim();
+            const chatId = ctx.chat?.id.toString();
+            const userId = ctx.from?.id.toString();
+            const isGroup = ctx.chat?.type === "group" || ctx.chat?.type === "supergroup";
+            const btn = dashboardUrlButton(chatId, userId, isGroup);
+
+            if (!query) {
+                const { InlineKeyboard } = await import("grammy");
+                const recallKb = new InlineKeyboard().url(btn.text, btn.url);
+                await ctx.reply(
+                    "Usage: `/recall <question>`\n\n" +
+                    "Searches your full conversation history across all sessions.\n\n" +
+                    "Example: `/recall What did Wisdom say about my dad?`\n\n" +
+                    "_Powered by Cognee's hybrid graph-vector memory._",
+                    { parse_mode: "Markdown", reply_markup: recallKb }
+                );
+                return;
+            }
+
+            await ctx.api.sendChatAction(ctx.chat!.id, "typing");
+
+            const memory = getMemoryService();
+            if (!memory.isEnabled()) {
+                const { InlineKeyboard } = await import("grammy");
+                const recallKb = new InlineKeyboard().url(btn.text, btn.url);
+                await ctx.reply(
+                    "\u{1F9E0} _Memory layer is not enabled._\n\n" +
+                    "Set `COGNEE_ENABLED=true` with a Cognee Cloud API key to activate cross-session memory.",
+                    { parse_mode: "Markdown", reply_markup: recallKb }
+                );
+                return;
+            }
+
+            const results = await memory.recall(userId || "unknown", query);
+
+            const { InlineKeyboard } = await import("grammy");
+            const recallKb = new InlineKeyboard().url(btn.text, btn.url);
+
+            if (results.length === 0) {
+                await ctx.reply(
+                    "\u{1F50D} _No memories found for that query._\n\n" +
+                    "Try rephrasing, or use /checkin and /family to build up your memory first.",
+                    { parse_mode: "Markdown", reply_markup: recallKb }
+                );
+            } else {
+                const snippets = results.slice(0, 5);
+                const body = snippets.map((r, i) => `**${i + 1}.** ${r.slice(0, 500)}`).join("\n\n---\n\n");
+                const header = `\u{1F9E0} *Recalled ${results.length} memor${results.length === 1 ? "y" : "ies"}*\n\n`;
+                const fullText = header + body;
+                // Telegram message limit is 4096 chars
+                if (fullText.length > 4000) {
+                    const chunks: string[] = [];
+                    let remaining = fullText;
+                    while (remaining.length > 4000) {
+                        let splitAt = remaining.lastIndexOf("\n", 4000);
+                        if (splitAt < 2000) splitAt = 4000;
+                        chunks.push(remaining.substring(0, splitAt));
+                        remaining = remaining.substring(splitAt);
+                    }
+                    if (remaining) chunks.push(remaining);
+                    for (const chunk of chunks) {
+                        await ctx.reply(chunk, { parse_mode: "Markdown" });
+                    }
+                    await ctx.reply("_Powered by Cognee_ \u{1F9E0}", { parse_mode: "Markdown", reply_markup: recallKb });
+                } else {
+                    await ctx.reply(fullText, { parse_mode: "Markdown", reply_markup: recallKb });
+                }
+            }
+            this.updateActivity();
+        });
+
         this.bot.command("status", async (ctx) => {
             const hederaEnabled = !!(process.env.HEDERA_OPERATOR_ID && process.env.HEDERA_OPERATOR_KEY);
+            const memoryEnabled = getMemoryService().isEnabled();
             const chatId = ctx.chat?.id.toString();
             const userId = ctx.from?.id.toString();
             const isGroup = ctx.chat?.type === "group" || ctx.chat?.type === "supergroup";
@@ -485,7 +559,8 @@ export class TelegramFamilyClient implements FamilyMessagingAdapter {
                 `Groups: ${this.groupMappings.size}\n` +
                 `Agents: 6 available\n` +
                 `Bot: @${this.status.details?.botUsername || "familexyzbot"}\n\n` +
-                `🏦 *Hedera:* ${hederaEnabled ? "✅ Connected" : "❌ Not configured"}\n\n` +
+                `🏦 *Hedera:* ${hederaEnabled ? "✅ Connected" : "❌ Not configured"}\n` +
+                `🧠 *Memory:* ${memoryEnabled ? "✅ Cognee connected" : "🔶 Disabled (set COGNEE_ENABLED=true)"}\n\n` +
                 `*Commands:*\n` +
                 `/checkin — Daily mood & gratitude\n` +
                 `/agents — Switch coaching agent\n` +
@@ -495,6 +570,7 @@ export class TelegramFamilyClient implements FamilyMessagingAdapter {
                 `/hedera — Hedera status & tools\n` +
                 `/demo — Full Hedera walkthrough\n` +
                 `/ask <agent> <q> — Ask a specific agent\n` +
+                `/recall <question> — Search your memory\n` +
                 `/help — Feature overview`,
                 { parse_mode: "Markdown", reply_markup: statusKb }
             );
@@ -874,6 +950,15 @@ export class TelegramFamilyClient implements FamilyMessagingAdapter {
                         preferredAgent: ctx.session.preferredAgent,
                     },
                 };
+
+                // Cognee: remember what the user is talking about (fire-and-forget)
+                const memoryUserId = ctx.from?.id?.toString();
+                if (memoryUserId) {
+                    getMemoryService().remember(memoryUserId, text, {
+                        source: "conversation",
+                        agent: ctx.session.preferredAgent,
+                    }).catch(() => {});
+                }
 
                 try {
                     for (const handler of this.messageHandlers) {

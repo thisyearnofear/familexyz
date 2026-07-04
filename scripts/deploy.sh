@@ -96,6 +96,7 @@ done
 cp "${PROJECT_ROOT}/package.json" "${TEMP_DEPLOY}/"
 cp "${PROJECT_ROOT}/pnpm-lock.yaml" "${TEMP_DEPLOY}/"
 cp "${PROJECT_ROOT}/tsconfig.json" "${TEMP_DEPLOY}/" 2>/dev/null || true
+cp "${PROJECT_ROOT}/ecosystem.config.cjs" "${TEMP_DEPLOY}/" 2>/dev/null || true
 
 cat > "${TEMP_DEPLOY}/.deployment.json" << EOF
 {
@@ -158,8 +159,29 @@ cd \$RELEASE_DIR
 ln -sfn ${VPS_TARGET}/shared/env/.env .env 2>/dev/null || true
 ln -sfn ${VPS_TARGET}/shared/data ./data 2>/dev/null || true
 
+# Ensure logs directory exists for PM2
+mkdir -p ${VPS_TARGET}/logs
+
 # Install deps (--no-frozen-lockfile in case lockfile drifts)
 pnpm install --no-frozen-lockfile 2>&1 | tail -5
+
+# Build workspace packages (dist/ needed for runtime imports)
+echo \"Building workspace packages...\"
+pnpm --filter @elizaos/core build 2>&1 | tail -2
+pnpm --filter @elizaos/config build 2>&1 | tail -2
+pnpm --filter @elizaos/client-direct build 2>&1 | tail -2
+pnpm --filter @elizaos/client-telegram build 2>&1 | tail -2
+pnpm --filter @familexyz/memory build 2>&1 | tail -2
+pnpm --filter @elizaos/monetization build 2>&1 | tail -2
+pnpm --filter @elizaos/adapter-sqlite build 2>&1 | tail -2
+pnpm --filter @elizaos/hedera-core build 2>&1 | tail -2
+pnpm --filter @elizaos/familyxyz-hedera-plugin build 2>&1 | tail -2
+pnpm --filter @elizaos/family-nlp-utils build 2>&1 | tail -2
+pnpm --filter @elizaos/family/plugin-wisdom build 2>&1 | tail -2
+pnpm --filter @elizaos/family/plugin-intimacy build 2>&1 | tail -2
+pnpm --filter @elizaos/family/plugin-presence build 2>&1 | tail -2
+pnpm --filter @elizaos/family/plugin-growth build 2>&1 | tail -2
+pnpm --filter @elizaos/family/plugin-generational-bridge build 2>&1 | tail -2
 
 # Rebuild native modules (better-sqlite3 needs node-gyp for target Node version)
 for ver in 9.6.0 11.6.0; do
